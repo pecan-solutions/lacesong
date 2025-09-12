@@ -1,0 +1,80 @@
+{
+  "name": "lacesong",
+  "version": "1.0.0",
+  "description": "A cross-platform mod management and loader tool for Unity/Mono games",
+  "author": "Lacesong Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wwdarrenwei/lacesong.git"
+  },
+  "keywords": [
+    "mod-manager",
+    "hollow-knight",
+    "silksong",
+    "bepinex",
+    "unity",
+    "modding"
+  ],
+  "engines": {
+    "dotnet": ">=9.0.0"
+  },
+  "targetFrameworks": [
+    "net9.0-windows",
+    "net9.0"
+  ],
+  "dependencies": {
+    "lacesong.core": "1.0.0",
+    "lacesong.cli": "1.0.0",
+    "lacesong.tests": "1.0.0"
+  },
+  "build": {
+    "outputDirectory": "build",
+    "configuration": "Release",
+    "platform": "Any CPU"
+  },
+  "supportedGames": [
+    {
+      "name": "Hollow Knight Silksong",
+      "id": "hollow-knight-silksong",
+      "executable": "Hollow Knight Silksong.exe",
+      "steamAppId": "1030300",
+      "epicAppId": "hollow-knight-silksong",
+      "gogAppId": "hollow_knight_silksong",
+      "bepInExVersion": "5.4.22",
+      "modDirectory": "BepInEx/plugins"
+    }
+  ],
+  "modRegistry": {
+    "baseUrl": "https://api.lacesong.dev",
+    "version": "v1",
+    "endpoints": {
+      "mods": "/mods",
+      "search": "/mods/search",
+      "download": "/mods/{id}/download",
+      "manifest": "/mods/{id}/manifest"
+    }
+  },
+  "features": {
+    "autoGameDetection": true,
+    "dependencyResolution": true,
+    "profileManagement": true,
+    "modUpdating": true,
+    "backupRestore": true,
+    "crossPlatform": true
+  },
+  "cli": {
+    "executable": "modman.exe",
+    "commands": [
+      "install-bepinex",
+      "install-mod",
+      "uninstall-mod",
+      "enable-mod",
+      "disable-mod",
+      "list-mods",
+      "backup",
+      "restore",
+      "detect-game"
+    ]
+  }
+}

@@ -1,0 +1,53 @@
+# Build outputs
+build/
+bin/
+obj/
+out/
+
+# .NET
+*.user
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+*.log
+*.tmp
+
+# Visual Studio
+.vs/
+*.sln.docstates
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+
+# Packages
+packages/
+*.nupkg
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local
+.env.*.local
