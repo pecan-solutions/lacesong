@@ -135,25 +135,37 @@ public class GameDetector : IGameDetector
                     if (string.IsNullOrEmpty(game.SteamAppId))
                         continue;
 
-                    var gamePath = Path.Combine(steamAppsPath, game.Name);
-                    var executablePath = Path.Combine(gamePath, game.Executable);
-
-                    if (File.Exists(executablePath))
+                    // try different possible folder names for the game
+                    var possibleFolderNames = new[]
                     {
-                        detectedGames.Add(new GameInstallation
+                        game.Name, // "Hollow Knight: Silksong"
+                        game.Name.Replace(":", ""), // "Hollow Knight Silksong"
+                        "Hollow Knight Silksong" // explicit fallback
+                    };
+
+                    foreach (var folderName in possibleFolderNames)
+                    {
+                        var gamePath = Path.Combine(steamAppsPath, folderName);
+                        var executablePath = Path.Combine(gamePath, game.Executable);
+
+                        if (File.Exists(executablePath))
                         {
-                            Name = game.Name,
-                            Id = game.Id,
-                            InstallPath = gamePath,
-                            Executable = game.Executable,
-                            SteamAppId = game.SteamAppId,
-                            EpicAppId = game.EpicAppId,
-                            GogAppId = game.GogAppId,
-                            BepInExVersion = game.BepInExVersion,
-                            ModDirectory = game.ModDirectory,
-                            IsValid = true,
-                            DetectedBy = "Steam"
-                        });
+                            detectedGames.Add(new GameInstallation
+                            {
+                                Name = game.Name,
+                                Id = game.Id,
+                                InstallPath = gamePath,
+                                Executable = game.Executable,
+                                SteamAppId = game.SteamAppId,
+                                EpicAppId = game.EpicAppId,
+                                GogAppId = game.GogAppId,
+                                BepInExVersion = game.BepInExVersion,
+                                ModDirectory = game.ModDirectory,
+                                IsValid = true,
+                                DetectedBy = "Steam"
+                            });
+                            break; // found the game, no need to check other folder names
+                        }
                     }
                 }
             }
@@ -255,25 +267,37 @@ public class GameDetector : IGameDetector
 
                 foreach (var game in _supportedGames)
                 {
-                    var gamePath = Path.Combine(commonPath, game.Name);
-                    var executablePath = Path.Combine(gamePath, game.Executable);
-
-                    if (File.Exists(executablePath))
+                    // try different possible folder names for the game
+                    var possibleFolderNames = new[]
                     {
-                        detectedGames.Add(new GameInstallation
+                        game.Name, // "Hollow Knight: Silksong"
+                        game.Name.Replace(":", ""), // "Hollow Knight Silksong"
+                        "Hollow Knight Silksong" // explicit fallback
+                    };
+
+                    foreach (var folderName in possibleFolderNames)
+                    {
+                        var gamePath = Path.Combine(commonPath, folderName);
+                        var executablePath = Path.Combine(gamePath, game.Executable);
+
+                        if (File.Exists(executablePath))
                         {
-                            Name = game.Name,
-                            Id = game.Id,
-                            InstallPath = gamePath,
-                            Executable = game.Executable,
-                            SteamAppId = game.SteamAppId,
-                            EpicAppId = game.EpicAppId,
-                            GogAppId = game.GogAppId,
-                            BepInExVersion = game.BepInExVersion,
-                            ModDirectory = game.ModDirectory,
-                            IsValid = true,
-                            DetectedBy = "GOG"
-                        });
+                            detectedGames.Add(new GameInstallation
+                            {
+                                Name = game.Name,
+                                Id = game.Id,
+                                InstallPath = gamePath,
+                                Executable = game.Executable,
+                                SteamAppId = game.SteamAppId,
+                                EpicAppId = game.EpicAppId,
+                                GogAppId = game.GogAppId,
+                                BepInExVersion = game.BepInExVersion,
+                                ModDirectory = game.ModDirectory,
+                                IsValid = true,
+                                DetectedBy = "GOG"
+                            });
+                            break; // found the game, no need to check other folder names
+                        }
                     }
                 }
             }
@@ -310,25 +334,37 @@ public class GameDetector : IGameDetector
 
                 foreach (var game in _supportedGames)
                 {
-                    var gamePath = Path.Combine(commonPath, game.Name);
-                    var executablePath = Path.Combine(gamePath, game.Executable);
-
-                    if (File.Exists(executablePath))
+                    // try different possible folder names for the game
+                    var possibleFolderNames = new[]
                     {
-                        detectedGames.Add(new GameInstallation
+                        game.Name, // "Hollow Knight: Silksong"
+                        game.Name.Replace(":", ""), // "Hollow Knight Silksong"
+                        "Hollow Knight Silksong" // explicit fallback
+                    };
+
+                    foreach (var folderName in possibleFolderNames)
+                    {
+                        var gamePath = Path.Combine(commonPath, folderName);
+                        var executablePath = Path.Combine(gamePath, game.Executable);
+
+                        if (File.Exists(executablePath))
                         {
-                            Name = game.Name,
-                            Id = game.Id,
-                            InstallPath = gamePath,
-                            Executable = game.Executable,
-                            SteamAppId = game.SteamAppId,
-                            EpicAppId = game.EpicAppId,
-                            GogAppId = game.GogAppId,
-                            BepInExVersion = game.BepInExVersion,
-                            ModDirectory = game.ModDirectory,
-                            IsValid = true,
-                            DetectedBy = "Common Path"
-                        });
+                            detectedGames.Add(new GameInstallation
+                            {
+                                Name = game.Name,
+                                Id = game.Id,
+                                InstallPath = gamePath,
+                                Executable = game.Executable,
+                                SteamAppId = game.SteamAppId,
+                                EpicAppId = game.EpicAppId,
+                                GogAppId = game.GogAppId,
+                                BepInExVersion = game.BepInExVersion,
+                                ModDirectory = game.ModDirectory,
+                                IsValid = true,
+                                DetectedBy = "Common Path"
+                            });
+                            break; // found the game, no need to check other folder names
+                        }
                     }
                 }
             }

@@ -35,7 +35,7 @@
   },
   "supportedGames": [
     {
-      "name": "Hollow Knight Silksong",
+      "name": "Hollow Knight: Silksong",
       "id": "hollow-knight-silksong",
       "executable": "Hollow Knight Silksong.exe",
       "steamAppId": "1030300",

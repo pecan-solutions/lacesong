@@ -8,25 +8,37 @@ Lacesong provides players with a simple, safe, and consistent way to install, ma
 
 ## **✨ Features**
 
-* **Automatic Mod Installation**  
-   Drag-and-drop or one-click install mods packaged as `.zip` or `.dll`.  
-   Automatically resolves directory placement and ensures compatibility with BepInEx.
+* **Modern WPF Interface**  
+   Clean, intuitive dark-themed UI with MVVM architecture.  
+   Responsive design with comprehensive navigation and status indicators.
 
-* **Dependency Management**  
-   Detects required frameworks (e.g., Satchel, WeaverCore) and installs missing dependencies automatically.
+* **Automatic Game Detection**  
+   Finds Hollow Knight Silksong installations automatically via Steam/Epic/GoG registry scanning or manual selection.  
+   Supports multiple installation sources and validates game integrity.
 
-* **Game Detection**  
-   Finds Hollow Knight Silksong installation directories automatically via Steam/Epic/GoG registry scanning or manual selection.
+* **BepInEx Management**  
+   One-click BepInEx installation with version selection and configuration.  
+   Automatic backup creation and safe uninstallation procedures.
 
-* **Safe Mod Updating**  
-   Uses a remote repository (JSON manifest / API-driven) to check for new versions and update installed mods without breaking configs.
+* **Comprehensive Mod Management**  
+   Install mods from files or URLs with dependency resolution.  
+   Enable/disable mods without uninstalling, safe uninstallation with backups.
 
-* **Profiles and Presets (Planned)**  
-   Save multiple mod configurations for different playthroughs or testing scenarios.
+* **Built-in Logging System**  
+   Comprehensive logging with easy access to log files.  
+   Multiple log levels and automatic log rotation.
 
-* **Cross-Platform**  
-   ✅ Windows (primary target, .NET 8 WPF/WinUI frontend).  
-   🔜 macOS/Linux support (via Avalonia UI \+ Mono backend).
+* **Update Management**  
+   Built-in updater that checks GitHub releases automatically.  
+   Safe update process with rollback capabilities.
+
+* **Settings & Configuration**  
+   Extensive settings management with import/export functionality.  
+   Customizable preferences and advanced options.
+
+* **Cross-Platform Foundation**  
+   ✅ Windows (WPF frontend with .NET 9).  
+   🔜 macOS/Linux support (via Avalonia UI in Phase 3).
 
 ---
 
@@ -34,31 +46,45 @@ Lacesong provides players with a simple, safe, and consistent way to install, ma
 
 ### **Core**
 
-* **.NET 8 / C\#** – Shared backend logic for mod discovery, manifest parsing, dependency graph building.
+* **.NET 9 / C\#** – Modern, high-performance backend logic for mod discovery, manifest parsing, dependency resolution.
 
-* **BepInEx** – Unity/Mono mod loader integration layer.
+* **BepInEx** – Unity/Mono mod loader integration layer with comprehensive management.
 
-* **YAML/JSON** – Mod manifests, dependency descriptors, and repository indexing.
+* **JSON** – Mod manifests, dependency descriptors, and configuration management.
 
-### **Windows Frontend**
+### **WPF Frontend (Phase 2)**
 
-* **WPF or WinUI 3** – Native Windows UI for v1 release.
+* **WPF with MVVM** – Modern Windows UI using CommunityToolkit.Mvvm for clean architecture.
 
-* **Squirrel.Windows** – Auto-updater and installer for easy distribution.
+* **Dark Theme** – Custom styling with modern design principles and accessibility.
 
-### **Cross-Platform Frontend (v2)**
+* **Dependency Injection** – Microsoft.Extensions.DependencyInjection for service management.
 
-* **Avalonia UI** – Enables a single shared UI across Windows/macOS/Linux.
+* **Logging** – Microsoft.Extensions.Logging with file and console providers.
 
-* **MAUI (optional)** – If mobile clients (remote mod browsing) become desirable.
+### **Services & Integration**
+
+* **Octokit** – GitHub API integration for update checking and release management.
+
+* **System.CommandLine** – Comprehensive CLI interface for advanced users.
+
+* **FlaUI** – UI automation testing framework for quality assurance.
+
+### **Testing & Quality**
+
+* **xUnit** – Unit testing framework with comprehensive test coverage.
+
+* **Moq** – Mocking framework for isolated testing.
+
+* **FlaUI** – UI automation testing for user interaction validation.
 
 ### **Packaging & Distribution**
 
-* **NuGet** – For internal libraries.
+* **Self-contained deployments** – Single-file executables with all dependencies.
 
-* **GitHub Releases** – Hosting installer builds.
+* **GitHub Releases** – Automated release management and distribution.
 
-* **Future: Custom Mod API / Registry** – For community mod hosting, searchable from inside the manager.
+* **Cross-platform builds** – Ready for macOS/Linux expansion in Phase 3.
 
 ---
 
@@ -66,11 +92,21 @@ Lacesong provides players with a simple, safe, and consistent way to install, ma
 
 ### **Windows (Current Support)**
 
-1. Download the latest `.exe` installer from [Releases](https://github.com/YourOrg/HollowModManager/releases).
+1. Download the latest Lacesong installer from [GitHub Releases](https://github.com/YourOrg/Lacesong/releases).
 
 2. Run the installer – it will auto-detect your Silksong installation.
 
 3. Launch `Lacesong` from Start Menu or Desktop.
+
+### **Command Line Interface**
+
+For advanced users, a CLI version is also available:
+
+1. Download the CLI package from [Releases](https://github.com/YourOrg/Lacesong/releases).
+
+2. Extract to a folder and run `lacesong.exe` from command line.
+
+3. See [USAGE.md](USAGE.md) for CLI commands and options.
 
 ### **macOS/Linux (Planned Support)**
 
@@ -82,64 +118,93 @@ Lacesong provides players with a simple, safe, and consistent way to install, ma
 
 ## **🚀 Usage**
 
-1. **Install BepInEx** (if not already bundled). Lacesong will attempt to detect and install the correct BepInEx version.
+### **WPF Application**
 
-2. **Browse & Install Mods**
+1. **Launch Lacesong** – The application will automatically detect your game installation.
 
-   * Drag a `.zip` into the app.
+2. **Game Detection** – If not detected automatically, use the "Browse for Game" option.
 
-   * Use the built-in mod browser (if configured to a registry API).
+3. **Install BepInEx** – Navigate to "BepInEx Install" and click "Install BepInEx".
 
-3. **Enable / Disable Mods**  
-    Toggle mods per profile. Disabled mods are safely unloaded without uninstalling files.
+4. **Manage Mods** – Use the "Mod Catalog" to install, enable, disable, or uninstall mods.
 
-4. **Update Mods**  
-    Click “Check for Updates” to see which mods are out of date.
+5. **Settings** – Configure preferences, check for updates, and manage logs.
 
-5. **Profiles (Planned)**  
-    Save/load sets of mods for speedrunning, casual playthroughs, or testing.
+### **Command Line Interface**
+
+```bash
+# Detect game installation
+lacesong detect-game
+
+# Install BepInEx
+lacesong install-bepinex --version 5.4.22 --backup
+
+# Install a mod
+lacesong install-mod "path/to/mod.zip"
+
+# List installed mods
+lacesong list-mods
+
+# Enable/disable mod
+lacesong enable-mod "mod-id"
+lacesong disable-mod "mod-id"
+
+# Create backup
+lacesong backup "backup-name"
+
+# Restore backup
+lacesong restore "backup-file.lcb"
+```
+
+### **Detailed Documentation**
+
+For comprehensive usage instructions, troubleshooting, and advanced features, see [USAGE.md](USAGE.md).
 
 ---
 
 ## **🧑‍💻 Development Roadmap**
 
-### **Phase 1 – Windows MVP**
+### **Phase 1 – Core Foundation** ✅
 
 * Core library: manifest parsing, mod installation, dependency resolution.
+* CLI tool with comprehensive command set.
+* Comprehensive unit tests (21 test cases).
+* Cross-platform build system.
 
-* WPF frontend with mod list UI.
+### **Phase 2 – WPF Application** ✅
 
-* BepInEx auto-installer.
+* **WPF frontend with MVVM architecture**.
+* **Modern dark theme UI** with intuitive navigation.
+* **Game detection screen** with automatic and manual detection.
+* **BepInEx installation flow** with version management.
+* **Mod catalog view** with install/uninstall/enable/disable functionality.
+* **Settings management** with preferences and configuration.
+* **Local logging system** with "Open logs" action.
+* **Built-in updater** that checks GitHub releases.
+* **UI automation tests** for user interactions.
+* **Comprehensive documentation** (USAGE.md).
 
-* Profile saving/loading.
-
-* Initial GitHub release.
-
-### **Phase 2 – Cross-Platform Expansion**
+### **Phase 3 – Cross-Platform Expansion**
 
 * Port frontend to Avalonia UI.
-
 * macOS ARM64/Intel builds with `.dmg` packaging.
-
 * Linux builds (AppImage/Deb).
 
-### **Phase 3 – Advanced Features**
+### **Phase 4 – Advanced Features**
 
 * Cloud sync of profiles.
-
 * Mod registry API (community-driven).
-
 * Plugin SDK for custom mod manager extensions.
 
 ---
 
 ## **📖 Documentation**
 
-* Architecture Overview
-
-* How Mod Installation Works
-
-* Contributing Guidelines
+* **[USAGE.md](USAGE.md)** – Comprehensive usage guide with step-by-step instructions
+* **Architecture Overview** – Technical documentation of the system design
+* **API Reference** – Core library interfaces and services
+* **Contributing Guidelines** – How to contribute to the project
+* **Build Instructions** – How to build and develop Lacesong locally
 
 ---
 
