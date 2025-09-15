@@ -345,6 +345,11 @@ public class ViewModelTests
         // arrange
         var mockLogger = new Mock<ILogger<ModCatalogViewModel>>();
         var mockModManager = new Mock<IModManager>();
+        var mockModIndexService = new Mock<IModIndexService>();
+        var mockModUpdateService = new Mock<IModUpdateService>();
+        var mockConflictService = new Mock<IConflictDetectionService>();
+        var mockCompatibilityService = new Mock<ICompatibilityService>();
+        var mockConfigService = new Mock<IModConfigService>();
         var mockDialogService = new Mock<IDialogService>();
 
         var gameInstall = new GameInstallation
@@ -375,6 +380,11 @@ public class ViewModelTests
         var viewModel = new ModCatalogViewModel(
             mockLogger.Object,
             mockModManager.Object,
+            mockModIndexService.Object,
+            mockModUpdateService.Object,
+            mockConflictService.Object,
+            mockCompatibilityService.Object,
+            mockConfigService.Object,
             mockDialogService.Object);
 
         // act

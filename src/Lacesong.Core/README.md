@@ -7,7 +7,8 @@ This is the core library for the Lacesong mod management tool, providing essenti
 - **Game Detection**: Automatically detect game installations from Steam, Epic Games, GOG, and manual paths
 - **BepInEx Management**: Install, configure, and manage BepInEx mod loader
 - **Mod Management**: Install, uninstall, enable, and disable mods
-- **Backup & Restore**: Create and restore backups of mod configurations
+- **Backup & Restore**: Create and 
+restore backups of mod configurations
 - **Robust Error Handling**: Comprehensive error handling with detailed operation results
 - **Atomic Operations**: Safe file operations using temporary directories and atomic moves
 

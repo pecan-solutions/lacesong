@@ -20,6 +20,11 @@ class Program
         var bepinexManager = new BepInExManager();
         var modManager = new ModManager();
         var backupManager = new BackupManager();
+        var modIndexService = new ModIndexService();
+        var verificationService = new VerificationService();
+        var dependencyResolver = new DependencyResolver(modManager, bepinexManager);
+        var installationStager = new InstallationStager(verificationService, dependencyResolver);
+        var permissionsService = new PermissionsService();
 
         // install-bepinex command
         var installBepInExCommand = new Command("install-bepinex", "Install BepInEx to a game installation");
@@ -28,12 +33,18 @@ class Program
         var forceOption = new Option<bool>("--force", "Force reinstall even if already installed");
         var backupOption = new Option<bool>("--backup", () => true, "Create backup before installation");
         var shortcutOption = new Option<bool>("--shortcut", "Create desktop shortcut");
+        var verifySignatureOption = new Option<bool>("--verify-signature", () => true, "Verify BepInEx signature");
+        var verifyChecksumOption = new Option<bool>("--verify-checksum", () => true, "Verify BepInEx checksum");
+        var requireElevationOption = new Option<bool>("--require-elevation", "Require administrator elevation");
 
         installBepInExCommand.AddOption(pathOption);
         installBepInExCommand.AddOption(versionOption);
         installBepInExCommand.AddOption(forceOption);
         installBepInExCommand.AddOption(backupOption);
         installBepInExCommand.AddOption(shortcutOption);
+        installBepInExCommand.AddOption(verifySignatureOption);
+        installBepInExCommand.AddOption(verifyChecksumOption);
+        installBepInExCommand.AddOption(requireElevationOption);
 
         installBepInExCommand.SetHandler(async (path, version, force, backup, shortcut) =>
         {
@@ -140,6 +151,168 @@ class Program
             await HandleDetectGame(gameDetector, path);
         }, detectPathOption);
 
+        // search-mods command
+        var searchModsCommand = new Command("search-mods", "Search for mods in the mod index");
+        var queryOption = new Option<string?>("--query", "Search query");
+        var categoryOption = new Option<string?>("--category", "Filter by category");
+        var authorOption = new Option<string?>("--author", "Filter by author");
+        var officialOption = new Option<bool?>("--official", "Filter by official status");
+        var verifiedOption = new Option<bool?>("--verified", "Filter by verified status");
+        var pageOption = new Option<int>("--page", () => 1, "Page number");
+        var pageSizeOption = new Option<int>("--page-size", () => 20, "Number of results per page");
+
+        searchModsCommand.AddOption(queryOption);
+        searchModsCommand.AddOption(categoryOption);
+        searchModsCommand.AddOption(authorOption);
+        searchModsCommand.AddOption(officialOption);
+        searchModsCommand.AddOption(verifiedOption);
+        searchModsCommand.AddOption(pageOption);
+        searchModsCommand.AddOption(pageSizeOption);
+
+        searchModsCommand.SetHandler(async (query, category, author, official, verified, page, pageSize) =>
+        {
+            await HandleSearchMods(modIndexService, query, category, author, official, verified, page, pageSize);
+        }, queryOption, categoryOption, authorOption, officialOption, verifiedOption, pageOption, pageSizeOption);
+
+        // browse-mods command
+        var browseModsCommand = new Command("browse-mods", "Browse available mods by category");
+        var browseCategoryOption = new Option<string?>("--category", "Category to browse");
+
+        browseModsCommand.AddOption(browseCategoryOption);
+
+        browseModsCommand.SetHandler(async (category) =>
+        {
+            await HandleBrowseMods(modIndexService, category);
+        }, browseCategoryOption);
+
+        // add-repo command
+        var addRepoCommand = new Command("add-repo", "Add a custom mod repository");
+        var repoIdArgument = new Argument<string>("id", "Repository ID");
+        var repoNameArgument = new Argument<string>("name", "Repository name");
+        var repoUrlArgument = new Argument<string>("url", "Repository URL");
+        var repoTypeOption = new Option<string>("--type", () => "Custom", "Repository type (GitHub, GitLab, Custom)");
+        var repoDescriptionOption = new Option<string?>("--description", "Repository description");
+
+        addRepoCommand.AddArgument(repoIdArgument);
+        addRepoCommand.AddArgument(repoNameArgument);
+        addRepoCommand.AddArgument(repoUrlArgument);
+        addRepoCommand.AddOption(repoTypeOption);
+        addRepoCommand.AddOption(repoDescriptionOption);
+
+        addRepoCommand.SetHandler(async (id, name, url, type, description) =>
+        {
+            await HandleAddRepo(modIndexService, id, name, url, type, description);
+        }, repoIdArgument, repoNameArgument, repoUrlArgument, repoTypeOption, repoDescriptionOption);
+
+        // remove-repo command
+        var removeRepoCommand = new Command("remove-repo", "Remove a custom mod repository");
+        var removeRepoIdArgument = new Argument<string>("id", "Repository ID to remove");
+
+        removeRepoCommand.AddArgument(removeRepoIdArgument);
+
+        removeRepoCommand.SetHandler(async (id) =>
+        {
+            await HandleRemoveRepo(modIndexService, id);
+        }, removeRepoIdArgument);
+
+        // list-repos command
+        var listReposCommand = new Command("list-repos", "List all configured repositories");
+
+        listReposCommand.SetHandler(async () =>
+        {
+            await HandleListRepos(modIndexService);
+        });
+
+        // refresh-index command
+        var refreshIndexCommand = new Command("refresh-index", "Refresh the mod index from all repositories");
+
+        refreshIndexCommand.SetHandler(async () =>
+        {
+            await HandleRefreshIndex(modIndexService);
+        });
+
+        // install-from-index command
+        var installFromIndexCommand = new Command("install-from-index", "Install a mod from the mod index");
+        var indexModIdArgument = new Argument<string>("mod-id", "Mod ID from the index");
+        var indexPathOption = new Option<string?>("--path", "Path to game installation directory");
+        var indexVersionOption = new Option<string?>("--version", "Specific version to install");
+
+        installFromIndexCommand.AddArgument(indexModIdArgument);
+        installFromIndexCommand.AddOption(indexPathOption);
+        installFromIndexCommand.AddOption(indexVersionOption);
+
+        installFromIndexCommand.SetHandler(async (modId, path, version) =>
+        {
+            await HandleInstallFromIndex(gameDetector, modManager, modIndexService, modId, path, version);
+        }, indexModIdArgument, indexPathOption, indexVersionOption);
+
+        // verify-checksum command
+        var verifyChecksumCommand = new Command("verify-checksum", "Verify file checksum");
+        var checksumFileArgument = new Argument<string>("file", "File to verify");
+        var checksumExpectedArgument = new Argument<string>("expected", "Expected checksum");
+        var checksumAlgorithmOption = new Option<string>("--algorithm", () => "SHA256", "Checksum algorithm (SHA1, SHA256, SHA384, SHA512, MD5)");
+
+        verifyChecksumCommand.AddArgument(checksumFileArgument);
+        verifyChecksumCommand.AddArgument(checksumExpectedArgument);
+        verifyChecksumCommand.AddOption(checksumAlgorithmOption);
+
+        verifyChecksumCommand.SetHandler(async (file, expected, algorithm) =>
+        {
+            await HandleVerifyChecksum(verificationService, file, expected, algorithm);
+        }, checksumFileArgument, checksumExpectedArgument, checksumAlgorithmOption);
+
+        // check-permissions command
+        var checkPermissionsCommand = new Command("check-permissions", "Check user permissions for game installation");
+        var permissionsPathOption = new Option<string?>("--path", "Path to game installation directory");
+
+        checkPermissionsCommand.AddOption(permissionsPathOption);
+
+        checkPermissionsCommand.SetHandler(async (path) =>
+        {
+            await HandleCheckPermissions(gameDetector, permissionsService, path);
+        }, permissionsPathOption);
+
+        // create-restore-point command
+        var createRestorePointCommand = new Command("create-restore-point", "Create a restore point");
+        var restorePointNameArgument = new Argument<string>("name", "Name for the restore point");
+        var restorePointDescriptionOption = new Option<string?>("--description", "Description for the restore point");
+        var restorePointTagsOption = new Option<List<string>>("--tags", "Tags for the restore point");
+        var restorePointPathOption = new Option<string?>("--path", "Path to game installation directory");
+
+        createRestorePointCommand.AddArgument(restorePointNameArgument);
+        createRestorePointCommand.AddOption(restorePointDescriptionOption);
+        createRestorePointCommand.AddOption(restorePointTagsOption);
+        createRestorePointCommand.AddOption(restorePointPathOption);
+
+        createRestorePointCommand.SetHandler(async (name, description, tags, path) =>
+        {
+            await HandleCreateRestorePoint(gameDetector, backupManager, name, description, tags, path);
+        }, restorePointNameArgument, restorePointDescriptionOption, restorePointTagsOption, restorePointPathOption);
+
+        // list-restore-points command
+        var listRestorePointsCommand = new Command("list-restore-points", "List all restore points");
+        var listRestorePointsPathOption = new Option<string?>("--path", "Path to game installation directory");
+
+        listRestorePointsCommand.AddOption(listRestorePointsPathOption);
+
+        listRestorePointsCommand.SetHandler(async (path) =>
+        {
+            await HandleListRestorePoints(gameDetector, backupManager, path);
+        }, listRestorePointsPathOption);
+
+        // restore-from-point command
+        var restoreFromPointCommand = new Command("restore-from-point", "Restore from a restore point");
+        var restorePointFileArgument = new Argument<string>("restore-point-file", "Path to restore point file");
+        var restoreFromPointPathOption = new Option<string?>("--path", "Path to game installation directory");
+
+        restoreFromPointCommand.AddArgument(restorePointFileArgument);
+        restoreFromPointCommand.AddOption(restoreFromPointPathOption);
+
+        restoreFromPointCommand.SetHandler(async (restorePointFile, path) =>
+        {
+            await HandleRestoreFromPoint(gameDetector, backupManager, restorePointFile, path);
+        }, restorePointFileArgument, restoreFromPointPathOption);
+
         // add all commands to root command
         rootCommand.AddCommand(installBepInExCommand);
         rootCommand.AddCommand(installModCommand);
@@ -150,6 +323,18 @@ class Program
         rootCommand.AddCommand(backupCommand);
         rootCommand.AddCommand(restoreCommand);
         rootCommand.AddCommand(detectGameCommand);
+        rootCommand.AddCommand(searchModsCommand);
+        rootCommand.AddCommand(browseModsCommand);
+        rootCommand.AddCommand(addRepoCommand);
+        rootCommand.AddCommand(removeRepoCommand);
+        rootCommand.AddCommand(listReposCommand);
+        rootCommand.AddCommand(refreshIndexCommand);
+        rootCommand.AddCommand(installFromIndexCommand);
+        rootCommand.AddCommand(verifyChecksumCommand);
+        rootCommand.AddCommand(checkPermissionsCommand);
+        rootCommand.AddCommand(createRestorePointCommand);
+        rootCommand.AddCommand(listRestorePointsCommand);
+        rootCommand.AddCommand(restoreFromPointCommand);
 
         // execute the command
         return await rootCommand.InvokeAsync(args);
@@ -503,6 +688,511 @@ class Program
             if (!string.IsNullOrEmpty(gameInstall.GogAppId))
             {
                 Console.WriteLine($"  GOG App ID: {gameInstall.GogAppId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleSearchMods(IModIndexService modIndexService, string? query, string? category, 
+        string? author, bool? official, bool? verified, int page, int pageSize)
+    {
+        try
+        {
+            Console.WriteLine("Searching mod index...");
+            
+            var criteria = new ModSearchCriteria
+            {
+                Query = query,
+                Category = category,
+                Author = author,
+                IsOfficial = official,
+                IsVerified = verified,
+                Page = page,
+                PageSize = pageSize
+            };
+            
+            var results = await modIndexService.SearchMods(criteria);
+            
+            Console.WriteLine($"Found {results.TotalCount} mod(s) (Page {results.Page} of {results.TotalPages})");
+            Console.WriteLine($"Search completed in {results.SearchTime.TotalMilliseconds:F0}ms");
+            Console.WriteLine();
+            
+            if (results.Mods.Count == 0)
+            {
+                Console.WriteLine("No mods found matching your criteria.");
+                return;
+            }
+            
+            foreach (var mod in results.Mods)
+            {
+                var officialStatus = mod.IsOfficial ? " [Official]" : "";
+                var verifiedStatus = mod.IsVerified ? " [Verified]" : "";
+                
+                Console.WriteLine($"  {mod.Name} v{mod.Versions.FirstOrDefault()?.Version ?? "Unknown"}{officialStatus}{verifiedStatus}");
+                Console.WriteLine($"    ID: {mod.Id}");
+                Console.WriteLine($"    Author: {mod.Author}");
+                Console.WriteLine($"    Category: {mod.Category}");
+                Console.WriteLine($"    Downloads: {mod.DownloadCount:N0}");
+                if (mod.Rating > 0)
+                {
+                    Console.WriteLine($"    Rating: {mod.Rating:F1}/5.0 ({mod.RatingCount} reviews)");
+                }
+                if (!string.IsNullOrEmpty(mod.Description))
+                {
+                    var shortDesc = mod.Description.Length > 100 ? mod.Description[..100] + "..." : mod.Description;
+                    Console.WriteLine($"    Description: {shortDesc}");
+                }
+                Console.WriteLine();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleBrowseMods(IModIndexService modIndexService, string? category)
+    {
+        try
+        {
+            Console.WriteLine("Browsing mod index...");
+            
+            var categories = await modIndexService.GetCategories();
+            
+            if (string.IsNullOrEmpty(category))
+            {
+                Console.WriteLine("Available categories:");
+                foreach (var cat in categories)
+                {
+                    Console.WriteLine($"  - {cat}");
+                }
+                return;
+            }
+            
+            var criteria = new ModSearchCriteria
+            {
+                Category = category,
+                PageSize = 50
+            };
+            
+            var results = await modIndexService.SearchMods(criteria);
+            
+            Console.WriteLine($"Mods in '{category}' category:");
+            Console.WriteLine($"Found {results.TotalCount} mod(s)");
+            Console.WriteLine();
+            
+            foreach (var mod in results.Mods)
+            {
+                Console.WriteLine($"  {mod.Name} v{mod.Versions.FirstOrDefault()?.Version ?? "Unknown"}");
+                Console.WriteLine($"    ID: {mod.Id} | Author: {mod.Author}");
+                Console.WriteLine($"    Downloads: {mod.DownloadCount:N0}");
+                Console.WriteLine();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleAddRepo(IModIndexService modIndexService, string id, string name, 
+        string url, string type, string? description)
+    {
+        try
+        {
+            Console.WriteLine($"Adding repository: {name}");
+            
+            var repository = new ModRepository
+            {
+                Id = id,
+                Name = name,
+                Url = url,
+                Type = type,
+                Description = description,
+                IsOfficial = false,
+                IsEnabled = true
+            };
+            
+            var result = await modIndexService.AddRepository(repository);
+            
+            if (result.Success)
+            {
+                Console.WriteLine($"Success: {result.Message}");
+            }
+            else
+            {
+                Console.WriteLine($"Error: {result.Message}");
+                if (!string.IsNullOrEmpty(result.Error))
+                {
+                    Console.WriteLine($"Details: {result.Error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleRemoveRepo(IModIndexService modIndexService, string id)
+    {
+        try
+        {
+            Console.WriteLine($"Removing repository: {id}");
+            
+            var result = await modIndexService.RemoveRepository(id);
+            
+            if (result.Success)
+            {
+                Console.WriteLine($"Success: {result.Message}");
+            }
+            else
+            {
+                Console.WriteLine($"Error: {result.Message}");
+                if (!string.IsNullOrEmpty(result.Error))
+                {
+                    Console.WriteLine($"Details: {result.Error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleListRepos(IModIndexService modIndexService)
+    {
+        try
+        {
+            Console.WriteLine("Listing configured repositories...");
+            
+            var repositories = await modIndexService.GetRepositories();
+            
+            if (repositories.Count == 0)
+            {
+                Console.WriteLine("No repositories configured.");
+                return;
+            }
+            
+            Console.WriteLine($"Found {repositories.Count} repository(ies):");
+            Console.WriteLine();
+            
+            foreach (var repo in repositories)
+            {
+                var status = repo.IsEnabled ? "Enabled" : "Disabled";
+                var officialStatus = repo.IsOfficial ? " [Official]" : "";
+                
+                Console.WriteLine($"  {repo.Name}{officialStatus} ({status})");
+                Console.WriteLine($"    ID: {repo.Id}");
+                Console.WriteLine($"    URL: {repo.Url}");
+                Console.WriteLine($"    Type: {repo.Type}");
+                if (!string.IsNullOrEmpty(repo.Description))
+                {
+                    Console.WriteLine($"    Description: {repo.Description}");
+                }
+                if (repo.LastSync.HasValue)
+                {
+                    Console.WriteLine($"    Last Sync: {repo.LastSync.Value:yyyy-MM-dd HH:mm:ss}");
+                }
+                Console.WriteLine();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleRefreshIndex(IModIndexService modIndexService)
+    {
+        try
+        {
+            Console.WriteLine("Refreshing mod index...");
+            
+            var result = await modIndexService.RefreshIndex();
+            
+            if (result.Success)
+            {
+                Console.WriteLine($"Success: {result.Message}");
+            }
+            else
+            {
+                Console.WriteLine($"Error: {result.Message}");
+                if (!string.IsNullOrEmpty(result.Error))
+                {
+                    Console.WriteLine($"Details: {result.Error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleInstallFromIndex(IGameDetector gameDetector, IModManager modManager, 
+        IModIndexService modIndexService, string modId, string? path, string? version)
+    {
+        try
+        {
+            Console.WriteLine("Detecting game installation...");
+            var gameInstall = await gameDetector.DetectGameInstall(path);
+            
+            if (gameInstall == null)
+            {
+                Console.WriteLine("Error: Could not detect game installation. Please specify --path or ensure the game is installed.");
+                return;
+            }
+
+            Console.WriteLine($"Detected game: {gameInstall.Name} at {gameInstall.InstallPath}");
+
+            Console.WriteLine($"Looking up mod: {modId}");
+            var modEntry = await modIndexService.GetMod(modId);
+            
+            if (modEntry == null)
+            {
+                Console.WriteLine($"Error: Mod '{modId}' not found in index.");
+                return;
+            }
+
+            Console.WriteLine($"Found mod: {modEntry.Name} by {modEntry.Author}");
+
+            // find the version to install
+            ModVersion? targetVersion = null;
+            if (!string.IsNullOrEmpty(version))
+            {
+                targetVersion = modEntry.Versions.FirstOrDefault(v => v.Version.Equals(version, StringComparison.OrdinalIgnoreCase));
+                if (targetVersion == null)
+                {
+                    Console.WriteLine($"Error: Version '{version}' not found for mod '{modId}'.");
+                    return;
+                }
+            }
+            else
+            {
+                // use the latest non-prerelease version
+                targetVersion = modEntry.Versions
+                    .Where(v => !v.IsPrerelease)
+                    .OrderByDescending(v => v.ReleaseDate)
+                    .FirstOrDefault();
+                
+                if (targetVersion == null)
+                {
+                    Console.WriteLine($"Error: No stable version found for mod '{modId}'.");
+                    return;
+                }
+            }
+
+            Console.WriteLine($"Installing version: {targetVersion.Version}");
+            Console.WriteLine($"Download URL: {targetVersion.DownloadUrl}");
+
+            var result = await modManager.InstallModFromZip(targetVersion.DownloadUrl, gameInstall);
+            
+            if (result.Success)
+            {
+                Console.WriteLine($"Success: {result.Message}");
+                if (result.Data is ModInfo modInfo)
+                {
+                    Console.WriteLine($"Installed mod: {modInfo.Name} v{modInfo.Version}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Error: {result.Message}");
+                if (!string.IsNullOrEmpty(result.Error))
+                {
+                    Console.WriteLine($"Details: {result.Error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleVerifyChecksum(IVerificationService verificationService, string file, string expected, string algorithm)
+    {
+        try
+        {
+            Console.WriteLine($"Verifying {algorithm} checksum for: {file}");
+            Console.WriteLine($"Expected: {expected}");
+            
+            var result = await verificationService.VerifyChecksum(file, expected, algorithm);
+            
+            if (result.Passed)
+            {
+                Console.WriteLine($"✓ Checksum verification successful");
+                Console.WriteLine($"Details: {result.Details}");
+            }
+            else
+            {
+                Console.WriteLine($"✗ Checksum verification failed");
+                Console.WriteLine($"Message: {result.Message}");
+                Console.WriteLine($"Details: {result.Details}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleCheckPermissions(IGameDetector gameDetector, IPermissionsService permissionsService, string? path)
+    {
+        try
+        {
+            Console.WriteLine("Detecting game installation...");
+            var gameInstall = await gameDetector.DetectGameInstall(path);
+            
+            if (gameInstall == null)
+            {
+                Console.WriteLine("Error: Could not detect game installation. Please specify --path or ensure the game is installed.");
+                return;
+            }
+
+            Console.WriteLine($"Checking permissions for: {gameInstall.Name} at {gameInstall.InstallPath}");
+            
+            var permissions = await permissionsService.CheckPermissions(gameInstall);
+            
+            Console.WriteLine("Permission Status:");
+            Console.WriteLine($"  Elevated: {(permissions.IsElevated ? "Yes" : "No")}");
+            Console.WriteLine($"  Can write to game directory: {(permissions.CanWriteToGameDirectory ? "Yes" : "No")}");
+            Console.WriteLine($"  Can create system files: {(permissions.CanCreateSystemFiles ? "Yes" : "No")}");
+            Console.WriteLine($"  Can modify registry: {(permissions.CanModifyRegistry ? "Yes" : "No")}");
+            Console.WriteLine($"  Requires elevation: {(permissions.RequiresElevation ? "Yes" : "No")}");
+            
+            if (permissions.RequiresElevation && !string.IsNullOrEmpty(permissions.ElevationReason))
+            {
+                Console.WriteLine($"  Elevation reason: {permissions.ElevationReason}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleCreateRestorePoint(IGameDetector gameDetector, IBackupManager backupManager, 
+        string name, string? description, List<string>? tags, string? path)
+    {
+        try
+        {
+            Console.WriteLine("Detecting game installation...");
+            var gameInstall = await gameDetector.DetectGameInstall(path);
+            
+            if (gameInstall == null)
+            {
+                Console.WriteLine("Error: Could not detect game installation. Please specify --path or ensure the game is installed.");
+                return;
+            }
+
+            Console.WriteLine($"Creating restore point '{name}' for: {gameInstall.Name} at {gameInstall.InstallPath}");
+            
+            var result = await backupManager.CreateBackup(gameInstall, name);
+            
+            if (result.Success)
+            {
+                Console.WriteLine($"✓ {result.Message}");
+                if (result.Data is string backupPath)
+                {
+                    var fileInfo = new FileInfo(backupPath);
+                    Console.WriteLine($"  Backup: {backupPath}");
+                    Console.WriteLine($"  Size: {fileInfo.Length:N0} bytes");
+                    Console.WriteLine($"  Created: {fileInfo.CreationTime:yyyy-MM-dd HH:mm:ss}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"✗ Error: {result.Message}");
+                if (!string.IsNullOrEmpty(result.Error))
+                {
+                    Console.WriteLine($"Details: {result.Error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleListRestorePoints(IGameDetector gameDetector, IBackupManager backupManager, string? path)
+    {
+        try
+        {
+            Console.WriteLine("Detecting game installation...");
+            var gameInstall = await gameDetector.DetectGameInstall(path);
+            
+            if (gameInstall == null)
+            {
+                Console.WriteLine("Error: Could not detect game installation. Please specify --path or ensure the game is installed.");
+                return;
+            }
+
+            Console.WriteLine($"Listing restore points for: {gameInstall.Name} at {gameInstall.InstallPath}");
+            
+            var restorePoints = await backupManager.ListBackups(gameInstall);
+            
+            if (restorePoints.Count == 0)
+            {
+                Console.WriteLine("No restore points found.");
+                return;
+            }
+
+            Console.WriteLine($"Found {restorePoints.Count} backup(s):");
+            Console.WriteLine();
+            
+            foreach (var backup in restorePoints)
+            {
+                Console.WriteLine($"Name: {backup.Name}");
+                Console.WriteLine($"  Description: {backup.Description}");
+                Console.WriteLine($"  Created: {backup.CreatedDate:yyyy-MM-dd HH:mm:ss}");
+                Console.WriteLine($"  Size: {backup.SizeBytes:N0} bytes");
+                Console.WriteLine($"  Path: {backup.Path}");
+                Console.WriteLine();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleRestoreFromPoint(IGameDetector gameDetector, IBackupManager backupManager, 
+        string restorePointFile, string? path)
+    {
+        try
+        {
+            Console.WriteLine("Detecting game installation...");
+            var gameInstall = await gameDetector.DetectGameInstall(path);
+            
+            if (gameInstall == null)
+            {
+                Console.WriteLine("Error: Could not detect game installation. Please specify --path or ensure the game is installed.");
+                return;
+            }
+
+            Console.WriteLine($"Restoring from point: {restorePointFile}");
+            Console.WriteLine($"Target: {gameInstall.Name} at {gameInstall.InstallPath}");
+            
+            var result = await backupManager.RestoreBackup(restorePointFile, gameInstall);
+            
+            if (result.Success)
+            {
+                Console.WriteLine($"✓ {result.Message}");
+            }
+            else
+            {
+                Console.WriteLine($"✗ Error: {result.Message}");
+                if (!string.IsNullOrEmpty(result.Error))
+                {
+                    Console.WriteLine($"Details: {result.Error}");
+                }
             }
         }
         catch (Exception ex)

@@ -480,6 +480,294 @@ public class BackupManager : IBackupManager
         }
     }
 
+    public async Task<OperationResult> CreateRestorePoint(GameInstallation gameInstall, string name, string? description = null, List<string>? tags = null)
+    {
+        try
+        {
+            // validate game installation
+            if (!ValidateGameInstall(gameInstall))
+            {
+                return OperationResult.ErrorResult("Invalid game installation", "Game installation validation failed");
+            }
+
+            // create restore point directory
+            var restorePointDir = Path.Combine(gameInstall.InstallPath, "BepInEx", "restore_points");
+            Directory.CreateDirectory(restorePointDir);
+
+            // generate restore point filename
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var restorePointFileName = $"{name}_{timestamp}{BackupExtension}";
+            var restorePointPath = Path.Combine(restorePointDir, restorePointFileName);
+
+            // get current mod state
+            var installedMods = await GetInstalledModsForBackup(gameInstall);
+            var bepinexVersion = GetBepInExVersionForBackup(gameInstall);
+
+            // create restore point
+            var restorePoint = new RestorePoint
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = name,
+                Description = description ?? $"Restore point created on {DateTime.Now:yyyy-MM-dd HH:mm:ss}",
+                Created = DateTime.UtcNow,
+                BackupPath = restorePointPath,
+                GameInstall = gameInstall,
+                Mods = installedMods,
+                BepInExVersion = bepinexVersion,
+                Size = 0, // will be calculated after creation
+                IsAutomatic = false,
+                Tags = tags ?? new List<string>()
+            };
+
+            // create backup archive
+            var tempBackupDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempBackupDir);
+
+            try
+            {
+                // backup current state
+                await BackupBepInExConfig(gameInstall, tempBackupDir);
+                await BackupInstalledMods(gameInstall, tempBackupDir);
+                await BackupModList(gameInstall, tempBackupDir);
+
+                // save restore point manifest
+                var manifestPath = Path.Combine(tempBackupDir, "restore_point_manifest.json");
+                var manifestJson = JsonSerializer.Serialize(restorePoint, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(manifestPath, manifestJson);
+
+                // create archive
+                ZipFile.CreateFromDirectory(tempBackupDir, restorePointPath);
+
+                // calculate size
+                var fileInfo = new FileInfo(restorePointPath);
+                restorePoint.Size = fileInfo.Length;
+
+                // cleanup temp directory
+                Directory.Delete(tempBackupDir, true);
+
+                return OperationResult.SuccessResult($"Restore point '{name}' created successfully", restorePoint);
+            }
+            catch
+            {
+                // cleanup temp directory on error
+                if (Directory.Exists(tempBackupDir))
+                {
+                    Directory.Delete(tempBackupDir, true);
+                }
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            return OperationResult.ErrorResult(ex.Message, "Restore point creation failed");
+        }
+    }
+
+    public async Task<List<RestorePoint>> ListRestorePoints(GameInstallation gameInstall)
+    {
+        var restorePoints = new List<RestorePoint>();
+
+        try
+        {
+            var restorePointDir = Path.Combine(gameInstall.InstallPath, "BepInEx", "restore_points");
+            if (!Directory.Exists(restorePointDir))
+            {
+                return restorePoints;
+            }
+
+            var backupFiles = Directory.GetFiles(restorePointDir, $"*{BackupExtension}");
+
+            foreach (var backupFile in backupFiles)
+            {
+                try
+                {
+                    var restorePoint = await LoadRestorePointFromFile(backupFile);
+                    if (restorePoint != null)
+                    {
+                        restorePoints.Add(restorePoint);
+                    }
+                }
+                catch
+                {
+                    // ignore corrupted restore points
+                    continue;
+                }
+            }
+
+            // sort by creation date (newest first)
+            return restorePoints.OrderByDescending(rp => rp.Created).ToList();
+        }
+        catch
+        {
+            return restorePoints;
+        }
+    }
+
+    public async Task<OperationResult> RestoreFromRestorePoint(string restorePointPath, GameInstallation gameInstall)
+    {
+        try
+        {
+            if (!File.Exists(restorePointPath))
+            {
+                return OperationResult.ErrorResult("Restore point file not found", "Restore point does not exist");
+            }
+
+            // validate game installation
+            if (!ValidateGameInstall(gameInstall))
+            {
+                return OperationResult.ErrorResult("Invalid game installation", "Game installation validation failed");
+            }
+
+            // load restore point
+            var restorePoint = await LoadRestorePointFromFile(restorePointPath);
+            if (restorePoint == null)
+            {
+                return OperationResult.ErrorResult("Invalid restore point file", "Failed to load restore point");
+            }
+
+            // create backup before restore
+            var currentBackupResult = await CreateBackup(gameInstall, "pre_restore");
+            if (!currentBackupResult.Success)
+            {
+                return OperationResult.ErrorResult($"Failed to create pre-restore backup: {currentBackupResult.Error}", "Pre-restore backup failed");
+            }
+
+            // extract restore point
+            var tempRestoreDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempRestoreDir);
+
+            try
+            {
+                ZipFile.ExtractToDirectory(restorePointPath, tempRestoreDir);
+
+                // restore bepinex configuration
+                await RestoreBepInExConfig(gameInstall, tempRestoreDir);
+
+                // restore installed mods
+                await RestoreInstalledMods(gameInstall, tempRestoreDir);
+
+                // restore mod list
+                await RestoreModList(gameInstall, tempRestoreDir);
+
+                // cleanup temp directory
+                Directory.Delete(tempRestoreDir, true);
+
+                return OperationResult.SuccessResult($"Restore point '{restorePoint.Name}' restored successfully");
+            }
+            catch
+            {
+                // cleanup temp directory on error
+                if (Directory.Exists(tempRestoreDir))
+                {
+                    Directory.Delete(tempRestoreDir, true);
+                }
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            return OperationResult.ErrorResult(ex.Message, "Restore point restoration failed");
+        }
+    }
+
+    public async Task<OperationResult> CreateAutomaticRestorePoint(GameInstallation gameInstall, string operation)
+    {
+        try
+        {
+            var name = $"auto_{operation}_{DateTime.Now:yyyyMMdd_HHmmss}";
+            var description = $"Automatic restore point before {operation} operation";
+            var tags = new List<string> { "automatic", operation };
+
+            return await CreateRestorePoint(gameInstall, name, description, tags);
+        }
+        catch (Exception ex)
+        {
+            return OperationResult.ErrorResult(ex.Message, "Automatic restore point creation failed");
+        }
+    }
+
+    private async Task<RestorePoint?> LoadRestorePointFromFile(string filePath)
+    {
+        try
+        {
+            var tempExtractDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempExtractDir);
+
+            try
+            {
+                ZipFile.ExtractToDirectory(filePath, tempExtractDir);
+                
+                var manifestPath = Path.Combine(tempExtractDir, "restore_point_manifest.json");
+                if (!File.Exists(manifestPath))
+                {
+                    return null;
+                }
+
+                var manifestJson = await File.ReadAllTextAsync(manifestPath);
+                var restorePoint = JsonSerializer.Deserialize<RestorePoint>(manifestJson);
+                
+                // update file size from actual file
+                var fileInfo = new FileInfo(filePath);
+                if (restorePoint != null)
+                {
+                    restorePoint.Size = fileInfo.Length;
+                    restorePoint.BackupPath = filePath;
+                }
+
+                return restorePoint;
+            }
+            finally
+            {
+                if (Directory.Exists(tempExtractDir))
+                {
+                    Directory.Delete(tempExtractDir, true);
+                }
+            }
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task<List<ModInfo>> GetInstalledModsForBackup(GameInstallation gameInstall)
+    {
+        try
+        {
+            var modsListPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "mods_list.json");
+            if (!File.Exists(modsListPath))
+            {
+                return new List<ModInfo>();
+            }
+
+            var modsListJson = await File.ReadAllTextAsync(modsListPath);
+            return JsonSerializer.Deserialize<List<ModInfo>>(modsListJson) ?? new List<ModInfo>();
+        }
+        catch
+        {
+            return new List<ModInfo>();
+        }
+    }
+
+    private string? GetBepInExVersionForBackup(GameInstallation gameInstall)
+    {
+        try
+        {
+            var coreDllPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "core", "BepInEx.Core.dll");
+            if (!File.Exists(coreDllPath))
+            {
+                return null;
+            }
+
+            var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(coreDllPath);
+            return versionInfo.FileVersion;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private class BackupManifest
     {
         public string Name { get; set; } = string.Empty;
