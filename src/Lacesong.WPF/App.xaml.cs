@@ -39,6 +39,13 @@ public partial class App : Application
         services.AddSingleton<IBepInExManager, BepInExManager>();
         services.AddSingleton<IModManager, ModManager>();
         services.AddSingleton<IBackupManager, BackupManager>();
+        services.AddSingleton<IModIndexService, ModIndexService>();
+        services.AddSingleton<IVerificationService, VerificationService>();
+        services.AddSingleton<IDependencyResolver, DependencyResolver>();
+        services.AddSingleton<IModUpdateService, ModUpdateService>();
+        services.AddSingleton<IConflictDetectionService, ConflictDetectionService>();
+        services.AddSingleton<ICompatibilityService, CompatibilityService>();
+        services.AddSingleton<IModConfigService, ModConfigService>();
 
         // wpf services
         services.AddSingleton<ILoggingService, LoggingService>();

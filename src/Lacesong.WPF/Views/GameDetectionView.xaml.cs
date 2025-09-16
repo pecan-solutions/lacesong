@@ -8,9 +8,8 @@ namespace Lacesong.WPF.Views;
 /// </summary>
 public partial class GameDetectionView : UserControl
 {
-    public GameDetectionView(GameDetectionViewModel viewModel)
+    public GameDetectionView()
     {
         InitializeComponent();
-        DataContext = viewModel;
     }
 }

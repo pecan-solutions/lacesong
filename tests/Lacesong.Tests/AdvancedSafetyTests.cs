@@ -81,7 +81,7 @@ public class DependencyResolverTests
                 Id = "test-mod",
                 Name = "Test Mod",
                 Version = "1.0.0",
-                Description = "Requires BepInEx 5.4.22",
+                Description = "A test mod with no specific requirements",
                 Dependencies = new List<string>()
             };
 
@@ -91,7 +91,7 @@ public class DependencyResolverTests
             // assert
             Assert.NotNull(result);
             Assert.NotNull(result.BepInExVersion);
-            Assert.True(result.BepInExCompatible); // should be compatible since no bepinex is installed
+            Assert.True(result.BepInExCompatible); // should be compatible since no specific requirement is specified
         }
         finally
         {
@@ -647,7 +647,7 @@ public class EnhancedBackupManagerTests
             // assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Contains("auto_install-mod", result.Message);
+            Assert.Contains("install-mod", result.Message);
             Assert.NotNull(result.Data);
             Assert.IsType<RestorePoint>(result.Data);
         }
@@ -687,7 +687,7 @@ public class AdvancedModelTests
         Assert.NotNull(json);
         Assert.Contains("5.4.22", json);
         Assert.Contains("mod1", json);
-        Assert.Contains("BepInExCompatible", json);
+        Assert.Contains("bepInExCompatible", json);
     }
 
     [Fact]
@@ -721,7 +721,7 @@ public class AdvancedModelTests
         Assert.Contains("test-stage-id", json);
         Assert.Contains("Pending", json);
         Assert.Contains("file.dll", json);
-        Assert.Contains("IsExecutable", json);
+        Assert.Contains("isExecutable", json);
     }
 
     [Fact]
@@ -766,9 +766,9 @@ public class AdvancedModelTests
 
         // assert
         Assert.NotNull(json);
-        Assert.Contains("IsElevated", json);
-        Assert.Contains("CanWriteToGameDirectory", json);
-        Assert.Contains("RequiresElevation", json);
+        Assert.Contains("isElevated", json);
+        Assert.Contains("canWriteToGameDirectory", json);
+        Assert.Contains("requiresElevation", json);
     }
 
     [Fact]

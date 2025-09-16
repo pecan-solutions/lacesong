@@ -42,11 +42,26 @@ public partial class MainWindow : Window
             "Home" => _serviceProvider.GetRequiredService<HomeView>(),
             "GameDetection" => _serviceProvider.GetRequiredService<GameDetectionView>(),
             "BepInExInstall" => _serviceProvider.GetRequiredService<BepInExInstallView>(),
-            "ModCatalog" => _serviceProvider.GetRequiredService<ModCatalogView>(),
+            "ModCatalog" => CreateModCatalogView(),
             "Settings" => _serviceProvider.GetRequiredService<SettingsView>(),
             _ => _serviceProvider.GetRequiredService<HomeView>()
         };
         
         ContentArea.Content = view;
+    }
+
+    private ModCatalogView CreateModCatalogView()
+    {
+        var view = _serviceProvider.GetRequiredService<ModCatalogView>();
+        var viewModel = _serviceProvider.GetRequiredService<ModCatalogViewModel>();
+        
+        // pass the game installation to the view model
+        if (_viewModel.CurrentGame != null)
+        {
+            viewModel.SetGameInstallation(_viewModel.CurrentGame);
+        }
+        
+        view.DataContext = viewModel;
+        return view;
     }
 }

@@ -6,6 +6,8 @@ using Lacesong.WPF.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Linq;
+using System;
 
 namespace Lacesong.WPF.ViewModels;
 
@@ -525,6 +527,11 @@ public partial class ModCatalogViewModel : BaseViewModel
     {
         return SelectedInstalledMod != null && SelectedInstalledMod.IsInstalled && SelectedInstalledMod.IsEnabled;
     }
+
+    // properties for XAML binding
+    public bool CanEnableModProperty => CanEnableMod();
+    public bool CanDisableModProperty => CanDisableMod();
+    public bool CanUninstallModProperty => CanUninstallMod();
 
     [RelayCommand]
     private void FilterMods()

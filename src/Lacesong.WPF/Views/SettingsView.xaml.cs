@@ -8,9 +8,8 @@ namespace Lacesong.WPF.Views;
 /// </summary>
 public partial class SettingsView : System.Windows.Controls.UserControl
 {
-    public SettingsView(SettingsViewModel viewModel)
+    public SettingsView()
     {
         InitializeComponent();
-        DataContext = viewModel;
     }
 }

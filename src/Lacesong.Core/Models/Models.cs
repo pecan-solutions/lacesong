@@ -510,6 +510,7 @@ public class StagedFile
 /// <summary>
 /// represents installation stage status
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum InstallationStageStatus
 {
     Pending,

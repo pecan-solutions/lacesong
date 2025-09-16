@@ -88,7 +88,7 @@ public class PermissionsService : IPermissionsService
 
             return operation.ToLowerInvariant() switch
             {
-                "install-bepinex" => !permissions.CanWriteToGameDirectory || !permissions.CanCreateSystemFiles,
+                "install-bepinex" => !permissions.CanWriteToGameDirectory,
                 "uninstall-bepinex" => !permissions.CanWriteToGameDirectory,
                 "install-mod" => !permissions.CanWriteToGameDirectory,
                 "uninstall-mod" => !permissions.CanWriteToGameDirectory,

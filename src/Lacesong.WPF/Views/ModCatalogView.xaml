@@ -73,7 +73,7 @@
 
                 <!-- Mod List -->
                 <ListView Grid.Column="0" ItemsSource="{Binding InstalledMods}" 
-                          SelectedItem="{Binding SelectedMod}"
+                          SelectedItem="{Binding SelectedInstalledMod}"
                           Background="Transparent" BorderThickness="0">
                     <ListView.ItemTemplate>
                         <DataTemplate>
@@ -124,31 +124,31 @@
                         <TextBlock Text="Mod Details" FontSize="14" FontWeight="SemiBold" 
                                    Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,12"/>
                         
-                        <TextBlock Text="{Binding SelectedMod.Name}" FontSize="13" FontWeight="SemiBold" 
+                        <TextBlock Text="{Binding SelectedInstalledMod.Name}" FontSize="13" FontWeight="SemiBold" 
                                    Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,8"/>
                         
-                        <TextBlock Text="{Binding SelectedMod.Description}" FontSize="11" 
+                        <TextBlock Text="{Binding SelectedInstalledMod.Description}" FontSize="11" 
                                    Foreground="{DynamicResource SecondaryTextBrush}" 
                                    TextWrapping="Wrap" Margin="0,0,0,8"/>
                         
-                        <TextBlock Text="{Binding SelectedMod.Author, StringFormat='Author: {0}'}" FontSize="10" 
+                        <TextBlock Text="{Binding SelectedInstalledMod.Author, StringFormat='Author: {0}'}" FontSize="10" 
                                    Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,4"/>
                         
-                        <TextBlock Text="{Binding SelectedMod.Version, StringFormat='Version: {0}'}" FontSize="10" 
+                        <TextBlock Text="{Binding SelectedInstalledMod.Version, StringFormat='Version: {0}'}" FontSize="10" 
                                    Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,12"/>
                         
                         <!-- Action Buttons -->
                         <Button Content="Enable" Command="{Binding EnableModCommand}" 
                                 Style="{DynamicResource AccentButtonStyle}" 
-                                IsEnabled="{Binding CanEnable}" Margin="0,0,0,8"/>
+                                IsEnabled="{Binding CanEnableModProperty}" Margin="0,0,0,8"/>
                         
                         <Button Content="Disable" Command="{Binding DisableModCommand}" 
                                 Style="{DynamicResource WarningButtonStyle}" 
-                                IsEnabled="{Binding CanDisable}" Margin="0,0,0,8"/>
+                                IsEnabled="{Binding CanDisableModProperty}" Margin="0,0,0,8"/>
                         
                         <Button Content="Uninstall" Command="{Binding UninstallModCommand}" 
                                 Style="{DynamicResource DangerButtonStyle}" 
-                                IsEnabled="{Binding CanUninstall}"/>
+                                IsEnabled="{Binding CanUninstallModProperty}"/>
                     </StackPanel>
                 </Border>
             </Grid>

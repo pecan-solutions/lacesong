@@ -67,7 +67,21 @@ public class BackupManager : IBackupManager
                 // cleanup temp directory
                 Directory.Delete(tempBackupDir, true);
 
-                return OperationResult.SuccessResult($"Backup '{backupName}' created successfully", backupPath);
+                // create restore point object for return
+                var restorePoint = new RestorePoint
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = backupName,
+                    Description = $"Backup created on {DateTime.Now:yyyy-MM-dd HH:mm:ss}",
+                    Created = DateTime.UtcNow,
+                    BackupPath = backupPath,
+                    GameInstall = gameInstall,
+                    Size = new FileInfo(backupPath).Length,
+                    IsAutomatic = backupName.StartsWith("auto_"),
+                    Tags = backupName.StartsWith("auto_") ? new List<string> { "automatic" } : new List<string>()
+                };
+
+                return OperationResult.SuccessResult($"Backup '{backupName}' created successfully", restorePoint);
             }
             catch
             {

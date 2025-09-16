@@ -8,9 +8,8 @@ namespace Lacesong.WPF.Views;
 /// </summary>
 public partial class BepInExInstallView : System.Windows.Controls.UserControl
 {
-    public BepInExInstallView(BepInExInstallViewModel viewModel)
+    public BepInExInstallView()
     {
         InitializeComponent();
-        DataContext = viewModel;
     }
 }

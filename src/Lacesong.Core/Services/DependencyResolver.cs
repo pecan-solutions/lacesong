@@ -157,13 +157,13 @@ public class DependencyResolver : IDependencyResolver
             if (string.IsNullOrEmpty(requiredVersion))
             {
                 // no specific requirement - assume compatible with any version
-                return (installedVersion, null, installedVersion, true);
+                return (installedVersion ?? "Not Installed", null, installedVersion, true);
             }
 
             if (string.IsNullOrEmpty(installedVersion))
             {
-                // bepinex not installed
-                return (null, requiredVersion, null, false);
+                // bepinex not installed - still return a version string for consistency
+                return ("Not Installed", requiredVersion, null, false);
             }
 
             var isCompatible = IsVersionCompatible(installedVersion, requiredVersion);
@@ -171,7 +171,7 @@ public class DependencyResolver : IDependencyResolver
         }
         catch
         {
-            return (null, null, null, false);
+            return ("Unknown", null, null, false);
         }
     }
 

@@ -57,10 +57,10 @@ echo Creating zip packages...
 cd ./dist
 
 REM WPF Application Package
-powershell Compress-Archive -Path installer -DestinationPath Lacesong-WPF-%date:~-4,4%%date:~-10,2%%date:~-7,2%.zip
+powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Path installer -DestinationPath Lacesong-WPF-%date:~-4,4%%date:~-10,2%%date:~-7,2%.zip"
 
 REM CLI Package
-powershell Compress-Archive -Path cli-package -DestinationPath Lacesong-CLI-%date:~-4,4%%date:~-10,2%%date:~-7,2%.zip
+powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Path cli-package -DestinationPath Lacesong-CLI-%date:~-4,4%%date:~-10,2%%date:~-7,2%.zip"
 
 cd ..
 

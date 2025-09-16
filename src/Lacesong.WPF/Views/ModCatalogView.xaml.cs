@@ -8,9 +8,8 @@ namespace Lacesong.WPF.Views;
 /// </summary>
 public partial class ModCatalogView : System.Windows.Controls.UserControl
 {
-    public ModCatalogView(ModCatalogViewModel viewModel)
+    public ModCatalogView()
     {
         InitializeComponent();
-        DataContext = viewModel;
     }
 }
