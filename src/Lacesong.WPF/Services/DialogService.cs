@@ -88,6 +88,17 @@ public class DialogService : IDialogService
             MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
         });
     }
+
+    public async Task ShowModSettingsAsync(Lacesong.Core.Models.GameInstallation installation, string modId)
+    {
+        await Task.Run(() =>
+        {
+            var window = new Lacesong.WPF.Views.ModSettingsWindow(installation, modId);
+            window.Owner = Application.Current.MainWindow;
+            window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            window.ShowDialog();
+        });
+    }
 }
 
 /// <summary>

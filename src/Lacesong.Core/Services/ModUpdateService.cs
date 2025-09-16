@@ -80,12 +80,33 @@ public class ModUpdateService : IModUpdateService
                 {
                     return OperationResult.ErrorResult($"Failed to create backup: {backupResult.Error}", "Backup creation failed");
                 }
+                // store backup path for possible rollback
+                var backupPath = backupResult.Data as string;
+                settings.PendingBackupPath = backupPath;
             }
 
             // backup configs if preservation is enabled
+            List<ModConfig>? oldConfigs = null;
+            string? configBackupPath = null;
             if (settings.PreserveConfigs)
             {
-                await _configService.BackupModConfigs(update.ModId, gameInstall);
+                var configBackupResult = await _configService.BackupModConfigs(update.ModId, gameInstall);
+                if (!configBackupResult.Success)
+                {
+                    return OperationResult.ErrorResult($"Failed to backup configs: {configBackupResult.Error}", "Config backup failed");
+                }
+                configBackupPath = configBackupResult.Data as string;
+                // read old config metadata for merge later
+                if (!string.IsNullOrEmpty(configBackupPath))
+                {
+                    var manifestPath = Path.Combine(configBackupPath, "backup_manifest.json");
+                    if (File.Exists(manifestPath))
+                    {
+                        var manifestJson = await File.ReadAllTextAsync(manifestPath);
+                        var manifest = JsonSerializer.Deserialize<JsonElement>(manifestJson);
+                        oldConfigs = JsonSerializer.Deserialize<List<ModConfig>>(manifest.GetProperty("Configs"));
+                    }
+                }
             }
 
             // download and install the update
@@ -104,11 +125,33 @@ public class ModUpdateService : IModUpdateService
             var verificationResult = await VerifyUpdate(update, gameInstall);
             if (!verificationResult.Success)
             {
+                // rollback if verification failed and backup exists
+                if (settings.BackupBeforeUpdate && settings.PendingBackupPath != null)
+                {
+                    await _backupManager.RestoreBackup(gameInstall, settings.PendingBackupPath);
+                }
+                // restore configs from backup
+                if (settings.PreserveConfigs && configBackupPath != null)
+                {
+                    await _configService.RestoreModConfigs(update.ModId, gameInstall, configBackupPath);
+                }
                 return OperationResult.ErrorResult($"Update verification failed: {verificationResult.Error}", "Update verification failed");
+            }
+
+            // merge configs if preservation enabled
+            if (settings.PreserveConfigs && oldConfigs != null)
+            {
+                var newConfigs = await _configService.GetModConfigs(update.ModId, gameInstall);
+                var mergeResult = await _configService.MergeConfigs(update.ModId, oldConfigs, newConfigs, gameInstall);
+                if (!mergeResult.Success)
+                {
+                    Console.WriteLine($"Warning: failed to merge configs after update: {mergeResult.Error}");
+                }
             }
 
             // update settings
             settings.LastUpdateCheck = DateTime.UtcNow;
+            settings.PendingBackupPath = null;
             await SetUpdateSettings(settings, gameInstall);
 
             return OperationResult.SuccessResult($"Mod '{update.ModId}' updated successfully from {update.CurrentVersion} to {update.AvailableVersion}");

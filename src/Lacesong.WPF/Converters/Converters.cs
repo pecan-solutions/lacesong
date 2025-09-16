@@ -173,3 +173,51 @@ public class GameStatusConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// converts compatibility status enum to color brush
+/// </summary>
+public class CompatibilityStatusColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is Lacesong.Core.Models.CompatibilityStatus status)
+        {
+            return status switch
+            {
+                Lacesong.Core.Models.CompatibilityStatus.Compatible => new SolidColorBrush(Colors.Green),
+                Lacesong.Core.Models.CompatibilityStatus.CompatibleWithIssues => new SolidColorBrush(Colors.Orange),
+                Lacesong.Core.Models.CompatibilityStatus.Incompatible => new SolidColorBrush(Colors.Red),
+                Lacesong.Core.Models.CompatibilityStatus.Deprecated => new SolidColorBrush(Colors.Gray),
+                _ => new SolidColorBrush(Colors.LightGray)
+            };
+        }
+        return new SolidColorBrush(Colors.LightGray);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}
+
+/// <summary>
+/// converts compatibility status enum to short text
+/// </summary>
+public class CompatibilityStatusTextConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is Lacesong.Core.Models.CompatibilityStatus status)
+        {
+            return status switch
+            {
+                Lacesong.Core.Models.CompatibilityStatus.Compatible => "OK",
+                Lacesong.Core.Models.CompatibilityStatus.CompatibleWithIssues => "!!",
+                Lacesong.Core.Models.CompatibilityStatus.Incompatible => "X",
+                Lacesong.Core.Models.CompatibilityStatus.Deprecated => "DEP",
+                _ => "?"
+            };
+        }
+        return "?";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}

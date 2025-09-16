@@ -14,6 +14,9 @@ public interface IDialogService
     Task<string?> ShowInputDialogAsync(string title, string message, string defaultValue = "");
     Task<bool> ShowConfirmationDialogAsync(string title, string message);
     Task ShowMessageDialogAsync(string title, string message);
+
+    // opens per-mod settings window
+    Task ShowModSettingsAsync(GameInstallation installation, string modId);
 }
 
 /// <summary>

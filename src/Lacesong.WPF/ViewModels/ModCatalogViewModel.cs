@@ -533,6 +533,20 @@ public partial class ModCatalogViewModel : BaseViewModel
     public bool CanDisableModProperty => CanDisableMod();
     public bool CanUninstallModProperty => CanUninstallMod();
 
+    [RelayCommand(CanExecute = nameof(CanOpenModSettings))]
+    private async Task OpenModSettingsAsync()
+    {
+        if (SelectedInstalledMod == null || GameInstallation == null) return;
+        await _dialogService.ShowModSettingsAsync(GameInstallation, SelectedInstalledMod.Id);
+    }
+
+    private bool CanOpenModSettings()
+    {
+        return SelectedInstalledMod != null;
+    }
+
+    public bool CanOpenModSettingsProperty => CanOpenModSettings();
+
     [RelayCommand]
     private void FilterMods()
     {

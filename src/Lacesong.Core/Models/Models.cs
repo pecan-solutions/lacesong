@@ -76,6 +76,13 @@ public class ModInfo
     [JsonPropertyName("isInstalled")]
     public bool IsInstalled { get; set; }
 
+    [JsonPropertyName("compatibilityStatus")]
+    public CompatibilityStatus CompatibilityStatus { get; set; } = CompatibilityStatus.Unknown;
+
+    // semver constraint string, e.g., ">=1.0.0 <2.0.0"
+    [JsonPropertyName("versionConstraints")]
+    public string? VersionConstraints { get; set; }
+
     [JsonPropertyName("installDate")]
     public DateTime? InstallDate { get; set; }
 }
@@ -675,6 +682,9 @@ public class ModUpdateSettings
 
     [JsonPropertyName("preserveConfigs")]
     public bool PreserveConfigs { get; set; } = true;
+
+    [JsonPropertyName("pendingBackupPath")]
+    public string? PendingBackupPath { get; set; }
 }
 
 /// <summary>
