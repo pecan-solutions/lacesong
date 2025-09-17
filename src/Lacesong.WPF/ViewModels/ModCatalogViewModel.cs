@@ -8,6 +8,8 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
+using Wpf.Ui;
+using Wpf.Ui.Controls;
 
 namespace Lacesong.WPF.ViewModels;
 
@@ -23,6 +25,7 @@ public partial class ModCatalogViewModel : BaseViewModel
     private readonly ICompatibilityService _compatibilityService;
     private readonly IModConfigService _configService;
     private readonly IDialogService _dialogService;
+    private readonly ISnackbarService _snackbarService;
 
     [ObservableProperty]
     private GameInstallation? _gameInstallation;
@@ -107,7 +110,8 @@ public partial class ModCatalogViewModel : BaseViewModel
         IConflictDetectionService conflictService,
         ICompatibilityService compatibilityService,
         IModConfigService configService,
-        IDialogService dialogService) : base(logger)
+        IDialogService dialogService,
+        ISnackbarService snackbarService) : base(logger)
     {
         _modManager = modManager;
         _modIndexService = modIndexService;
@@ -116,6 +120,7 @@ public partial class ModCatalogViewModel : BaseViewModel
         _compatibilityService = compatibilityService;
         _configService = configService;
         _dialogService = dialogService;
+        _snackbarService = snackbarService;
         
         // initialize categories
         Categories.Add("All");
@@ -392,12 +397,24 @@ public partial class ModCatalogViewModel : BaseViewModel
             {
                 ModStatus = "Mod installed successfully";
                 SetStatus("Mod installed successfully");
+                _snackbarService.Show(
+                    "Success", 
+                    $"Successfully installed {Path.GetFileName(filePath)}.", 
+                    ControlAppearance.Success, 
+                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    TimeSpan.FromSeconds(3));
                 await RefreshModsAsync();
             }
             else
             {
                 ModStatus = $"Installation failed: {result.Error}";
                 SetStatus($"Installation failed: {result.Error}", true);
+                _snackbarService.Show(
+                    "Installation Failed", 
+                    result.Error, 
+                    ControlAppearance.Danger, 
+                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    TimeSpan.FromSeconds(5));
             }
         }, "Installing mod...");
     }
@@ -453,12 +470,24 @@ public partial class ModCatalogViewModel : BaseViewModel
             {
                 ModStatus = "Mod uninstalled successfully";
                 SetStatus("Mod uninstalled successfully");
+                _snackbarService.Show(
+                    "Success", 
+                    $"Successfully uninstalled {SelectedInstalledMod.Name}.", 
+                    ControlAppearance.Success, 
+                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    TimeSpan.FromSeconds(3));
                 await RefreshModsAsync();
             }
             else
             {
                 ModStatus = $"Uninstallation failed: {uninstallResult.Error}";
                 SetStatus($"Uninstallation failed: {uninstallResult.Error}", true);
+                _snackbarService.Show(
+                    "Uninstallation Failed", 
+                    uninstallResult.Error, 
+                    ControlAppearance.Danger, 
+                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    TimeSpan.FromSeconds(5));
             }
         }, "Uninstalling mod...");
     }
@@ -478,12 +507,24 @@ public partial class ModCatalogViewModel : BaseViewModel
             {
                 ModStatus = "Mod enabled successfully";
                 SetStatus("Mod enabled successfully");
+                _snackbarService.Show(
+                    "Success", 
+                    $"{SelectedInstalledMod.Name} has been enabled.", 
+                    ControlAppearance.Success, 
+                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    TimeSpan.FromSeconds(3));
                 await RefreshModsAsync();
             }
             else
             {
                 ModStatus = $"Failed to enable mod: {result.Error}";
                 SetStatus($"Failed to enable mod: {result.Error}", true);
+                _snackbarService.Show(
+                    "Error", 
+                    $"Failed to enable mod: {result.Error}", 
+                    ControlAppearance.Danger, 
+                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    TimeSpan.FromSeconds(5));
             }
         }, "Enabling mod...");
     }
@@ -503,12 +544,24 @@ public partial class ModCatalogViewModel : BaseViewModel
             {
                 ModStatus = "Mod disabled successfully";
                 SetStatus("Mod disabled successfully");
+                _snackbarService.Show(
+                    "Success", 
+                    $"{SelectedInstalledMod.Name} has been disabled.", 
+                    ControlAppearance.Success, 
+                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    TimeSpan.FromSeconds(3));
                 await RefreshModsAsync();
             }
             else
             {
                 ModStatus = $"Failed to disable mod: {result.Error}";
                 SetStatus($"Failed to disable mod: {result.Error}", true);
+                _snackbarService.Show(
+                    "Error", 
+                    $"Failed to disable mod: {result.Error}", 
+                    ControlAppearance.Danger, 
+                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    TimeSpan.FromSeconds(5));
             }
         }, "Disabling mod...");
     }
@@ -738,6 +791,14 @@ public partial class ModCatalogViewModel : BaseViewModel
             foreach (var compatibility in compatibilities)
             {
                 CompatibilityStatuses.Add(compatibility);
+                
+                // update installed mod meta
+                var modInfo = InstalledMods.FirstOrDefault(m => m.Id == compatibility.ModId);
+                if (modInfo != null)
+                {
+                    modInfo.CompatibilityStatus = compatibility.Status;
+                    modInfo.VersionConstraints = compatibility.GameVersion;
+                }
             }
 
             var incompatibleCount = compatibilities.Count(c => c.Status == CompatibilityStatus.Incompatible);

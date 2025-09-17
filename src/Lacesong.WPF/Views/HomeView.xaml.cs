@@ -3,11 +3,11 @@ using Wpf.Ui.Controls;
 namespace Lacesong.WPF.Views
 {
     /// <summary>
-    /// Interaction logic for SettingsView.xaml
+    /// Interaction logic for HomeView.xaml
     /// </summary>
-    public partial class SettingsView : UiPage
+    public partial class HomeView : UiPage
     {
-        public SettingsView()
+        public HomeView()
         {
             InitializeComponent();
         }

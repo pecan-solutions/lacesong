@@ -1,40 +1,53 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Color Palette - Modern Dark Theme -->
+    <!-- Glassmorphic Color Palette -->
+
+    <!-- Base Colors -->
+    <Color x:Key="PrimaryColor">#4D81D9</Color>
+    <Color x:Key="AccentColor">#7E57C2</Color>
+
+    <!-- Text Colors -->
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#E0E0E0"/>
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#BDBDBD"/>
+
+    <!-- Status Colors -->
+    <SolidColorBrush x:Key="SuccessBrush" Color="#66BB6A"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="#FFA726"/>
+    <SolidColorBrush x:Key_ErrorBrush" Color="#EF5350"/>
+
+    <!-- Brushes with Transparency for Glass Effect -->
+    <SolidColorBrush x:Key="GlassFillBrush" Color="#20FFFFFF" />
+    <SolidColorBrush x:Key="GlassBorderBrush" Color="#40FFFFFF" />
+
+    <!-- Control-Specific Brushes -->
+    <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#30FFFFFF" />
+    <SolidColorBrush x:Key="ButtonHoverBrush" Color="#40FFFFFF" />
+    <SolidColorBrush x:Key="ButtonPressedBrush" Color="#50FFFFFF" />
+    
+    <SolidColorBrush x:Key="ListItemBrush" Color="#28FFFFFF" />
+    <SolidColorBrush x:Key="ListItemHoverBrush" Color="#38FFFFFF" />
+    
+    <SolidColorBrush x:Key="CardBrush" Color="#25FFFFFF" />
+    <SolidColorBrush x:Key="SidebarBrush" Color="#15FFFFFF" />
+    <SolidColorBrush x:Key="HeaderBrush" Color="#10FFFFFF" />
+    <SolidColorBrush x:Key="StatusBarBrush" Color="#10FFFFFF" />
+
+    <!-- Deprecated Brushes for reference, to be removed -->
+    <!--
     <SolidColorBrush x:Key="PrimaryBrush" Color="#0078D4"/>
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#106EBE"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="#8764B8"/>
     <SolidColorBrush x:Key="AccentBrush" Color="#107C10"/>
-    <SolidColorBrush x:Key="WarningBrush" Color="#FF8C00"/>
-    <SolidColorBrush x:Key="ErrorBrush" Color="#D13438"/>
-    <SolidColorBrush x:Key="SuccessBrush" Color="#107C10"/>
-    
-    <!-- Background Colors -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="#1E1E1E"/>
     <SolidColorBrush x:Key="ContentBrush" Color="#2D2D30"/>
-    <SolidColorBrush x:Key="CardBrush" Color="#3C3C3C"/>
-    <SolidColorBrush x:Key="HeaderBrush" Color="#2D2D30"/>
-    <SolidColorBrush x:Key="SidebarBrush" Color="#252526"/>
-    <SolidColorBrush x:Key="StatusBarBrush" Color="#3C3C3C"/>
-    <SolidColorBrush x:Key="ListItemBrush" Color="#404040"/>
-    
-    <!-- Text Colors -->
-    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#CCCCCC"/>
-    <SolidColorBrush x:Key="MutedTextBrush" Color="#969696"/>
-    
-    <!-- Border Colors -->
     <SolidColorBrush x:Key="BorderBrush" Color="#555555"/>
     <SolidColorBrush x:Key="DividerBrush" Color="#3C3C3C"/>
-    
-    <!-- Interactive Colors -->
     <SolidColorBrush x:Key="HoverBrush" Color="#4A4A4A"/>
     <SolidColorBrush x:Key="PressedBrush" Color="#5A5A5A"/>
     <SolidColorBrush x:Key="SelectedBrush" Color="#0078D4"/>
-    
-    <!-- Progress Colors -->
     <SolidColorBrush x:Key="ProgressBackgroundBrush" Color="#404040"/>
     <SolidColorBrush x:Key="ProgressForegroundBrush" Color="#0078D4"/>
-
+    -->
 </ResourceDictionary>

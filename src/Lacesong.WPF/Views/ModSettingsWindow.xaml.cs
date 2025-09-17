@@ -3,10 +3,11 @@ using Lacesong.Core.Models;
 using Lacesong.WPF.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
+using Wpf.Ui.Controls;
 
 namespace Lacesong.WPF.Views;
 
-public partial class ModSettingsWindow : Window
+public partial class ModSettingsWindow : FluentWindow
 {
     public ModSettingsWindow(GameInstallation install, string modId)
     {

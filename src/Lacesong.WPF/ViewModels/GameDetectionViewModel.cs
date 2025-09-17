@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Wpf.Ui;
+using Wpf.Ui.Controls;
+using System;
 
 namespace Lacesong.WPF.ViewModels;
 
@@ -17,6 +20,7 @@ public partial class GameDetectionViewModel : BaseViewModel
 {
     private readonly IGameDetector _gameDetector;
     private readonly IDialogService _dialogService;
+    private readonly ISnackbarService _snackbarService;
 
     [ObservableProperty]
     private List<GameInstallation> _detectedGames = new();
@@ -33,10 +37,12 @@ public partial class GameDetectionViewModel : BaseViewModel
     public GameDetectionViewModel(
         ILogger<GameDetectionViewModel> logger,
         IGameDetector gameDetector,
-        IDialogService dialogService) : base(logger)
+        IDialogService dialogService,
+        ISnackbarService snackbarService) : base(logger)
     {
         _gameDetector = gameDetector;
         _dialogService = dialogService;
+        _snackbarService = snackbarService;
     }
 
     [RelayCommand]
@@ -64,10 +70,22 @@ public partial class GameDetectionViewModel : BaseViewModel
             {
                 DetectionStatus = $"Found {DetectedGames.Count} game installation(s)";
                 SelectedGame = DetectedGames.First();
+                _snackbarService.Show(
+                    "Success", 
+                    DetectionStatus, 
+                    ControlAppearance.Success, 
+                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    TimeSpan.FromSeconds(3));
             }
             else
             {
                 DetectionStatus = "No game installations found";
+                _snackbarService.Show(
+                    "Not Found", 
+                    DetectionStatus, 
+                    ControlAppearance.Caution, 
+                    new SymbolIcon(SymbolRegular.QuestionCircle24), 
+                    TimeSpan.FromSeconds(3));
             }
         }, "Detecting games...");
         

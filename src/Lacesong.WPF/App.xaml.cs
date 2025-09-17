@@ -6,6 +6,7 @@ using Lacesong.WPF.ViewModels;
 using Lacesong.WPF.Services;
 using System.Windows;
 using Karambolo.Extensions.Logging.File;
+using Wpf.Ui;
 
 namespace Lacesong.WPF;
 
@@ -51,6 +52,9 @@ public partial class App : Application
         services.AddSingleton<ILoggingService, LoggingService>();
         services.AddSingleton<IUpdateService, UpdateService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<INavigationService, NavigationService>();
+        services.AddSingleton<ISnackbarService, SnackbarService>();
+        services.AddSingleton<IContentDialogService, ContentDialogService>();
 
         // view models
         services.AddTransient<MainViewModel>();

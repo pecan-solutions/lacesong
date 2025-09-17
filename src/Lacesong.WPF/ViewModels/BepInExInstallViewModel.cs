@@ -6,6 +6,8 @@ using Lacesong.WPF.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Wpf.Ui;
+using Wpf.Ui.Controls;
 
 namespace Lacesong.WPF.ViewModels;
 
@@ -16,6 +18,7 @@ public partial class BepInExInstallViewModel : BaseViewModel
 {
     private readonly IBepInExManager _bepinexManager;
     private readonly IDialogService _dialogService;
+    private readonly ISnackbarService _snackbarService;
 
     [ObservableProperty]
     private GameInstallation? _gameInstallation;
@@ -53,10 +56,12 @@ public partial class BepInExInstallViewModel : BaseViewModel
     public BepInExInstallViewModel(
         ILogger<BepInExInstallViewModel> logger,
         IBepInExManager bepinexManager,
-        IDialogService dialogService) : base(logger)
+        IDialogService dialogService,
+        ISnackbarService snackbarService) : base(logger)
     {
         _bepinexManager = bepinexManager;
         _dialogService = dialogService;
+        _snackbarService = snackbarService;
     }
 
     public void SetGameInstallation(GameInstallation gameInstallation)
@@ -112,13 +117,23 @@ public partial class BepInExInstallViewModel : BaseViewModel
             if (installResult.Success)
             {
                 InstallationStatus = "BepInEx installed successfully";
-                SetStatus("BepInEx installed successfully");
+                _snackbarService.Show(
+                    "Success", 
+                    "BepInEx was installed successfully.", 
+                    ControlAppearance.Success, 
+                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    TimeSpan.FromSeconds(3));
                 CheckBepInExStatus();
             }
             else
             {
                 InstallationStatus = $"Installation failed: {installResult.Error}";
-                SetStatus($"Installation failed: {installResult.Error}", true);
+                _snackbarService.Show(
+                    "Installation Failed", 
+                    installResult.Error, 
+                    ControlAppearance.Danger, 
+                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    TimeSpan.FromSeconds(5));
             }
         }, "Installing BepInEx...");
     }
@@ -143,13 +158,23 @@ public partial class BepInExInstallViewModel : BaseViewModel
             if (uninstallResult.Success)
             {
                 InstallationStatus = "BepInEx uninstalled successfully";
-                SetStatus("BepInEx uninstalled successfully");
+                _snackbarService.Show(
+                    "Success", 
+                    "BepInEx was uninstalled successfully.", 
+                    ControlAppearance.Success, 
+                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    TimeSpan.FromSeconds(3));
                 CheckBepInExStatus();
             }
             else
             {
                 InstallationStatus = $"Uninstallation failed: {uninstallResult.Error}";
-                SetStatus($"Uninstallation failed: {uninstallResult.Error}", true);
+                _snackbarService.Show(
+                    "Uninstallation Failed", 
+                    uninstallResult.Error, 
+                    ControlAppearance.Danger, 
+                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    TimeSpan.FromSeconds(5));
             }
         }, "Uninstalling BepInEx...");
     }

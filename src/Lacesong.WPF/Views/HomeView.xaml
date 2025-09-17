@@ -1,97 +1,97 @@
-<UserControl x:Class="Lacesong.WPF.Views.HomeView"
+<ui:UiPage x:Class="Lacesong.WPF.Views.HomeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.openxmlformats.org/expression/blend/2008" 
              xmlns:vm="clr-namespace:Lacesong.WPF.ViewModels"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance vm:MainViewModel}">
 
-    <Grid Margin="32">
+    <Grid Margin="42">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,24">
-            <TextBlock Text="Welcome to Lacesong" FontSize="24" FontWeight="SemiBold" 
-                       Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,8"/>
-            <TextBlock Text="Get started by installing mods for your game." 
-                       FontSize="14" Foreground="{DynamicResource SecondaryTextBrush}" TextWrapping="Wrap"/>
+        <StackPanel Grid.Row="0" Margin="0,0,0,32">
+            <TextBlock Text="Welcome to Lacesong" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,8"/>
+            <TextBlock Text="Your all-in-one mod manager for Silksong. Get started below." 
+                       Style="{StaticResource SubtitleTextBlockStyle}"/>
         </StackPanel>
 
         <!-- Main Content -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="24"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <!-- Quick Actions -->
-            <Border Grid.Column="0" Background="{DynamicResource CardBrush}" 
-                    CornerRadius="6" Padding="24" Margin="0,0,8,0">
+            <ui:Card Grid.Column="0" Padding="24">
                 <StackPanel>
-                    <TextBlock Text="Quick Actions" FontSize="18" FontWeight="SemiBold" 
-                               Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Quick Actions" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,20"/>
                     
-                    <Button Content="Install Mod from File" Command="{Binding InstallModFromFileCommand}" 
-                            Style="{DynamicResource PrimaryButtonStyle}" Margin="0,0,0,12"/>
+                    <ui:Button Content="Install Mod from File" Command="{Binding InstallModFromFileCommand}" 
+                               Appearance="Primary" Icon="DocumentAdd24" Margin="0,0,0,12"/>
                     
-                    <Button Content="Install Mod from URL" Command="{Binding InstallModFromUrlCommand}" 
-                            Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,0,12"/>
+                    <ui:Button Content="Install Mod from URL" Command="{Binding InstallModFromUrlCommand}" 
+                               Appearance="Secondary" Icon="Link24" Margin="0,0,0,12"/>
                     
-                    <Button Content="Browse Mod Catalog" Command="{Binding NavigateToViewCommand}" 
-                            CommandParameter="ModCatalog" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,0,16"/>
+                    <ui:Button Content="Browse Mod Catalog" Command="{Binding NavigateToViewCommand}" 
+                               CommandParameter="ModCatalog" Appearance="Secondary" Icon="Apps24" Margin="0,0,0,16"/>
                     
-                    <Separator Margin="0,8,0,8"/>
+                    <ui:CardSeparator Margin="0,8,0,16"/>
                     
-                    <TextBlock Text="Need help getting started?" FontSize="12" FontWeight="SemiBold"
-                               Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,8"/>
-                    <TextBlock Text="1. Make sure your game is detected" FontSize="11" 
-                               Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,4"/>
-                    <TextBlock Text="2. Install the mod loader if needed" FontSize="11" 
-                               Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,4"/>
-                    <TextBlock Text="3. Install your favorite mods" FontSize="11" 
-                               Foreground="{DynamicResource SecondaryTextBrush}"/>
+                    <TextBlock Text="New to Modding?" Style="{StaticResource SmallHeaderTextBlockStyle}" Margin="0,0,0,8"/>
+                    <TextBlock Style="{StaticResource BodyTextBlockStyle}" Margin="0,0,0,4">
+                        <Run>1. Make sure your game is detected</Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource BodyTextBlockStyle}" Margin="0,0,0,4">
+                        <Run>2. Install the mod loader if needed</Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource BodyTextBlockStyle}">
+                        <Run>3. Install your favorite mods</Run>
+                    </TextBlock>
                 </StackPanel>
-            </Border>
+            </ui:Card>
 
             <!-- Game Status -->
-            <Border Grid.Column="2" Background="{DynamicResource CardBrush}" 
-                    CornerRadius="6" Padding="24" Margin="8,0,0,0">
+            <ui:Card Grid.Column="2" Padding="24">
                 <StackPanel>
-                    <TextBlock Text="Game Status" FontSize="18" FontWeight="SemiBold" 
-                               Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Game Status" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,20"/>
                     
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                        <Ellipse Width="10" Height="10" Fill="{DynamicResource SuccessBrush}" 
-                                 Margin="0,0,8,0" Visibility="{Binding IsGameDetected, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        <Ellipse Width="10" Height="10" Fill="{DynamicResource WarningBrush}" 
-                                 Margin="0,0,8,0" Visibility="{Binding IsGameDetected, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                        <TextBlock Text="{Binding IsGameDetected, Converter={StaticResource GameStatusConverter}}" FontSize="13" 
-                                   Foreground="{DynamicResource PrimaryTextBrush}"/>
+                        <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="16"
+                                       Foreground="{DynamicResource SuccessBrush}" 
+                                       Visibility="{Binding IsGameDetected, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <ui:SymbolIcon Symbol="Warning24" FontSize="16"
+                                       Foreground="{DynamicResource WarningBrush}"
+                                       Visibility="{Binding IsGameDetected, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        <TextBlock Text="{Binding IsGameDetected, Converter={StaticResource GameStatusConverter}}" 
+                                   Style="{StaticResource BodyStrongTextBlockStyle}" Margin="8,0,0,0"/>
                     </StackPanel>
                     
-                    <TextBlock Text="{Binding CurrentGame.Name, StringFormat='Game: {0}'}" FontSize="12" 
-                               Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
+                    <TextBlock Text="{Binding CurrentGame.Name, StringFormat='Game: {0}'}" 
+                               Style="{StaticResource BodyTextBlockStyle}" Margin="0,0,0,8"/>
                     
-                    <TextBlock Text="{Binding CurrentGame.InstallPath}" FontSize="11" 
-                               Foreground="{DynamicResource SecondaryTextBrush}" 
+                    <TextBlock Text="{Binding CurrentGame.InstallPath}"
+                               Style="{StaticResource SmallFadedTextBlockStyle}"
                                TextWrapping="Wrap" Margin="0,0,0,16"/>
                     
-                    <Button Content="Detect Game" Command="{Binding DetectGameCommand}" 
-                            Style="{DynamicResource SecondaryButtonStyle}" 
-                            IsEnabled="{Binding IsGameDetected, Converter={StaticResource InverseBooleanConverter}}"
-                            Margin="0,0,0,8"/>
+                    <ui:Button Content="Detect Game" Command="{Binding DetectGameCommand}" 
+                               Appearance="Secondary"
+                               IsEnabled="{Binding IsGameDetected, Converter={StaticResource InverseBooleanConverter}}"
+                               Margin="0,0,0,8"/>
                     
-                    <Button Content="Change Game" Command="{Binding SelectGameDirectoryCommand}" 
-                            Style="{DynamicResource SecondaryButtonStyle}" 
-                            IsEnabled="{Binding IsGameDetected}"/>
+                    <ui:Button Content="Change Game" Command="{Binding SelectGameDirectoryCommand}" 
+                               Appearance="Secondary"
+                               IsEnabled="{Binding IsGameDetected}"/>
                 </StackPanel>
-            </Border>
+            </ui:Card>
         </Grid>
     </Grid>
-</UserControl>
+</ui:UiPage>

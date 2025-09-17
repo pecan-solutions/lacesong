@@ -1,15 +1,15 @@
-using Lacesong.WPF.ViewModels;
-using System.Windows.Controls;
+using Wpf.Ui.Controls;
 
-namespace Lacesong.WPF.Views;
-
-/// <summary>
-/// game detection view
-/// </summary>
-public partial class GameDetectionView : UserControl
+namespace Lacesong.WPF.Views
 {
-    public GameDetectionView()
+    /// <summary>
+    /// Interaction logic for GameDetectionView.xaml
+    /// </summary>
+    public partial class GameDetectionView : UiPage
     {
-        InitializeComponent();
+        public GameDetectionView()
+        {
+            InitializeComponent();
+        }
     }
 }

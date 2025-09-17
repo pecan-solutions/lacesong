@@ -95,12 +95,9 @@ public class BepInExManager : IBepInExManager
         try
         {
             var bepinexPath = Path.Combine(gameInstall.InstallPath, "BepInEx");
-            var coreDllPath = Path.Combine(gameInstall.InstallPath, BepInExCoreDll);
-            var loaderDllPath = Path.Combine(gameInstall.InstallPath, BepInExLoaderDll);
+            var winhttpPath = Path.Combine(gameInstall.InstallPath, "winhttp.dll");
 
-            return Directory.Exists(bepinexPath) && 
-                   File.Exists(coreDllPath) && 
-                   File.Exists(loaderDllPath);
+            return Directory.Exists(bepinexPath) && File.Exists(winhttpPath);
         }
         catch
         {

@@ -19,6 +19,7 @@ public class ModUpdateService : IModUpdateService
     private readonly IBackupManager _backupManager;
     
     private Timer? _updateTimer;
+    public event Action<List<ModUpdate>>? UpdatesAvailable;
     private readonly Dictionary<string, ModUpdateSettings> _updateSettings = new();
     private readonly object _settingsLock = new object();
 
@@ -395,6 +396,11 @@ public class ModUpdateService : IModUpdateService
         {
             var updates = await CheckForUpdates(gameInstall, modIds);
             
+            if (updates.Count > 0)
+            {
+                UpdatesAvailable?.Invoke(updates);
+            }
+
             foreach (var update in updates)
             {
                 var settings = await GetUpdateSettings(update.ModId, gameInstall);

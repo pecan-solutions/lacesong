@@ -1,15 +1,15 @@
-using Lacesong.WPF.ViewModels;
-using System.Windows.Controls;
+using Wpf.Ui.Controls;
 
-namespace Lacesong.WPF.Views;
-
-/// <summary>
-/// mod catalog view
-/// </summary>
-public partial class ModCatalogView : System.Windows.Controls.UserControl
+namespace Lacesong.WPF.Views
 {
-    public ModCatalogView()
+    /// <summary>
+    /// Interaction logic for ModCatalogView.xaml
+    /// </summary>
+    public partial class ModCatalogView : UiPage
     {
-        InitializeComponent();
+        public ModCatalogView()
+        {
+            InitializeComponent();
+        }
     }
 }

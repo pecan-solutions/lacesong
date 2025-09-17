@@ -6,6 +6,8 @@ using Lacesong.WPF.Services;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Windows;
+using Wpf.Ui;
+using Wpf.Ui.Controls;
 
 namespace Lacesong.WPF.ViewModels;
 
@@ -18,6 +20,7 @@ public partial class MainViewModel : BaseViewModel
     private readonly IDialogService _dialogService;
     private readonly ILoggingService _loggingService;
     private readonly IUpdateService _updateService;
+    private readonly INavigationService _navigationService;
 
     [ObservableProperty]
     private GameInstallation? _currentGame;
@@ -39,12 +42,14 @@ public partial class MainViewModel : BaseViewModel
         IGameDetector gameDetector,
         IDialogService dialogService,
         ILoggingService loggingService,
-        IUpdateService updateService) : base(logger)
+        IUpdateService updateService,
+        INavigationService navigationService) : base(logger)
     {
         _gameDetector = gameDetector;
         _dialogService = dialogService;
         _loggingService = loggingService;
         _updateService = updateService;
+        _navigationService = navigationService;
 
         // initialize with game detection
         _ = InitializeAsync();
@@ -63,13 +68,13 @@ public partial class MainViewModel : BaseViewModel
             // if game is detected, go directly to mod management
             if (IsGameDetected && CurrentGame != null)
             {
-                CurrentView = "Home";
+                _navigationService.Navigate(typeof(Views.HomeView));
                 SetStatus($"Ready to manage mods for {CurrentGame.Name}");
             }
             else
             {
                 // navigate to game detection if no game is found
-                CurrentView = "GameDetection";
+                _navigationService.Navigate(typeof(Views.GameDetectionView));
                 SetStatus("Please detect or select your game installation");
             }
         }, "Initializing Lacesong...");
@@ -90,14 +95,14 @@ public partial class MainViewModel : BaseViewModel
                 SetStatus($"Detected {game.Name} at {game.InstallPath}");
                 
                 // navigate to home if game is detected
-                CurrentView = "Home";
+                _navigationService.Navigate(typeof(Views.HomeView));
             }
             else
             {
                 IsGameDetected = false;
                 SetStatus("No game installation detected. Please select a game directory manually.");
                 // stay on game detection screen
-                CurrentView = "GameDetection";
+                _navigationService.Navigate(typeof(Views.GameDetectionView));
             }
         });
     }
@@ -118,7 +123,7 @@ public partial class MainViewModel : BaseViewModel
                     CurrentGame = game;
                     IsGameDetected = true;
                     SetStatus($"Detected {game.Name} at {game.InstallPath}");
-                    CurrentView = "Home";
+                    _navigationService.Navigate(typeof(Views.HomeView));
                 }
                 else
                 {
@@ -131,8 +136,7 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     private void NavigateToView(string viewName)
     {
-        CurrentView = viewName;
-        Logger.LogInformation($"Navigated to view: {viewName}");
+        // This command is now obsolete with NavigationView
     }
 
     [RelayCommand]
@@ -187,7 +191,7 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     private void OpenSettings()
     {
-        CurrentView = "Settings";
+        _navigationService.Navigate(typeof(Views.SettingsView));
     }
 
     [RelayCommand]

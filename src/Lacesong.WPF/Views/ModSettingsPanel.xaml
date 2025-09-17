@@ -3,8 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d"
-             d:DesignWidth="400" d:DesignHeight="300">
+             d:DesignWidth="400" d:DesignHeight="350">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -12,25 +13,29 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Mod Settings" FontSize="20" FontWeight="SemiBold"/>
+        <TextBlock Text="Mod Settings" Style="{StaticResource TitleTextBlockStyle}"/>
 
-        <StackPanel Grid.Row="1" Margin="0,16,0,0">
-            <CheckBox Content="Enable automatic updates" IsChecked="{Binding AutoUpdateEnabled}" Margin="0,0,0,8"/>
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+        <StackPanel Grid.Row="1" Margin="0,24,0,0">
+            <CheckBox Content="Enable automatic updates" IsChecked="{Binding AutoUpdateEnabled}" Margin="0,0,0,12"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                 <TextBlock Text="Update channel:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <ComboBox Width="120" SelectedItem="{Binding UpdateChannel}">
-                    <ComboBoxItem Content="stable"/>
-                    <ComboBoxItem Content="beta"/>
-                    <ComboBoxItem Content="alpha"/>
+                <ComboBox Width="150" SelectedItem="{Binding UpdateChannel}">
+                    <ComboBoxItem Content="Stable"/>
+                    <ComboBoxItem Content="Beta"/>
+                    <ComboBoxItem Content="Alpha"/>
                 </ComboBox>
             </StackPanel>
-            <CheckBox Content="Preserve/merge config files" IsChecked="{Binding PreserveConfigs}" Margin="0,0,0,8"/>
-            <CheckBox Content="Create backup before update" IsChecked="{Binding BackupBeforeUpdate}"/>
+            <CheckBox Content="Preserve configuration on update" IsChecked="{Binding PreserveConfigs}" Margin="0,0,0,12"/>
+            <CheckBox Content="Create backup before updating" IsChecked="{Binding BackupBeforeUpdate}"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <TextBlock Text="{Binding Status}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-            <Button Content="Save" Width="80" Command="{Binding SaveCommand}"/>
-        </StackPanel>
+        <Grid Grid.Row="2" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding Status}" VerticalAlignment="Center" Style="{StaticResource SmallFadedTextBlockStyle}"/>
+            <ui:Button Grid.Column="1" Content="Save" Appearance="Primary" Command="{Binding SaveCommand}"/>
+        </Grid>
     </Grid>
 </UserControl>
