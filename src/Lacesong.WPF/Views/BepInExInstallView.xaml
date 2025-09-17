@@ -1,8 +1,8 @@
-<ui:UiPage x:Class="Lacesong.WPF.Views.BepInExInstallView"
+<UserControl x:Class="Lacesong.WPF.Views.BepInExInstallView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.openxmlformats.org/expression/blend/2008" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:vm="clr-namespace:Lacesong.WPF.ViewModels"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
@@ -10,7 +10,7 @@
              d:DataContext="{d:DesignInstance vm:BepInExInstallViewModel}">
 
 
-    <Grid Margin="42">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -33,7 +33,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Status Panel -->
-            <ui:Card Grid.Column="0" Padding="24">
+            <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
                 <StackPanel>
                     <TextBlock Text="Current Status" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,16"/>
                     
@@ -51,62 +51,59 @@
                                    Style="{StaticResource BodyStrongTextBlockStyle}" Margin="8,0,0,0"/>
                     </StackPanel>
                     
-                    <ui:Button Content="Refresh Status" Command="{Binding RefreshStatusCommand}" 
-                               Appearance="Secondary" Icon="ArrowClockwise24" Margin="0,0,0,20"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Refresh Status" Command="{Binding RefreshStatusCommand}" Margin="0,0,0,20"/>
                     
                     <TextBlock Text="BepInEx is the mod loader required to use most mods with Silksong. It must be installed before you can load any mods." 
                                Style="{StaticResource SmallFadedTextBlockStyle}"
                                TextWrapping="Wrap"/>
                 </StackPanel>
-            </ui:Card>
+            </Border>
 
             <!-- Installation Panel -->
-            <ui:Card Grid.Column="2" Padding="24">
+            <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
                 <StackPanel>
                     <TextBlock Text="Install Options" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,16"/>
                     
                     <!-- Version Selection -->
                     <TextBlock Text="BepInEx Version" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,8"/>
-                    <ui:ComboBox ItemsSource="{Binding AvailableVersions}" 
+                    <ComboBox Style="{StaticResource DefaultComboBoxStyle}" ItemsSource="{Binding AvailableVersions}" 
                                  SelectedItem="{Binding SelectedVersion}"
                                  Margin="0,0,0,16"/>
                     
                     <!-- Options -->
-                    <ui:CheckBox Content="Force reinstall (if already installed)" 
+                    <CheckBox Style="{StaticResource DefaultCheckBoxStyle}" Content="Force reinstall (if already installed)" 
                                  IsChecked="{Binding ForceReinstall}"
                                  Margin="0,0,0,8"/>
                     
-                    <ui:CheckBox Content="Create backup before installation" 
+                    <CheckBox Style="{StaticResource DefaultCheckBoxStyle}" Content="Create backup before installation" 
                                  IsChecked="{Binding CreateBackup}"
                                  Margin="0,0,0,8"/>
                     
-                    <ui:CheckBox Content="Create desktop shortcut" 
+                    <CheckBox Style="{StaticResource DefaultCheckBoxStyle}" Content="Create desktop shortcut" 
                                  IsChecked="{Binding CreateDesktopShortcut}"
                                  Margin="0,0,0,20"/>
                     
                     <!-- Action Buttons -->
-                    <ui:Button Content="Install BepInEx" Command="{Binding InstallBepInExCommand}" 
-                               Appearance="Primary" Icon="Add24"
+                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="Install BepInEx" Command="{Binding InstallBepInExCommand}" 
                                IsEnabled="{Binding CanInstall}" Margin="0,0,0,8"/>
                     
-                    <ui:Button Content="Uninstall BepInEx" Command="{Binding UninstallBepInExCommand}" 
-                               Appearance="Danger" Icon="Delete24"
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Uninstall BepInEx" Command="{Binding UninstallBepInExCommand}" 
                                IsEnabled="{Binding CanUninstall}"/>
                 </StackPanel>
-            </ui:Card>
+            </Border>
         </Grid>
 
         <!-- Progress/Status -->
-        <ui:Card Grid.Row="2" Padding="24" Margin="0,16,0,0" 
+        <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,16,0,0" 
                  Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel>
                 <TextBlock Text="Installation in Progress..." Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,12"/>
                 
-                <ProgressBar IsIndeterminate="True" Height="4" CornerRadius="2"/>
+                <ProgressBar IsIndeterminate="True" Height="4" />
                 
                 <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource SmallFadedTextBlockStyle}"
                            Margin="0,8,0,0" TextWrapping="Wrap"/>
             </StackPanel>
-        </ui:Card>
+        </Border>
     </Grid>
-</ui:UiPage>
+</UserControl>

@@ -27,9 +27,7 @@ public partial class App : Application
         _serviceProvider = services.BuildServiceProvider();
 
         // show main window
-        var mainWindow = new MainWindow(
-            _serviceProvider.GetRequiredService<MainViewModel>(),
-            _serviceProvider);
+        var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
     }
 
@@ -58,6 +56,7 @@ public partial class App : Application
 
         // view models
         services.AddTransient<MainViewModel>();
+        services.AddTransient<HomeViewModel>();
         services.AddTransient<GameDetectionViewModel>();
         services.AddTransient<BepInExInstallViewModel>();
         services.AddTransient<ModCatalogViewModel>();

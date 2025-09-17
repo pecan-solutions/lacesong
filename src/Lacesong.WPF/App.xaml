@@ -11,6 +11,7 @@
                 <ResourceDictionary Source="Styles/Colors.xaml"/>
                 <ResourceDictionary Source="Styles/Typography.xaml"/>
                 <ResourceDictionary Source="Styles/Controls.xaml"/>
+                <ResourceDictionary Source="Styles/DataTemplates.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             
             <!-- Converters -->
@@ -24,6 +25,7 @@
             <converters:ModStatusConverter x:Key="ModStatusConverter"/>
             <converters:ModStatusColorConverter x:Key="ModStatusColorConverter"/>
             <converters:GameStatusConverter x:Key="GameStatusConverter"/>
+            <converters:ActiveViewConverter x:Key="ActiveViewConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

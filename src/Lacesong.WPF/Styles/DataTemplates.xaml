@@ -1,0 +1,26 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:Lacesong.WPF.ViewModels"
+                    xmlns:views="clr-namespace:Lacesong.WPF.Views">
+
+    <DataTemplate DataType="{x:Type vm:HomeViewModel}">
+        <views:HomeView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:GameDetectionViewModel}">
+        <views:GameDetectionView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:BepInExInstallViewModel}">
+        <views:BepInExInstallView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:ModCatalogViewModel}">
+        <views:ModCatalogView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+        <views:SettingsView />
+    </DataTemplate>
+
+</ResourceDictionary>

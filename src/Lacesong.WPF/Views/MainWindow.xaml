@@ -7,66 +7,123 @@
         xmlns:views="clr-namespace:Lacesong.WPF.Views"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         mc:Ignorable="d"
-        Title="Lacesong - Mod Manager" 
+        Title="Lacesong" 
         Height="720" 
         Width="1080"
         MinHeight="600"
         MinWidth="900"
         WindowStartupLocation="CenterScreen"
-        WindowBackdropType="Mica"
-        ExtendsContentIntoTitleBar="True">
+        WindowBackdropType="Acrylic"
+        ExtendsContentIntoTitleBar="True"
+        WindowCornerPreference="Round">
+
+    <Window.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FF0A0A0A" Offset="0" />
+            <GradientStop Color="#FF1A1A1A" Offset="0.25" />
+            <GradientStop Color="#FF2A2A2A" Offset="0.5" />
+            <GradientStop Color="#FF1A1A1A" Offset="0.75" />
+            <GradientStop Color="#FF0A0A0A" Offset="1" />
+        </LinearGradientBrush>
+    </Window.Background>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <!-- Header -->
-        <ui:TitleBar Grid.Row="0" Title="Lacesong" ShowMaximize="False" ShowMinimize="False">
-            <ui:TitleBar.Icon>
-                <ui:ImageIcon Source="/Resources/icon.ico" />
-            </ui:TitleBar.Icon>
-        </ui:TitleBar>
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBackgroundBrush}"
+                BorderBrush="{StaticResource GlassBorderBrush}"
+                BorderThickness="0,0,1,0">
+            <Border.Effect>
+                <BlurEffect Radius="20" />
+            </Border.Effect>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Title Bar Area in Sidebar -->
+                <StackPanel Orientation="Horizontal" Margin="24,20">
+                    <Border Width="24" Height="24" Background="{StaticResource ButtonPrimaryBrush}" CornerRadius="6" />
+                    <TextBlock Text="Lacesong" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                </StackPanel>
+
+                <!-- Navigation -->
+                <StackPanel Grid.Row="1" Margin="0,12">
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:HomeViewModel}" Style="{StaticResource NavigationButtonStyle}"
+                            Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:HomeViewModel}}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Home24" />
+                            <TextBlock Text="Home" Margin="16,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:GameDetectionViewModel}" Style="{StaticResource NavigationButtonStyle}"
+                            Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:GameDetectionViewModel}}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Games24" />
+                            <TextBlock Text="Game Detection" Margin="16,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:BepInExInstallViewModel}" Style="{StaticResource NavigationButtonStyle}"
+                            Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:BepInExInstallViewModel}}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Box24" />
+                            <TextBlock Text="Mod Loader" Margin="16,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:ModCatalogViewModel}" Style="{StaticResource NavigationButtonStyle}"
+                            Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:ModCatalogViewModel}}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Apps24" />
+                            <TextBlock Text="Mods" Margin="16,0,0,0" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:SettingsViewModel}" Style="{StaticResource NavigationButtonStyle}" VerticalAlignment="Bottom" Margin="12,0,12,24"
+                            Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:SettingsViewModel}}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Settings24" />
+                            <TextBlock Text="Settings" Margin="16,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
             
-            <ui:NavigationView x:Name="RootNavigation" Grid.Column="0"
-                               PaneDisplayMode="Left"
-                               Transition="Slide">
-                <ui:NavigationView.MenuItems>
-                    <ui:NavigationViewItem Content="Home" Icon="Home24" TargetPageType="{x:Type views:HomeView}" />
-                    <ui:NavigationViewItem Content="Game Detection" Icon="Games24" TargetPageType="{x:Type views:GameDetectionView}" />
-                    <ui:NavigationViewItem Content="Mod Loader" Icon="Box24" TargetPageType="{x:Type views:BepInExInstallView}" />
-                    <ui:NavigationViewItem Content="Mods" Icon="Apps24" TargetPageType="{x:Type views:ModCatalogView}" />
-                </ui:NavigationView.MenuItems>
-                <ui:NavigationView.FooterMenuItems>
-                    <ui:NavigationViewItem Content="Settings" Icon="Settings24" TargetPageType="{x:Type views:SettingsView}" />
-                </ui:NavigationView.FooterMenuItems>
-            </ui:NavigationView>
-
-            <!-- Content Area -->
-            <Border Grid.Column="1" Background="Transparent" CornerRadius="8,0,0,8">
+            <ui:TitleBar Grid.Row="0" ShowMaximize="True" ShowMinimize="True" ShowClose="True" />
+            
+            <Border Grid.Row="1" Background="{StaticResource CardBackgroundBrush}"
+                    Margin="0,0,8,8"
+                    CornerRadius="8,0,0,8">
+                <Border.Effect>
+                    <BlurEffect Radius="20" />
+                </Border.Effect>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     
-                    <ContentPresenter x:Name="ContentArea" Grid.Row="0"
-                                      Content="{Binding ElementName=RootNavigation, Path=CurrentPage}" />
+                    <ContentPresenter x:Name="ContentArea" Grid.Row="0" Margin="24" Content="{Binding CurrentViewModel}" />
 
                     <!-- Status Bar -->
-                    <Border Grid.Row="1" Background="{DynamicResource StatusBarBrush}" 
-                            BorderBrush="{DynamicResource GlassBorderBrush}" 
+                    <Border Grid.Row="1" Background="{StaticResource StatusBackgroundBrush}" 
+                            BorderBrush="{StaticResource GlassBorderBrush}" 
                             BorderThickness="0,1,0,0"
                             Padding="16,8"
-                            CornerRadius="0,0,8,0">
+                            CornerRadius="0,0,0,8">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -74,25 +131,21 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" FontSize="12"
-                                           Foreground="{DynamicResource PrimaryTextBrush}"/>
-                                <TextBlock Text=" | " VerticalAlignment="Center" Margin="8,0" FontSize="12"
-                                           Foreground="{DynamicResource SecondaryTextBrush}"/>
-                                <TextBlock Text="{Binding CurrentGame.Name, StringFormat='Game: {0}'}" VerticalAlignment="Center" FontSize="12"
-                                           Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,8,0"/>
-                                <TextBlock Text="{Binding CurrentGame.InstallPath}" VerticalAlignment="Center" FontSize="11"
-                                           Foreground="{DynamicResource MutedTextBrush}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Style="{StaticResource SmallFadedTextBlockStyle}" />
+                                <TextBlock Text="|" VerticalAlignment="Center" Margin="8,0" Style="{StaticResource SmallFadedTextBlockStyle}" />
+                                <TextBlock Text="{Binding CurrentGame.Name, StringFormat='Game: {0}'}" VerticalAlignment="Center" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,0,8,0"/>
+                                <TextBlock Text="{Binding CurrentGame.InstallPath}" VerticalAlignment="Center" Style="{StaticResource SmallFadedTextBlockStyle}" TextTrimming="CharacterEllipsis"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="CheckmarkCircle24" 
-                                               Foreground="{DynamicResource SuccessBrush}"
+                                               Foreground="{StaticResource SuccessBrush}"
                                                Visibility="{Binding HasError, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                                 <ui:SymbolIcon Symbol="ErrorCircle24"
-                                               Foreground="{DynamicResource ErrorBrush}"
+                                               Foreground="{StaticResource ErrorBrush}"
                                                Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                <TextBlock Text="{Binding IsBusy, Converter={StaticResource BusyStatusConverter}}" FontSize="11"
-                                           VerticalAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}" Margin="8,0,0,0"/>
+                                <TextBlock Text="{Binding IsBusy, Converter={StaticResource BusyStatusConverter}}"
+                                           VerticalAlignment="Center" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="8,0,0,0"/>
                             </StackPanel>
                         </Grid>
                     </Border>

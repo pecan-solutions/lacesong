@@ -1,8 +1,8 @@
-<ui:UiPage x:Class="Lacesong.WPF.Views.GameDetectionView"
+<UserControl x:Class="Lacesong.WPF.Views.GameDetectionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.openxmlformats.org/expression/blend/2008" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:vm="clr-namespace:Lacesong.WPF.ViewModels"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
@@ -10,11 +10,11 @@
              d:DataContext="{d:DesignInstance vm:GameDetectionViewModel}">
 
 
-    <Grid Margin="42">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -33,17 +33,16 @@
             </Grid.ColumnDefinitions>
 
             <!-- Detection Panel -->
-            <ui:Card Grid.Column="0" Padding="24">
+            <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
                 <StackPanel>
                     <TextBlock Text="Automatic Detection" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,16"/>
                     
                     <TextBlock Text="{Binding DetectionStatus}" Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap" Margin="0,0,0,20"/>
                     
-                    <ui:Button Content="Detect Games" Command="{Binding DetectGamesCommand}" 
-                               Appearance="Primary" Icon="Search24"
-                               IsEnabled="{Binding IsDetecting, Converter={StaticResource InverseBooleanConverter}}"
-                               Margin="0,0,0,20"/>
+                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="Detect Games" Command="{Binding DetectGamesCommand}" 
+                              IsEnabled="{Binding IsDetecting, Converter={StaticResource InverseBooleanConverter}}"
+                              Margin="0,0,0,20"/>
                     
                     <TextBlock Text="Lacesong will scan for Silksong in:" 
                                Style="{StaticResource SmallFadedTextBlockStyle}"
@@ -54,10 +53,10 @@
                     <TextBlock Text="• GOG Galaxy" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="16,0,0,4"/>
                     <TextBlock Text="• Common installation paths" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="16,0,0,0"/>
                 </StackPanel>
-            </ui:Card>
+            </Border>
 
             <!-- Manual Selection Panel -->
-            <ui:Card Grid.Column="2" Padding="24">
+            <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
                 <StackPanel>
                     <TextBlock Text="Manual Selection" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,16"/>
                     
@@ -65,8 +64,7 @@
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap" Margin="0,0,0,20"/>
                     
-                    <ui:Button Content="Browse for Game" Command="{Binding BrowseForGameCommand}" 
-                               Appearance="Secondary" Icon="FolderOpen24" Margin="0,0,0,20"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Browse for Game" Command="{Binding BrowseForGameCommand}" Margin="0,0,0,20"/>
                     
                     <TextBlock Text="Select the folder containing:" 
                                Style="{StaticResource SmallFadedTextBlockStyle}"
@@ -74,11 +72,11 @@
                     
                     <TextBlock Text="Hollow Knight Silksong.exe" Style="{StaticResource MonospaceTextBlockStyle}" Margin="16,0,0,0"/>
                 </StackPanel>
-            </ui:Card>
+            </Border>
         </Grid>
 
         <!-- Detected Games -->
-        <ui:Card Grid.Row="2" Padding="24" Margin="0,24,0,0" 
+        <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,24,0,0" 
                  Visibility="{Binding DetectedGames.Count, Converter={StaticResource CountToVisibilityConverter}}">
             <StackPanel>
                 <TextBlock Text="Detected Games" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,16"/>
@@ -90,41 +88,56 @@
                         <Style TargetType="ListViewItem">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                             <Setter Property="Focusable" Value="False"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListViewItem">
+                                        <Border x:Name="border" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="12" Padding="12" Margin="0,0,0,8">
+                                            <ContentPresenter />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="{StaticResource GlassSecondaryBrush}" />
+                                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GlassBorderBrush}" />
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="{StaticResource GlassPrimaryBrush}" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
                         </Style>
                     </ListView.ItemContainerStyle>
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <ui:CardAction Padding="12" Margin="0,0,0,8">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                                        <TextBlock Text="{Binding InstallPath}" Style="{StaticResource SmallFadedTextBlockStyle}"
-                                                   TextWrapping="Wrap" Margin="0,4,0,4"/>
-                                        <TextBlock Text="{Binding DetectedBy, StringFormat='Detected via: {0}'}" 
-                                                   Style="{StaticResource SmallFadedTextBlockStyle}"/>
-                                    </StackPanel>
-                                    
-                                    <ui:Button Grid.Column="1" Content="Select" 
-                                               Command="{Binding DataContext.SelectGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                               CommandParameter="{Binding}"
-                                               Appearance="Primary"
-                                               VerticalAlignment="Center"/>
-                                </Grid>
-                            </ui:CardAction>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                    <TextBlock Text="{Binding InstallPath}" Style="{StaticResource SmallFadedTextBlockStyle}"
+                                               TextWrapping="Wrap" Margin="0,4,0,4"/>
+                                    <TextBlock Text="{Binding DetectedBy, StringFormat='Detected via: {0}'}" 
+                                               Style="{StaticResource SmallFadedTextBlockStyle}"/>
+                                </StackPanel>
+                                
+                                <Button Grid.Column="1" Content="Select" 
+                                           Command="{Binding DataContext.SelectGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                           CommandParameter="{Binding}"
+                                           Style="{StaticResource PrimaryButtonStyle}"
+                                           VerticalAlignment="Center"/>
+                            </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
                 
-                <ui:Button Content="Continue" Command="{Binding ProceedToNextCommand}" 
-                           Appearance="Primary"
+                <Button Style="{StaticResource PrimaryButtonStyle}" Content="Continue" Command="{Binding ProceedToNextCommand}" 
                            HorizontalAlignment="Right" Margin="0,16,0,0"
                            IsEnabled="{Binding CanProceed}"/>
             </StackPanel>
-        </ui:Card>
+        </Border>
     </Grid>
-</ui:UiPage>
+</UserControl>

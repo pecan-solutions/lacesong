@@ -1,8 +1,8 @@
-<ui:UiPage x:Class="Lacesong.WPF.Views.ModCatalogView"
+<UserControl x:Class="Lacesong.WPF.Views.ModCatalogView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.openxmlformats.org/expression/blend/2008" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:vm="clr-namespace:Lacesong.WPF.ViewModels"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
@@ -10,24 +10,12 @@
              d:DataContext="{d:DesignInstance vm:ModCatalogViewModel}">
 
 
-    <Grid Margin="42">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-
-        <!-- Conflict Banner -->
-        <ui:InfoBar Grid.Row="1" Title="Conflicts Detected" 
-                    Message="{Binding DetectedConflicts.Count, StringFormat='{}{0} conflicts found.'}"
-                    Severity="Error" IsClosable="True"
-                    IsOpen="{Binding HasConflicts}"
-                    Margin="0,0,0,16">
-            <ui:InfoBar.Content>
-                <ui:Button Content="View Details" Command="{Binding DetectConflictsCommand}" Appearance="Secondary"/>
-            </ui:InfoBar.Content>
-        </ui:InfoBar>
 
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
@@ -37,7 +25,7 @@
         </StackPanel>
 
         <!-- Toolbar -->
-        <ui:Card Grid.Row="1" Padding="16" Margin="0,0,0,16">
+        <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Padding="16" Margin="0,0,0,16">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -46,29 +34,20 @@
 
                 <!-- Search and Filters -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <ui:TextBox PlaceholderText="Search mods..." Text="{Binding SearchText}" Width="200" Margin="0,0,12,0"/>
-                    
-                    <ui:CheckBox Content="Installed Only" IsChecked="{Binding ShowInstalledOnly}" 
-                                 Margin="0,0,12,0"/>
-                    
-                    <ui:CheckBox Content="Enabled Only" IsChecked="{Binding ShowEnabledOnly}" />
+                    <TextBox Style="{StaticResource SearchTextBoxStyle}" Text="{Binding SearchText}" Width="200" Margin="0,0,12,0"/>
+                    <CheckBox Style="{StaticResource DefaultCheckBoxStyle}" Content="Installed Only" IsChecked="{Binding ShowInstalledOnly}" Margin="0,0,12,0"/>
+                    <CheckBox Style="{StaticResource DefaultCheckBoxStyle}" Content="Enabled Only" IsChecked="{Binding ShowEnabledOnly}" />
                 </StackPanel>
 
                 <!-- Action Buttons -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <ui:Button Content="Install from File" Command="{Binding InstallModFromFileCommand}" 
-                               Appearance="Secondary" Icon="DocumentAdd24" Margin="0,0,8,0"/>
-                    
-                    <ui:Button Content="Install from URL" Command="{Binding InstallModFromUrlCommand}" 
-                               Appearance="Secondary" Icon="Link24" Margin="0,0,8,0"/>
-                    
-                    <ui:Button Content="Refresh" Command="{Binding RefreshModsCommand}" 
-                               Appearance="Secondary" Icon="ArrowClockwise24" Margin="0,0,8,0"/>
-                    <ui:Button Content="Settings" Command="{Binding OpenModSettingsCommand}" 
-                               Appearance="Secondary" Icon="Settings24"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Install from File" Command="{Binding InstallModFromFileCommand}" Margin="0,0,8,0"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Install from URL" Command="{Binding InstallModFromUrlCommand}" Margin="0,0,8,0"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Refresh" Command="{Binding RefreshModsCommand}" Margin="0,0,8,0"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Settings" Command="{Binding OpenModSettingsCommand}" />
                 </StackPanel>
             </Grid>
-        </ui:Card>
+        </Border>
 
         <!-- Mod List -->
         <Grid Grid.Row="2">
@@ -87,55 +66,68 @@
                     <Style TargetType="ListViewItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                         <Setter Property="Focusable" Value="False"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListViewItem">
+                                    <Border x:Name="border"
+                                            Background="Transparent"
+                                            BorderBrush="Transparent"
+                                            BorderThickness="1"
+                                            CornerRadius="12"
+                                            Padding="12" Margin="0,0,0,8">
+                                        <ContentPresenter />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="{StaticResource GlassSecondaryBrush}" />
+                                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GlassBorderBrush}" />
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="{StaticResource GlassPrimaryBrush}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
                     </Style>
                 </ListView.ItemContainerStyle>
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <ui:CardAction Padding="12" Margin="0,0,0,8">
-                            <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <!-- Status Indicator -->
-                                    <ui:SymbolIcon Grid.Column="0" Symbol="CheckmarkCircle24" FontSize="16"
-                                                 Foreground="{Binding IsEnabled, Converter={StaticResource EnabledStatusConverter}}" 
-                                                 Margin="0,0,12,0" VerticalAlignment="Center"/>
-                                    
-                                    <!-- Mod Info -->
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                                        <TextBlock Text="{Binding Description}" Style="{StaticResource SmallFadedTextBlockStyle}"
-                                                   TextWrapping="Wrap" Margin="0,4,0,0"/>
-                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                            <TextBlock Text="{Binding Author, StringFormat='by {0}'}" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,0,12,0"/>
-                                            <TextBlock Text="{Binding Version, StringFormat='v{0}'}" Style="{StaticResource SmallFadedTextBlockStyle}"/>
-                                            <ui:SymbolIcon Symbol="ShieldCheckmark24" FontSize="12" Margin="12,0,0,0"
-                                                           Foreground="{Binding CompatibilityStatus, Converter={StaticResource CompatibilityStatusColorConverter}}"/>
-                                        </StackPanel>
-                                        <!-- version constraint badge -->
-                                        <Border Background="{DynamicResource AccentBrush}" CornerRadius="4" Padding="4,2" Margin="0,6,0,0"
-                                                HorizontalAlignment="Left"
-                                                Visibility="{Binding VersionConstraints, Converter={StaticResource StringNullOrEmptyToVisibilityConverter}}">
-                                            <TextBlock Text="{Binding VersionConstraints}" Foreground="White" FontSize="10"/>
-                                        </Border>
-                                    </StackPanel>
-                                    
-                                    <!-- Status Text -->
-                                    <TextBlock Grid.Column="2" Text="{Binding IsEnabled, Converter={StaticResource ModStatusConverter}}" 
-                                               Style="{StaticResource SmallFadedTextBlockStyle}" FontWeight="SemiBold"
-                                               Foreground="{Binding IsEnabled, Converter={StaticResource ModStatusColorConverter}}"
-                                               VerticalAlignment="Center"/>
-                                </Grid>
-                        </ui:CardAction>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Status Indicator -->
+                            <ui:SymbolIcon Grid.Column="0" Symbol="CheckmarkCircle24" FontSize="16"
+                                         Foreground="{Binding IsEnabled, Converter={StaticResource EnabledStatusConverter}}" 
+                                         Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            
+                            <!-- Mod Info -->
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                <TextBlock Text="{Binding Description}" Style="{StaticResource SmallFadedTextBlockStyle}"
+                                           TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <TextBlock Text="{Binding Author, StringFormat='by {0}'}" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,0,12,0"/>
+                                    <TextBlock Text="{Binding Version, StringFormat='v{0}'}" Style="{StaticResource SmallFadedTextBlockStyle}"/>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <!-- Status Text -->
+                            <TextBlock Grid.Column="2" Text="{Binding IsEnabled, Converter={StaticResource ModStatusConverter}}" 
+                                       Style="{StaticResource SmallFadedTextBlockStyle}" FontWeight="SemiBold"
+                                       Foreground="{Binding IsEnabled, Converter={StaticResource ModStatusColorConverter}}"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
 
             <!-- Mod Details -->
-            <ui:Card Grid.Column="2" Padding="16">
+            <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
                 <StackPanel>
                     <TextBlock Text="Mod Details" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,12"/>
                     
@@ -149,30 +141,16 @@
                     <TextBlock Text="{Binding SelectedInstalledMod.Version, StringFormat='Version: {0}'}" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,0,0,16"/>
                     
                     <!-- Action Buttons -->
-                    <ui:Button Content="Enable" Command="{Binding EnableModCommand}" 
-                               Appearance="Primary"
-                               IsEnabled="{Binding CanEnableModProperty}" Margin="0,0,0,8"/>
+                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="Enable" Command="{Binding EnableModCommand}" 
+                              IsEnabled="{Binding CanEnableModProperty}" Margin="0,0,0,8"/>
                     
-                    <ui:Button Content="Disable" Command="{Binding DisableModCommand}" 
-                               Appearance="Secondary"
-                               IsEnabled="{Binding CanDisableModProperty}" Margin="0,0,0,8"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Disable" Command="{Binding DisableModCommand}" 
+                              IsEnabled="{Binding CanDisableModProperty}" Margin="0,0,0,8"/>
                     
-                    <ui:Button Content="Uninstall" Command="{Binding UninstallModCommand}" 
-                               Appearance="Danger"
-                               IsEnabled="{Binding CanUninstallModProperty}"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Uninstall" Command="{Binding UninstallModCommand}" 
+                              IsEnabled="{Binding CanUninstallModProperty}"/>
                 </StackPanel>
-            </ui:Card>
+            </Border>
         </Grid>
-
-        <!-- Status -->
-        <ui:Card Grid.Row="3" Padding="16" Margin="0,16,0,0">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding ModStatus}" Style="{StaticResource BodyTextBlockStyle}"/>
-                <TextBlock Text=" | " FontSize="12" Margin="8,0" 
-                           Foreground="{DynamicResource SecondaryTextBrush}"/>
-                <TextBlock Text="{Binding InstalledMods.Count, StringFormat='{}{0} mods installed'}" 
-                           Style="{StaticResource BodyTextBlockStyle}"/>
-            </StackPanel>
-        </ui:Card>
     </Grid>
-</ui:UiPage>
+</UserControl>

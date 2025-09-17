@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Wpf.Ui.Controls;
+using System;
 
 namespace Lacesong.WPF;
 
@@ -12,13 +13,9 @@ namespace Lacesong.WPF;
 /// </summary>
 public partial class MainWindow : FluentWindow
 {
-    public MainWindow(MainViewModel viewModel, IServiceProvider serviceProvider)
+    public MainWindow(MainViewModel viewModel)
     {
         InitializeComponent();
         DataContext = viewModel;
-
-        // Initialize the navigation
-        RootNavigation.ServiceProvider = serviceProvider;
-        RootNavigation.Loaded += (_, _) => RootNavigation.Navigate(typeof(HomeView));
     }
 }

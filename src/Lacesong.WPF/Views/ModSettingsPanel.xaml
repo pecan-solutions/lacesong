@@ -16,17 +16,17 @@
         <TextBlock Text="Mod Settings" Style="{StaticResource TitleTextBlockStyle}"/>
 
         <StackPanel Grid.Row="1" Margin="0,24,0,0">
-            <CheckBox Content="Enable automatic updates" IsChecked="{Binding AutoUpdateEnabled}" Margin="0,0,0,12"/>
+            <CheckBox Style="{StaticResource DefaultCheckBoxStyle}" Content="Enable automatic updates" IsChecked="{Binding AutoUpdateEnabled}" Margin="0,0,0,12"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                 <TextBlock Text="Update channel:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <ComboBox Width="150" SelectedItem="{Binding UpdateChannel}">
+                <ComboBox Style="{StaticResource DefaultComboBoxStyle}" Width="150" SelectedItem="{Binding UpdateChannel}">
                     <ComboBoxItem Content="Stable"/>
                     <ComboBoxItem Content="Beta"/>
                     <ComboBoxItem Content="Alpha"/>
                 </ComboBox>
             </StackPanel>
-            <CheckBox Content="Preserve configuration on update" IsChecked="{Binding PreserveConfigs}" Margin="0,0,0,12"/>
-            <CheckBox Content="Create backup before updating" IsChecked="{Binding BackupBeforeUpdate}"/>
+            <CheckBox Style="{StaticResource DefaultCheckBoxStyle}" Content="Preserve configuration on update" IsChecked="{Binding PreserveConfigs}" Margin="0,0,0,12"/>
+            <CheckBox Style="{StaticResource DefaultCheckBoxStyle}" Content="Create backup before updating" IsChecked="{Binding BackupBeforeUpdate}"/>
         </StackPanel>
 
         <Grid Grid.Row="2" Margin="0,16,0,0">
@@ -35,7 +35,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock Text="{Binding Status}" VerticalAlignment="Center" Style="{StaticResource SmallFadedTextBlockStyle}"/>
-            <ui:Button Grid.Column="1" Content="Save" Appearance="Primary" Command="{Binding SaveCommand}"/>
+            <Button Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" Content="Save" Command="{Binding SaveCommand}"/>
         </Grid>
     </Grid>
 </UserControl>
