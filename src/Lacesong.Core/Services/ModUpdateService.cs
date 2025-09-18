@@ -129,7 +129,7 @@ public class ModUpdateService : IModUpdateService
                 // rollback if verification failed and backup exists
                 if (settings.BackupBeforeUpdate && settings.PendingBackupPath != null)
                 {
-                    await _backupManager.RestoreBackup(gameInstall, settings.PendingBackupPath);
+                    await _backupManager.RestoreBackup(settings.PendingBackupPath, gameInstall);
                 }
                 // restore configs from backup
                 if (settings.PreserveConfigs && configBackupPath != null)

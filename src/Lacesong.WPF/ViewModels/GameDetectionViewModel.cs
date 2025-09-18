@@ -7,8 +7,6 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Wpf.Ui;
-using Wpf.Ui.Controls;
 using System;
 
 namespace Lacesong.WPF.ViewModels;
@@ -73,8 +71,8 @@ public partial class GameDetectionViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Success", 
                     DetectionStatus, 
-                    ControlAppearance.Success, 
-                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    "Success", 
+                    "✅", 
                     TimeSpan.FromSeconds(3));
             }
             else
@@ -83,8 +81,8 @@ public partial class GameDetectionViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Not Found", 
                     DetectionStatus, 
-                    ControlAppearance.Caution, 
-                    new SymbolIcon(SymbolRegular.QuestionCircle24), 
+                    "Warning", 
+                    "❓", 
                     TimeSpan.FromSeconds(3));
             }
         }, "Detecting games...");

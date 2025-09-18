@@ -1,11 +1,11 @@
-using Wpf.Ui.Controls;
+using System.Windows.Controls;
 
 namespace Lacesong.WPF.Views
 {
     /// <summary>
     /// Interaction logic for GameDetectionView.xaml
     /// </summary>
-    public partial class GameDetectionView : UiPage
+    public partial class GameDetectionView : UserControl
     {
         public GameDetectionView()
         {

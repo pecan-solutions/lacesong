@@ -8,8 +8,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
-using Wpf.Ui;
-using Wpf.Ui.Controls;
+using System.IO;
 
 namespace Lacesong.WPF.ViewModels;
 
@@ -400,8 +399,8 @@ public partial class ModCatalogViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Success", 
                     $"Successfully installed {Path.GetFileName(filePath)}.", 
-                    ControlAppearance.Success, 
-                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    "Success", 
+                    "✅", 
                     TimeSpan.FromSeconds(3));
                 await RefreshModsAsync();
             }
@@ -412,8 +411,8 @@ public partial class ModCatalogViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Installation Failed", 
                     result.Error, 
-                    ControlAppearance.Danger, 
-                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    "Error", 
+                    "❌", 
                     TimeSpan.FromSeconds(5));
             }
         }, "Installing mod...");
@@ -473,8 +472,8 @@ public partial class ModCatalogViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Success", 
                     $"Successfully uninstalled {SelectedInstalledMod.Name}.", 
-                    ControlAppearance.Success, 
-                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    "Success", 
+                    "✅", 
                     TimeSpan.FromSeconds(3));
                 await RefreshModsAsync();
             }
@@ -485,8 +484,8 @@ public partial class ModCatalogViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Uninstallation Failed", 
                     uninstallResult.Error, 
-                    ControlAppearance.Danger, 
-                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    "Error", 
+                    "❌", 
                     TimeSpan.FromSeconds(5));
             }
         }, "Uninstalling mod...");
@@ -510,8 +509,8 @@ public partial class ModCatalogViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Success", 
                     $"{SelectedInstalledMod.Name} has been enabled.", 
-                    ControlAppearance.Success, 
-                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    "Success", 
+                    "✅", 
                     TimeSpan.FromSeconds(3));
                 await RefreshModsAsync();
             }
@@ -522,8 +521,8 @@ public partial class ModCatalogViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Error", 
                     $"Failed to enable mod: {result.Error}", 
-                    ControlAppearance.Danger, 
-                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    "Error", 
+                    "❌", 
                     TimeSpan.FromSeconds(5));
             }
         }, "Enabling mod...");
@@ -547,8 +546,8 @@ public partial class ModCatalogViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Success", 
                     $"{SelectedInstalledMod.Name} has been disabled.", 
-                    ControlAppearance.Success, 
-                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    "Success", 
+                    "✅", 
                     TimeSpan.FromSeconds(3));
                 await RefreshModsAsync();
             }
@@ -559,8 +558,8 @@ public partial class ModCatalogViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Error", 
                     $"Failed to disable mod: {result.Error}", 
-                    ControlAppearance.Danger, 
-                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    "Error", 
+                    "❌", 
                     TimeSpan.FromSeconds(5));
             }
         }, "Disabling mod...");

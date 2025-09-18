@@ -1,21 +1,17 @@
-<ui:FluentWindow x:Class="Lacesong.WPF.MainWindow"
+<Window x:Class="Lacesong.WPF.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Lacesong.WPF.ViewModels"
         xmlns:views="clr-namespace:Lacesong.WPF.Views"
-        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         mc:Ignorable="d"
         Title="Lacesong" 
         Height="720" 
         Width="1080"
         MinHeight="600"
         MinWidth="900"
-        WindowStartupLocation="CenterScreen"
-        WindowBackdropType="Acrylic"
-        ExtendsContentIntoTitleBar="True"
-        WindowCornerPreference="Round">
+        WindowStartupLocation="CenterScreen">
 
     <Window.Background>
         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -58,28 +54,28 @@
                     <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:HomeViewModel}" Style="{StaticResource NavigationButtonStyle}"
                             Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:HomeViewModel}}">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Home24" />
+                            <TextBlock Text="🏠" FontSize="16" />
                             <TextBlock Text="Home" Margin="16,0,0,0" />
                         </StackPanel>
                     </Button>
                     <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:GameDetectionViewModel}" Style="{StaticResource NavigationButtonStyle}"
                             Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:GameDetectionViewModel}}">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Games24" />
+                            <TextBlock Text="🎮" FontSize="16" />
                             <TextBlock Text="Game Detection" Margin="16,0,0,0" />
                         </StackPanel>
                     </Button>
                     <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:BepInExInstallViewModel}" Style="{StaticResource NavigationButtonStyle}"
                             Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:BepInExInstallViewModel}}">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Box24" />
+                            <TextBlock Text="📦" FontSize="16" />
                             <TextBlock Text="Mod Loader" Margin="16,0,0,0" />
                         </StackPanel>
                     </Button>
                     <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:ModCatalogViewModel}" Style="{StaticResource NavigationButtonStyle}"
                             Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:ModCatalogViewModel}}">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Apps24" />
+                            <TextBlock Text="📱" FontSize="16" />
                             <TextBlock Text="Mods" Margin="16,0,0,0" />
                         </StackPanel>
                     </Button>
@@ -87,7 +83,7 @@
                     <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:SettingsViewModel}" Style="{StaticResource NavigationButtonStyle}" VerticalAlignment="Bottom" Margin="12,0,12,24"
                             Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:SettingsViewModel}}">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Settings24" />
+                            <TextBlock Text="⚙️" FontSize="16" />
                             <TextBlock Text="Settings" Margin="16,0,0,0" />
                         </StackPanel>
                     </Button>
@@ -102,7 +98,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             
-            <ui:TitleBar Grid.Row="0" ShowMaximize="True" ShowMinimize="True" ShowClose="True" />
+            
             
             <Border Grid.Row="1" Background="{StaticResource CardBackgroundBrush}"
                     Margin="0,0,8,8"
@@ -138,10 +134,10 @@
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="CheckmarkCircle24" 
+                                <TextBlock Text="✅" FontSize="16" />
                                                Foreground="{StaticResource SuccessBrush}"
                                                Visibility="{Binding HasError, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                                <ui:SymbolIcon Symbol="ErrorCircle24"
+                                <TextBlock Text="❌" FontSize="16" />
                                                Foreground="{StaticResource ErrorBrush}"
                                                Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                 <TextBlock Text="{Binding IsBusy, Converter={StaticResource BusyStatusConverter}}"
@@ -153,4 +149,4 @@
             </Border>
         </Grid>
     </Grid>
-</ui:FluentWindow>
+</Window>

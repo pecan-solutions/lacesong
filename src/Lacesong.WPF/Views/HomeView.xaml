@@ -64,10 +64,10 @@
                     <TextBlock Text="Game Status" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,20"/>
                     
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                        <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="16"
+                        <TextBlock Text="✅" FontSize="16"
                                        Foreground="{DynamicResource SuccessBrush}" 
                                        Visibility="{Binding DataContext.IsGameDetected, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        <ui:SymbolIcon Symbol="Warning24" FontSize="16"
+                        <TextBlock Text="⚠️" FontSize="16"
                                        Foreground="{DynamicResource WarningBrush}"
                                        Visibility="{Binding DataContext.IsGameDetected, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                         <TextBlock Text="{Binding DataContext.IsGameDetected, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource GameStatusConverter}}" 

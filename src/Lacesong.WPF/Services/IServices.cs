@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Lacesong.Core.Models;
 
 namespace Lacesong.WPF.Services;
 

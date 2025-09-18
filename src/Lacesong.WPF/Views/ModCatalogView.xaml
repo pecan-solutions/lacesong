@@ -101,7 +101,7 @@
                             </Grid.ColumnDefinitions>
                             
                             <!-- Status Indicator -->
-                            <ui:SymbolIcon Grid.Column="0" Symbol="CheckmarkCircle24" FontSize="16"
+                            <TextBlock Grid.Column="0" Text="✅" FontSize="16"
                                          Foreground="{Binding IsEnabled, Converter={StaticResource EnabledStatusConverter}}" 
                                          Margin="0,0,12,0" VerticalAlignment="Center"/>
                             

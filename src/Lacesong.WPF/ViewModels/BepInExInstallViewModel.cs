@@ -6,8 +6,6 @@ using Lacesong.WPF.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Wpf.Ui;
-using Wpf.Ui.Controls;
 
 namespace Lacesong.WPF.ViewModels;
 
@@ -120,8 +118,8 @@ public partial class BepInExInstallViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Success", 
                     "BepInEx was installed successfully.", 
-                    ControlAppearance.Success, 
-                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    "Success", 
+                    "✅", 
                     TimeSpan.FromSeconds(3));
                 CheckBepInExStatus();
             }
@@ -131,8 +129,8 @@ public partial class BepInExInstallViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Installation Failed", 
                     installResult.Error, 
-                    ControlAppearance.Danger, 
-                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    "Error", 
+                    "❌", 
                     TimeSpan.FromSeconds(5));
             }
         }, "Installing BepInEx...");
@@ -161,8 +159,8 @@ public partial class BepInExInstallViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Success", 
                     "BepInEx was uninstalled successfully.", 
-                    ControlAppearance.Success, 
-                    new SymbolIcon(SymbolRegular.CheckmarkCircle24), 
+                    "Success", 
+                    "✅", 
                     TimeSpan.FromSeconds(3));
                 CheckBepInExStatus();
             }
@@ -172,8 +170,8 @@ public partial class BepInExInstallViewModel : BaseViewModel
                 _snackbarService.Show(
                     "Uninstallation Failed", 
                     uninstallResult.Error, 
-                    ControlAppearance.Danger, 
-                    new SymbolIcon(SymbolRegular.ErrorCircle24), 
+                    "Error", 
+                    "❌", 
                     TimeSpan.FromSeconds(5));
             }
         }, "Uninstalling BepInEx...");

@@ -1,11 +1,11 @@
-using Wpf.Ui.Controls;
+using System.Windows.Controls;
 
 namespace Lacesong.WPF.Views
 {
     /// <summary>
     /// Interaction logic for SettingsView.xaml
     /// </summary>
-    public partial class SettingsView : UiPage
+    public partial class SettingsView : UserControl
     {
         public SettingsView()
         {

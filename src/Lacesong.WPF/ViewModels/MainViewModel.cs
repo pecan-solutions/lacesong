@@ -6,9 +6,8 @@ using Lacesong.WPF.Services;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Windows;
-using Wpf.Ui;
-using Wpf.Ui.Controls;
 using System;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Lacesong.WPF.ViewModels;
 

@@ -41,10 +41,10 @@
                                TextWrapping="Wrap" Margin="0,0,0,16"/>
                     
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                        <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="16"
+                        <TextBlock Text="✅" FontSize="16"
                                        Foreground="{DynamicResource SuccessBrush}" 
                                        Visibility="{Binding IsBepInExInstalled, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        <ui:SymbolIcon Symbol="Warning24" FontSize="16"
+                        <TextBlock Text="⚠️" FontSize="16"
                                        Foreground="{DynamicResource WarningBrush}"
                                        Visibility="{Binding IsBepInExInstalled, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                         <TextBlock Text="{Binding IsBepInExInstalled, Converter={StaticResource BepInExStatusConverter}}" 

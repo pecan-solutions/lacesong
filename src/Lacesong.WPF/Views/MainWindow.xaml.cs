@@ -3,7 +3,6 @@ using Lacesong.WPF.Views;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
-using Wpf.Ui.Controls;
 using System;
 
 namespace Lacesong.WPF;
@@ -11,7 +10,7 @@ namespace Lacesong.WPF;
 /// <summary>
 /// main window for the lacesong application
 /// </summary>
-public partial class MainWindow : FluentWindow
+public partial class MainWindow : Window
 {
     public MainWindow(MainViewModel viewModel)
     {

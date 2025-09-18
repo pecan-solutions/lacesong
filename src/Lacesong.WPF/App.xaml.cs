@@ -4,9 +4,9 @@ using Lacesong.Core.Interfaces;
 using Lacesong.Core.Services;
 using Lacesong.WPF.ViewModels;
 using Lacesong.WPF.Services;
+using Lacesong.WPF.Views;
 using System.Windows;
 using Karambolo.Extensions.Logging.File;
-using Wpf.Ui;
 
 namespace Lacesong.WPF;
 
@@ -16,6 +16,8 @@ namespace Lacesong.WPF;
 public partial class App : Application
 {
     private ServiceProvider? _serviceProvider;
+
+    public IServiceProvider Services => _serviceProvider ?? throw new InvalidOperationException("Services not initialized");
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -62,6 +64,7 @@ public partial class App : Application
         services.AddTransient<BepInExInstallViewModel>();
         services.AddTransient<ModCatalogViewModel>();
         services.AddTransient<SettingsViewModel>();
+        services.AddTransient<ModSettingsViewModelFactory>();
 
         // views
         services.AddTransient<MainWindow>();
