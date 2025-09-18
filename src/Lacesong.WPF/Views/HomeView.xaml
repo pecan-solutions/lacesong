@@ -51,6 +51,10 @@
                     <TextBlock Style="{StaticResource BodyTextBlockStyle}" Margin="0,0,0,4" Text="1. Make sure your game is detected" />
                     <TextBlock Style="{StaticResource BodyTextBlockStyle}" Margin="0,0,0,4" Text="2. Install the mod loader if needed" />
                     <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="3. Install your favorite mods" />
+                    <Button Content="Launch Modded Game" Command="{Binding DataContext.LaunchModdedCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,0,12"/>
+                    <Button Content="Launch Vanilla Game" Command="{Binding DataContext.LaunchVanillaCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,0,12"/>
                 </StackPanel>
             </Border>
 

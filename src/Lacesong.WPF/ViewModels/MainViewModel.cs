@@ -187,6 +187,30 @@ public partial class MainViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private async Task LaunchModdedAsync()
+    {
+        if (CurrentGame == null) return;
+        await ExecuteAsync(async () =>
+        {
+            var launcher = (IGameLauncher)_serviceProvider.GetRequiredService(typeof(IGameLauncher));
+            var result = await launcher.LaunchModded(CurrentGame);
+            SetStatus(result.Success ? "modded game launched" : result.Error ?? "failed to launch");
+        });
+    }
+
+    [RelayCommand]
+    private async Task LaunchVanillaAsync()
+    {
+        if (CurrentGame == null) return;
+        await ExecuteAsync(async () =>
+        {
+            var launcher = (IGameLauncher)_serviceProvider.GetRequiredService(typeof(IGameLauncher));
+            var result = await launcher.LaunchVanilla(CurrentGame);
+            SetStatus(result.Success ? "vanilla game launched" : result.Error ?? "failed to launch");
+        });
+    }
+
+    [RelayCommand]
     private void OpenLogs()
     {
         _loggingService.OpenLogsFolder();

@@ -45,6 +45,7 @@ public partial class App : Application
         services.AddSingleton<IConflictDetectionService, ConflictDetectionService>();
         services.AddSingleton<ICompatibilityService, CompatibilityService>();
         services.AddSingleton<IModConfigService, ModConfigService>();
+        services.AddSingleton<IGameLauncher, GameLauncher>();
 
         // wpf services
         services.AddSingleton<ILoggingService, LoggingService>();

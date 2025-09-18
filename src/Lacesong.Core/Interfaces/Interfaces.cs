@@ -576,3 +576,23 @@ public interface ICompatibilityService
     /// <returns>operation result</returns>
     Task<OperationResult> ReportCompatibilityIssue(ModCompatibility compatibility);
 }
+
+/// <summary>
+/// interface for launching the game in vanilla or modded mode
+/// </summary>
+public interface IGameLauncher
+{
+    /// <summary>
+    /// launches the game with bepinex and all enabled mods
+    /// </summary>
+    /// <param name="gameInstall">game installation to launch</param>
+    /// <returns>operation result</returns>
+    Task<OperationResult> LaunchModded(GameInstallation gameInstall);
+
+    /// <summary>
+    /// launches the game without loading any mods (pure vanilla)
+    /// </summary>
+    /// <param name="gameInstall">game installation to launch</param>
+    /// <returns>operation result</returns>
+    Task<OperationResult> LaunchVanilla(GameInstallation gameInstall);
+}
