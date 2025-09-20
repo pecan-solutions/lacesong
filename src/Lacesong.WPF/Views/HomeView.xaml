@@ -9,26 +9,27 @@
              d:DesignHeight="600" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance vm:HomeViewModel}">
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,32">
-            <TextBlock Text="Welcome to Lacesong" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,8"/>
-            <TextBlock Text="Your all-in-one mod manager for Silksong. Get started below." 
-                       Style="{StaticResource SubtitleTextBlockStyle}"/>
-        </StackPanel>
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,32">
+                <TextBlock Text="Welcome to Lacesong" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,8"/>
+                <TextBlock Text="Your all-in-one mod manager for Silksong. Get started below." 
+                           Style="{StaticResource SubtitleTextBlockStyle}"/>
+            </StackPanel>
 
-        <!-- Main Content -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="24"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <!-- Main Content -->
+            <Grid Grid.Row="1" MinHeight="500">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="300"/>
+                    <ColumnDefinition Width="24"/>
+                    <ColumnDefinition Width="*" MinWidth="300"/>
+                </Grid.ColumnDefinitions>
 
             <!-- Quick Actions -->
             <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
@@ -50,11 +51,11 @@
                     <TextBlock Text="New to Modding?" Style="{StaticResource SmallHeaderTextBlockStyle}" Margin="0,0,0,8"/>
                     <TextBlock Style="{StaticResource BodyTextBlockStyle}" Margin="0,0,0,4" Text="1. Make sure your game is detected" />
                     <TextBlock Style="{StaticResource BodyTextBlockStyle}" Margin="0,0,0,4" Text="2. Install the mod loader if needed" />
-                    <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="3. Install your favorite mods" />
+                    <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="3. Install your favorite mods" Margin="0,0,0,24" />
                     <Button Content="Launch Modded Game" Command="{Binding DataContext.LaunchModdedCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                            Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,0,12"/>
+                            Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,0,12" MinWidth="160" MinHeight="44"/>
                     <Button Content="Launch Vanilla Game" Command="{Binding DataContext.LaunchVanillaCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                            Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,0,12"/>
+                            Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,0,12" MinWidth="160" MinHeight="44"/>
                 </StackPanel>
             </Border>
 
@@ -91,6 +92,7 @@
                               IsEnabled="{Binding DataContext.IsGameDetected, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 </StackPanel>
             </Border>
+            </Grid>
         </Grid>
-    </Grid>
+    </ScrollViewer>
 </UserControl>

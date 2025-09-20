@@ -56,6 +56,13 @@ public interface IBepInExManager
     string? GetInstalledBepInExVersion(GameInstallation gameInstall);
 
     /// <summary>
+    /// gets detailed BepInEx version information
+    /// </summary>
+    /// <param name="gameInstall">game installation to check</param>
+    /// <returns>detailed version info or null if not installed</returns>
+    BepInExVersionInfo? GetBepInExVersionInfo(GameInstallation gameInstall);
+
+    /// <summary>
     /// uninstalls bepinex from the game installation
     /// </summary>
     /// <param name="gameInstall">game installation to uninstall from</param>

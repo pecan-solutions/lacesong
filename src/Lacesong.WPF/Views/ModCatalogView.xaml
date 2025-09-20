@@ -27,130 +27,77 @@
         <!-- Toolbar -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Padding="16" Margin="0,0,0,16">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
                 <!-- Search and Filters -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <TextBox Style="{StaticResource SearchTextBoxStyle}" Text="{Binding SearchText}" Width="200" Margin="0,0,12,0"/>
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                    <TextBox Style="{StaticResource SearchTextBoxStyle}" Text="{Binding SearchText}" Width="200" MinWidth="150" Margin="0,0,12,0"/>
                     <CheckBox Style="{StaticResource DefaultCheckBoxStyle}" Content="Installed Only" IsChecked="{Binding ShowInstalledOnly}" Margin="0,0,12,0"/>
                     <CheckBox Style="{StaticResource DefaultCheckBoxStyle}" Content="Enabled Only" IsChecked="{Binding ShowEnabledOnly}" />
                 </StackPanel>
 
                 <!-- Action Buttons -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Install from File" Command="{Binding InstallModFromFileCommand}" Margin="0,0,8,0"/>
-                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Install from URL" Command="{Binding InstallModFromUrlCommand}" Margin="0,0,8,0"/>
-                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Refresh" Command="{Binding RefreshModsCommand}" Margin="0,0,8,0"/>
-                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Settings" Command="{Binding OpenModSettingsCommand}" />
+                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Install from File" Command="{Binding InstallModFromFileCommand}" Margin="0,0,8,0" MinWidth="120"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Install from URL" Command="{Binding InstallModFromUrlCommand}" Margin="0,0,8,0" MinWidth="120"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Refresh" Command="{Binding RefreshModsCommand}" Margin="0,0,8,0" MinWidth="80"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Open Mods Folder" Command="{Binding OpenModsFolderCommand}" Margin="0,0,8,0" MinWidth="140"/>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Settings" Command="{Binding OpenModSettingsCommand}" MinWidth="80"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Mod List -->
         <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="24"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding InstalledMods}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,16,16" MinWidth="300" MaxWidth="350">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,12"/>
+                                    <TextBlock Text="{Binding Description}" Style="{StaticResource SmallFadedTextBlockStyle}"
+                                               TextWrapping="Wrap" Margin="0,0,0,8" MaxHeight="60" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Author, StringFormat='Author: {0}'}" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,0,0,4"/>
+                                    <TextBlock Text="{Binding Version, StringFormat='Version: {0}'}" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,0,0,16"/>
 
-            <!-- Mod List -->
-            <ListView Grid.Column="0" ItemsSource="{Binding InstalledMods}" 
-                      SelectedItem="{Binding SelectedInstalledMod}"
-                      Background="Transparent" BorderThickness="0"
-                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                        <Setter Property="Focusable" Value="False"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListViewItem">
-                                    <Border x:Name="border"
-                                            Background="Transparent"
-                                            BorderBrush="Transparent"
-                                            BorderThickness="1"
-                                            CornerRadius="12"
-                                            Padding="12" Margin="0,0,0,8">
-                                        <ContentPresenter />
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="border" Property="Background" Value="{StaticResource GlassSecondaryBrush}" />
-                                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GlassBorderBrush}" />
-                                        </Trigger>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="border" Property="Background" Value="{StaticResource GlassPrimaryBrush}" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListView.ItemContainerStyle>
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <!-- Status Indicator -->
-                            <TextBlock Grid.Column="0" Text="✅" FontSize="16"
-                                         Foreground="{Binding IsEnabled, Converter={StaticResource EnabledStatusConverter}}" 
-                                         Margin="0,0,12,0" VerticalAlignment="Center"/>
-                            
-                            <!-- Mod Info -->
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                                <TextBlock Text="{Binding Description}" Style="{StaticResource SmallFadedTextBlockStyle}"
-                                           TextWrapping="Wrap" Margin="0,4,0,0"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                    <TextBlock Text="{Binding Author, StringFormat='by {0}'}" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,0,12,0"/>
-                                    <TextBlock Text="{Binding Version, StringFormat='v{0}'}" Style="{StaticResource SmallFadedTextBlockStyle}"/>
+                                    <!-- Action Buttons -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Button Grid.Column="0" Style="{StaticResource SecondaryButtonStyle}" Content="Enable" 
+                                                Command="{Binding DataContext.EnableModCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding CanBeEnabled}" Margin="0,0,4,0"/>
+
+                                        <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" Content="Disable"
+                                                Command="{Binding DataContext.DisableModCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding IsEnabled}" Margin="4,0,4,0"/>
+
+                                        <Button Grid.Column="2" Style="{StaticResource DangerButtonStyle}" Content="Uninstall"
+                                                Command="{Binding DataContext.UninstallModCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding CanBeUninstalled}" Margin="4,0,0,0"/>
+                                    </Grid>
                                 </StackPanel>
-                            </StackPanel>
-                            
-                            <!-- Status Text -->
-                            <TextBlock Grid.Column="2" Text="{Binding IsEnabled, Converter={StaticResource ModStatusConverter}}" 
-                                       Style="{StaticResource SmallFadedTextBlockStyle}" FontWeight="SemiBold"
-                                       Foreground="{Binding IsEnabled, Converter={StaticResource ModStatusColorConverter}}"
-                                       VerticalAlignment="Center"/>
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-
-            <!-- Mod Details -->
-            <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
-                <StackPanel>
-                    <TextBlock Text="Mod Details" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,12"/>
-                    
-                    <TextBlock Text="{Binding SelectedInstalledMod.Name}" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,8"/>
-                    
-                    <TextBlock Text="{Binding SelectedInstalledMod.Description}" Style="{StaticResource SmallFadedTextBlockStyle}"
-                               TextWrapping="Wrap" Margin="0,0,0,8"/>
-                    
-                    <TextBlock Text="{Binding SelectedInstalledMod.Author, StringFormat='Author: {0}'}" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,0,0,4"/>
-                    
-                    <TextBlock Text="{Binding SelectedInstalledMod.Version, StringFormat='Version: {0}'}" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,0,0,16"/>
-                    
-                    <!-- Action Buttons -->
-                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="Enable" Command="{Binding EnableModCommand}" 
-                              IsEnabled="{Binding CanEnableModProperty}" Margin="0,0,0,8"/>
-                    
-                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Disable" Command="{Binding DisableModCommand}" 
-                              IsEnabled="{Binding CanDisableModProperty}" Margin="0,0,0,8"/>
-                    
-                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Uninstall" Command="{Binding UninstallModCommand}" 
-                              IsEnabled="{Binding CanUninstallModProperty}"/>
-                </StackPanel>
-            </Border>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
         </Grid>
     </Grid>
 </UserControl>

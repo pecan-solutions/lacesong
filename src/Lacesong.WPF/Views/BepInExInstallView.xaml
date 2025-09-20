@@ -27,9 +27,9 @@
         <!-- Main Content -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*" MinWidth="280"/>
                 <ColumnDefinition Width="20"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*" MinWidth="280"/>
             </Grid.ColumnDefinitions>
 
             <!-- Status Panel -->
@@ -68,7 +68,11 @@
                     <TextBlock Text="BepInEx Version" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,8"/>
                     <ComboBox Style="{StaticResource DefaultComboBoxStyle}" ItemsSource="{Binding AvailableVersions}" 
                                  SelectedItem="{Binding SelectedVersion}"
-                                 Margin="0,0,0,16"/>
+                                 Margin="0,0,0,16">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource ComboBoxItemStyle}"/>
+                        </ComboBox.ItemContainerStyle>
+                    </ComboBox>
                     
                     <!-- Options -->
                     <CheckBox Style="{StaticResource DefaultCheckBoxStyle}" Content="Force reinstall (if already installed)" 
@@ -85,10 +89,10 @@
                     
                     <!-- Action Buttons -->
                     <Button Style="{StaticResource PrimaryButtonStyle}" Content="Install BepInEx" Command="{Binding InstallBepInExCommand}" 
-                               IsEnabled="{Binding CanInstall}" Margin="0,0,0,8"/>
+                               IsEnabled="{Binding CanInstall}" Margin="0,0,0,8" MinWidth="160" MinHeight="44"/>
                     
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="Uninstall BepInEx" Command="{Binding UninstallBepInExCommand}" 
-                               IsEnabled="{Binding CanUninstall}"/>
+                               IsEnabled="{Binding CanUninstall}" MinWidth="160" MinHeight="44"/>
                 </StackPanel>
             </Border>
         </Grid>

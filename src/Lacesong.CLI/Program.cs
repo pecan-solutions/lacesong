@@ -151,6 +151,17 @@ class Program
             await HandleDetectGame(gameDetector, path);
         }, detectPathOption);
 
+        // check-bepinex command
+        var checkBepInExCommand = new Command("check-bepinex", "Check BepInEx installation status");
+        var checkBepInExPathOption = new Option<string?>("--path", "Path to game installation directory");
+
+        checkBepInExCommand.AddOption(checkBepInExPathOption);
+
+        checkBepInExCommand.SetHandler(async (path) =>
+        {
+            await HandleCheckBepInEx(gameDetector, bepinexManager, path);
+        }, checkBepInExPathOption);
+
         // search-mods command
         var searchModsCommand = new Command("search-mods", "Search for mods in the mod index");
         var queryOption = new Option<string?>("--query", "Search query");
@@ -323,6 +334,7 @@ class Program
         rootCommand.AddCommand(backupCommand);
         rootCommand.AddCommand(restoreCommand);
         rootCommand.AddCommand(detectGameCommand);
+        rootCommand.AddCommand(checkBepInExCommand);
         rootCommand.AddCommand(searchModsCommand);
         rootCommand.AddCommand(browseModsCommand);
         rootCommand.AddCommand(addRepoCommand);
@@ -688,6 +700,67 @@ class Program
             if (!string.IsNullOrEmpty(gameInstall.GogAppId))
             {
                 Console.WriteLine($"  GOG App ID: {gameInstall.GogAppId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleCheckBepInEx(IGameDetector gameDetector, IBepInExManager bepinexManager, string? path)
+    {
+        try
+        {
+            Console.WriteLine("Detecting game installation...");
+            var gameInstall = await gameDetector.DetectGameInstall(path);
+            
+            if (gameInstall == null)
+            {
+                Console.WriteLine("Error: Could not detect game installation. Please specify --path or ensure the game is installed.");
+                return;
+            }
+
+            Console.WriteLine($"Detected game: {gameInstall.Name} at {gameInstall.InstallPath}");
+            Console.WriteLine();
+
+            Console.WriteLine("Checking BepInEx installation status...");
+            
+            // use the exact same logic as the WPF application
+            var isBepInExInstalled = bepinexManager.IsBepInExInstalled(gameInstall);
+            
+            if (isBepInExInstalled)
+            {
+                var versionInfo = bepinexManager.GetBepInExVersionInfo(gameInstall);
+                if (versionInfo != null)
+                {
+                    Console.WriteLine($"✓ BepInEx is installed");
+                    Console.WriteLine($"  Status: Installed");
+                    Console.WriteLine($"  File Version: {versionInfo.FileVersion ?? "Unknown"}");
+                    Console.WriteLine($"  Product Version: {versionInfo.ProductVersion ?? "Unknown"}");
+                    Console.WriteLine($"  Product Name: {versionInfo.ProductName ?? "Unknown"}");
+                    Console.WriteLine($"  Company: {versionInfo.CompanyName ?? "Unknown"}");
+                    Console.WriteLine($"  Description: {versionInfo.Description ?? "Unknown"}");
+                    Console.WriteLine($"  Loader Version: {versionInfo.LoaderVersion ?? "Unknown"}");
+                    Console.WriteLine($"  Core Version: {versionInfo.CoreVersion ?? "Unknown"}");
+                    Console.WriteLine($"  Loader Path: {versionInfo.LoaderPath}");
+                    Console.WriteLine($"  Core Path: {versionInfo.CorePath}");
+                }
+                else
+                {
+                    // fallback to simple version detection
+                    var installedVersion = bepinexManager.GetInstalledBepInExVersion(gameInstall) ?? "Unknown";
+                    Console.WriteLine($"✓ BepInEx {installedVersion} is already installed");
+                    Console.WriteLine($"  Status: Installed");
+                    Console.WriteLine($"  Version: {installedVersion}");
+                    Console.WriteLine($"  Path: {Path.Combine(gameInstall.InstallPath, "BepInEx")}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("✗ BepInEx is not installed");
+                Console.WriteLine("  Status: Not installed");
+                Console.WriteLine("  Recommendation: Use 'lacesong install-bepinex' to install BepInEx");
             }
         }
         catch (Exception ex)

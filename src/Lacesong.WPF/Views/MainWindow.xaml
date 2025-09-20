@@ -10,7 +10,7 @@
         Height="720" 
         Width="1080"
         MinHeight="600"
-        MinWidth="900"
+        MinWidth="940"
         WindowStartupLocation="CenterScreen">
 
     <Window.Background>
@@ -25,8 +25,8 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="280" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="280" MinWidth="240" />
+            <ColumnDefinition Width="*" MinWidth="600" />
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->

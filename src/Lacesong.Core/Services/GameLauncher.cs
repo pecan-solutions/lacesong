@@ -21,6 +21,9 @@ public class GameLauncher : IGameLauncher
 
     public Task<OperationResult> LaunchModded(GameInstallation gameInstall)
     {
+        // ensure mods directory exists so any first-run setup is complete
+        ModManager.EnsureModsDirectory(gameInstall); // static helper
+
         if (!_bepInExManager.IsBepInExInstalled(gameInstall))
         {
             return Task.FromResult(OperationResult.ErrorResult("BepInEx is not installed", "modded launch failed"));
@@ -31,6 +34,8 @@ public class GameLauncher : IGameLauncher
 
     public async Task<OperationResult> LaunchVanilla(GameInstallation gameInstall)
     {
+        // ensure mods directory exists even for vanilla launches
+        ModManager.EnsureModsDirectory(gameInstall);
         var bepinexPath = Path.Combine(gameInstall.InstallPath, "BepInEx");
         var tempDisabledPath = bepinexPath + "_disabled";
         try

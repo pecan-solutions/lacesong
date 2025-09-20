@@ -55,6 +55,9 @@ public class GameDetector : IGameDetector
         if (string.IsNullOrEmpty(gameInstall.InstallPath) || string.IsNullOrEmpty(gameInstall.Executable))
             return false;
 
+        // create the mods directory if not present so downstream services have it
+        ModManager.EnsureModsDirectory(gameInstall);
+
         var executablePath = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
         return File.Exists(executablePath);
     }
@@ -416,7 +419,7 @@ public class GameDetector : IGameDetector
                 EpicAppId = "hollow-knight-silksong",
                 GogAppId = "hollow_knight_silksong",
                 BepInExVersion = "5.4.22",
-                ModDirectory = "BepInEx/plugins"
+                ModDirectory = "Hollow Knight Silksong_Data\\Managed\\Mods"
             }
         };
     }

@@ -73,6 +73,9 @@ public class ModInfo
     [JsonPropertyName("isEnabled")]
     public bool IsEnabled { get; set; }
 
+    [JsonPropertyName("iconPath")]
+    public string? IconPath { get; set; }
+
     [JsonPropertyName("isInstalled")]
     public bool IsInstalled { get; set; }
 
@@ -85,6 +88,12 @@ public class ModInfo
 
     [JsonPropertyName("installDate")]
     public DateTime? InstallDate { get; set; }
+    
+    [JsonIgnore]
+    public bool CanBeEnabled => IsInstalled && !IsEnabled;
+
+    [JsonIgnore]
+    public bool CanBeUninstalled => IsInstalled;
 }
 
 /// <summary>
@@ -929,6 +938,39 @@ public class ResolutionAction
 
     [JsonPropertyName("parameters")]
     public Dictionary<string, object> Parameters { get; set; } = new();
+}
+
+/// <summary>
+/// represents detailed BepInEx version information
+/// </summary>
+public class BepInExVersionInfo
+{
+    [JsonPropertyName("fileVersion")]
+    public string? FileVersion { get; set; }
+
+    [JsonPropertyName("productVersion")]
+    public string? ProductVersion { get; set; }
+
+    [JsonPropertyName("companyName")]
+    public string? CompanyName { get; set; }
+
+    [JsonPropertyName("productName")]
+    public string? ProductName { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("loaderVersion")]
+    public string? LoaderVersion { get; set; }
+
+    [JsonPropertyName("coreVersion")]
+    public string? CoreVersion { get; set; }
+
+    [JsonPropertyName("loaderPath")]
+    public string? LoaderPath { get; set; }
+
+    [JsonPropertyName("corePath")]
+    public string? CorePath { get; set; }
 }
 
 /// <summary>

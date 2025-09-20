@@ -23,6 +23,8 @@ public class ModManager : IModManager
     {
         try
         {
+            // ensure mods directory exists
+            EnsureModsDirectory(gameInstall);
             // validate game installation
             if (!ValidateGameInstall(gameInstall))
             {
@@ -129,6 +131,13 @@ public class ModManager : IModManager
                 Directory.Delete(modPath, true);
             }
 
+            // remove plugin mirror
+            var pluginMirror = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", modId);
+            if (Directory.Exists(pluginMirror))
+            {
+                Directory.Delete(pluginMirror, true);
+            }
+
             // remove from mod list
             await RemoveModFromList(modId, gameInstall);
 
@@ -165,6 +174,8 @@ public class ModManager : IModManager
                     var enabledFile = Path.ChangeExtension(disabledFile, ".dll");
                     File.Move(disabledFile, enabledFile);
                 }
+                // refresh plugin mirror
+                MirrorPluginDlls(modId, modPath, gameInstall);
             }
 
             // update mod status
@@ -203,6 +214,12 @@ public class ModManager : IModManager
                     var disabledFile = Path.ChangeExtension(dllFile, ".disabled");
                     File.Move(dllFile, disabledFile);
                 }
+                // clear plugin mirror after disabling
+                var pluginsRoot = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", modId);
+                if (Directory.Exists(pluginsRoot))
+                {
+                    Directory.Delete(pluginsRoot, true);
+                }
             }
 
             // update mod status
@@ -222,6 +239,8 @@ public class ModManager : IModManager
 
         try
         {
+            // ensure mods directory exists
+            EnsureModsDirectory(gameInstall);
             var modsListPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "mods_list.json");
             if (File.Exists(modsListPath))
             {
@@ -238,10 +257,15 @@ public class ModManager : IModManager
                     foreach (var modDir in modDirs)
                     {
                         var modId = Path.GetFileName(modDir);
-                        var modInfo = await GetModInfo(modId, gameInstall);
-                        if (modInfo != null)
+                        // validate mod has at least one dll file
+                        var dllFiles = Directory.GetFiles(modDir, "*.dll", SearchOption.AllDirectories);
+                        if (dllFiles.Length > 0)
                         {
-                            mods.Add(modInfo);
+                            var modInfo = await GetModInfo(modId, gameInstall);
+                            if (modInfo != null)
+                            {
+                                mods.Add(modInfo);
+                            }
                         }
                     }
                 }
@@ -263,6 +287,11 @@ public class ModManager : IModManager
             if (!Directory.Exists(modPath))
                 return null;
 
+            // validate mod has at least one dll file
+            var dllFiles = Directory.GetFiles(modPath, "*.dll", SearchOption.AllDirectories);
+            if (dllFiles.Length == 0)
+                return null;
+
             // look for mod info file
             var modInfoPath = Path.Combine(modPath, ModInfoFileName);
             if (File.Exists(modInfoPath))
@@ -271,11 +300,49 @@ public class ModManager : IModManager
                 var modInfo = JsonSerializer.Deserialize<ModInfo>(json);
                 if (modInfo != null)
                 {
-                    // check if mod is enabled by looking for .dll files
-                    var dllFiles = Directory.GetFiles(modPath, "*.dll", SearchOption.AllDirectories);
                     modInfo.IsEnabled = dllFiles.Length > 0;
                     modInfo.IsInstalled = true;
                     return modInfo;
+                }
+            }
+
+            // fallback to manifest.json (new format)
+            var manifestPath = Path.Combine(modPath, "manifest.json");
+            if (File.Exists(manifestPath))
+            {
+                try
+                {
+                    var manifestJson = await File.ReadAllTextAsync(manifestPath);
+                    var manifest = JsonSerializer.Deserialize<JsonElement>(manifestJson);
+
+                    var modInfo = new ModInfo
+                    {
+                        Id = manifest.TryGetProperty("id", out var idEl) ? idEl.GetString() ?? Path.GetFileName(modPath) : Path.GetFileName(modPath),
+                        Name = manifest.TryGetProperty("name", out var nameEl) ? nameEl.GetString() ?? Path.GetFileName(modPath) : Path.GetFileName(modPath),
+                        Description = manifest.TryGetProperty("description", out var descEl) ? descEl.GetString() ?? string.Empty : string.Empty,
+                        Version = manifest.TryGetProperty("version", out var verEl) ? verEl.GetString() ?? "1.0.0" : "1.0.0",
+                        Author = manifest.TryGetProperty("author", out var authorEl) ? authorEl.GetString() ?? "Unknown" : "Unknown",
+                        Dependencies = manifest.TryGetProperty("dependencies", out var depsEl) && depsEl.ValueKind == JsonValueKind.Array ?
+                            depsEl.EnumerateArray().Select(x => x.GetString() ?? string.Empty).Where(x => !string.IsNullOrEmpty(x)).ToList() : new List<string>(),
+                        IsInstalled = true,
+                        IsEnabled = Directory.GetFiles(modPath, "*.dll", SearchOption.AllDirectories).Length > 0
+                    };
+
+                    // icon detection
+                    var iconPath = manifest.TryGetProperty("icon", out var iconEl) ? iconEl.GetString() : null;
+                    if (string.IsNullOrEmpty(iconPath))
+                    {
+                        var png = Path.Combine(modPath, "icon.png");
+                        if (File.Exists(png)) iconPath = png;
+                    }
+
+                    modInfo.IconPath = iconPath;
+
+                    return modInfo;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"failed to parse manifest for {modId}: {ex.Message}");
                 }
             }
 
@@ -307,6 +374,34 @@ public class ModManager : IModManager
         return File.Exists(executablePath);
     }
 
+    public static void EnsureModsDirectory(GameInstallation gameInstall)
+    {
+        var modsRoot = Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory);
+        if (!Directory.Exists(modsRoot))
+        {
+            Directory.CreateDirectory(modsRoot);
+        }
+    }
+
+    private static void MirrorPluginDlls(string modId, string modsPath, GameInstallation gameInstall)
+    {
+        var pluginsRoot = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", modId);
+        // clear any existing files to keep mirror in sync
+        if (Directory.Exists(pluginsRoot))
+        {
+            foreach (var file in Directory.GetFiles(pluginsRoot, "*", SearchOption.AllDirectories))
+            {
+                File.Delete(file);
+            }
+        }
+        Directory.CreateDirectory(pluginsRoot);
+        var dllFiles = Directory.GetFiles(modsPath, "*.dll", SearchOption.AllDirectories);
+        foreach (var dll in dllFiles)
+        {
+            var targetPath = Path.Combine(pluginsRoot, Path.GetFileName(dll));
+            File.Copy(dll, targetPath, true);
+        }
+    }
 
     private async Task<OperationResult> DownloadMod(string url)
     {
@@ -455,6 +550,9 @@ public class ModManager : IModManager
 
             // add to mods list
             await AddModToList(modInfo, gameInstall);
+
+            // mirror dlls into BepInEx/plugins so chainloader picks them up
+            MirrorPluginDlls(modInfo.Id, modPath, gameInstall);
 
             return OperationResult.SuccessResult("Mod files installed successfully");
         }

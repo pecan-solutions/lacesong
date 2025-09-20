@@ -25,6 +25,19 @@ public partial class MainViewModel : BaseViewModel
     [ObservableProperty]
     private GameInstallation? _currentGame;
 
+    partial void OnCurrentGameChanged(GameInstallation? value)
+    {
+        // update current viewmodel if it needs the game installation
+        if (CurrentViewModel is BepInExInstallViewModel bepinexViewModel && value != null)
+        {
+            bepinexViewModel.SetGameInstallation(value);
+        }
+        else if (CurrentViewModel is ModCatalogViewModel modCatalogViewModel && value != null)
+        {
+            modCatalogViewModel.SetGameInstallation(value);
+        }
+    }
+
     [ObservableProperty]
     private bool _isGameDetected;
 
@@ -140,6 +153,16 @@ public partial class MainViewModel : BaseViewModel
     private void Navigate(Type viewModelType)
     {
         CurrentViewModel = (BaseViewModel?)_serviceProvider.GetService(viewModelType);
+        
+        // pass current game to viewmodels that need it
+        if (CurrentViewModel is BepInExInstallViewModel bepinexViewModel && CurrentGame != null)
+        {
+            bepinexViewModel.SetGameInstallation(CurrentGame);
+        }
+        else if (CurrentViewModel is ModCatalogViewModel modCatalogViewModel && CurrentGame != null)
+        {
+            modCatalogViewModel.SetGameInstallation(CurrentGame);
+        }
     }
 
     [RelayCommand]

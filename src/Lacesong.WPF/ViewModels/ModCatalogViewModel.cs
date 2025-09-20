@@ -39,9 +39,6 @@ public partial class ModCatalogViewModel : BaseViewModel
     private ObservableCollection<ModIndexEntry> _searchResults = new();
 
     [ObservableProperty]
-    private ModInfo? _selectedInstalledMod;
-
-    [ObservableProperty]
     private ModIndexEntry? _selectedAvailableMod;
 
     [ObservableProperty]
@@ -342,13 +339,6 @@ public partial class ModCatalogViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private void SelectInstalledMod(ModInfo mod)
-    {
-        SelectedInstalledMod = mod;
-        ModStatus = $"Selected installed mod: {mod.Name}";
-    }
-
-    [RelayCommand]
     private void SelectAvailableMod(ModIndexEntry mod)
     {
         SelectedAvailableMod = mod;
@@ -410,7 +400,7 @@ public partial class ModCatalogViewModel : BaseViewModel
                 SetStatus($"Installation failed: {result.Error}", true);
                 _snackbarService.Show(
                     "Installation Failed", 
-                    result.Error, 
+                    result.Error ?? "An unknown error occurred.", 
                     "Error", 
                     "❌", 
                     TimeSpan.FromSeconds(5));
@@ -449,21 +439,21 @@ public partial class ModCatalogViewModel : BaseViewModel
     }
 
     [RelayCommand(CanExecute = nameof(CanUninstallMod))]
-    private async Task UninstallModAsync()
+    private async Task UninstallModAsync(ModInfo mod)
     {
-        if (SelectedInstalledMod == null || GameInstallation == null) return;
+        if (mod == null || GameInstallation == null) return;
 
         var result = await _dialogService.ShowConfirmationDialogAsync(
             "Uninstall Mod",
-            $"Are you sure you want to uninstall '{SelectedInstalledMod.Name}'? This action cannot be undone.");
+            $"Are you sure you want to uninstall '{mod.Name}'? This action cannot be undone.");
             
         if (!result) return;
 
         await ExecuteAsync(async () =>
         {
-            ModStatus = $"Uninstalling {SelectedInstalledMod.Name}...";
+            ModStatus = $"Uninstalling {mod.Name}...";
             
-            var uninstallResult = await _modManager.UninstallMod(SelectedInstalledMod.Id, GameInstallation);
+            var uninstallResult = await _modManager.UninstallMod(mod.Id, GameInstallation);
             
             if (uninstallResult.Success)
             {
@@ -471,7 +461,7 @@ public partial class ModCatalogViewModel : BaseViewModel
                 SetStatus("Mod uninstalled successfully");
                 _snackbarService.Show(
                     "Success", 
-                    $"Successfully uninstalled {SelectedInstalledMod.Name}.", 
+                    $"Successfully uninstalled {mod.Name}.", 
                     "Success", 
                     "✅", 
                     TimeSpan.FromSeconds(3));
@@ -483,7 +473,7 @@ public partial class ModCatalogViewModel : BaseViewModel
                 SetStatus($"Uninstallation failed: {uninstallResult.Error}", true);
                 _snackbarService.Show(
                     "Uninstallation Failed", 
-                    uninstallResult.Error, 
+                    uninstallResult.Error ?? "An unknown error occurred.", 
                     "Error", 
                     "❌", 
                     TimeSpan.FromSeconds(5));
@@ -492,15 +482,15 @@ public partial class ModCatalogViewModel : BaseViewModel
     }
 
     [RelayCommand(CanExecute = nameof(CanEnableMod))]
-    private async Task EnableModAsync()
+    private async Task EnableModAsync(ModInfo mod)
     {
-        if (SelectedInstalledMod == null || GameInstallation == null || SelectedInstalledMod.IsEnabled) return;
+        if (mod == null || GameInstallation == null || mod.IsEnabled) return;
 
         await ExecuteAsync(async () =>
         {
-            ModStatus = $"Enabling {SelectedInstalledMod.Name}...";
+            ModStatus = $"Enabling {mod.Name}...";
             
-            var result = await _modManager.EnableMod(SelectedInstalledMod.Id, GameInstallation);
+            var result = await _modManager.EnableMod(mod.Id, GameInstallation);
             
             if (result.Success)
             {
@@ -508,7 +498,7 @@ public partial class ModCatalogViewModel : BaseViewModel
                 SetStatus("Mod enabled successfully");
                 _snackbarService.Show(
                     "Success", 
-                    $"{SelectedInstalledMod.Name} has been enabled.", 
+                    $"{mod.Name} has been enabled.", 
                     "Success", 
                     "✅", 
                     TimeSpan.FromSeconds(3));
@@ -529,15 +519,15 @@ public partial class ModCatalogViewModel : BaseViewModel
     }
 
     [RelayCommand(CanExecute = nameof(CanDisableMod))]
-    private async Task DisableModAsync()
+    private async Task DisableModAsync(ModInfo mod)
     {
-        if (SelectedInstalledMod == null || GameInstallation == null || !SelectedInstalledMod.IsEnabled) return;
+        if (mod == null || GameInstallation == null || !mod.IsEnabled) return;
 
         await ExecuteAsync(async () =>
         {
-            ModStatus = $"Disabling {SelectedInstalledMod.Name}...";
+            ModStatus = $"Disabling {mod.Name}...";
             
-            var result = await _modManager.DisableMod(SelectedInstalledMod.Id, GameInstallation);
+            var result = await _modManager.DisableMod(mod.Id, GameInstallation);
             
             if (result.Success)
             {
@@ -545,7 +535,7 @@ public partial class ModCatalogViewModel : BaseViewModel
                 SetStatus("Mod disabled successfully");
                 _snackbarService.Show(
                     "Success", 
-                    $"{SelectedInstalledMod.Name} has been disabled.", 
+                    $"{mod.Name} has been disabled.", 
                     "Success", 
                     "✅", 
                     TimeSpan.FromSeconds(3));
@@ -565,39 +555,27 @@ public partial class ModCatalogViewModel : BaseViewModel
         }, "Disabling mod...");
     }
 
-    private bool CanUninstallMod()
+    private bool CanUninstallMod(ModInfo mod)
     {
-        return SelectedInstalledMod != null && SelectedInstalledMod.IsInstalled;
+        return mod != null && mod.IsInstalled;
     }
 
-    private bool CanEnableMod()
+    private bool CanEnableMod(ModInfo mod)
     {
-        return SelectedInstalledMod != null && SelectedInstalledMod.IsInstalled && !SelectedInstalledMod.IsEnabled;
+        return mod != null && mod.IsInstalled && !mod.IsEnabled;
     }
 
-    private bool CanDisableMod()
+    private bool CanDisableMod(ModInfo mod)
     {
-        return SelectedInstalledMod != null && SelectedInstalledMod.IsInstalled && SelectedInstalledMod.IsEnabled;
+        return mod != null && mod.IsInstalled && mod.IsEnabled;
     }
 
-    // properties for XAML binding
-    public bool CanEnableModProperty => CanEnableMod();
-    public bool CanDisableModProperty => CanDisableMod();
-    public bool CanUninstallModProperty => CanUninstallMod();
-
-    [RelayCommand(CanExecute = nameof(CanOpenModSettings))]
-    private async Task OpenModSettingsAsync()
+    [RelayCommand]
+    private async Task OpenModSettingsAsync(ModInfo mod)
     {
-        if (SelectedInstalledMod == null || GameInstallation == null) return;
-        await _dialogService.ShowModSettingsAsync(GameInstallation, SelectedInstalledMod.Id);
+        if (mod == null || GameInstallation == null) return;
+        await _dialogService.ShowModSettingsAsync(GameInstallation, mod.Id);
     }
-
-    private bool CanOpenModSettings()
-    {
-        return SelectedInstalledMod != null;
-    }
-
-    public bool CanOpenModSettingsProperty => CanOpenModSettings();
 
     [RelayCommand]
     private void FilterMods()
@@ -819,13 +797,13 @@ public partial class ModCatalogViewModel : BaseViewModel
     [RelayCommand]
     private async Task ConfigureAutoUpdatesAsync()
     {
-        if (SelectedInstalledMod == null || GameInstallation == null) return;
+        if (SelectedAvailableMod == null || GameInstallation == null) return;
 
-        var settings = await _modUpdateService.GetUpdateSettings(SelectedInstalledMod.Id, GameInstallation);
+        var settings = await _modUpdateService.GetUpdateSettings(SelectedAvailableMod.Id, GameInstallation);
         
         var enableAutoUpdate = await _dialogService.ShowConfirmationDialogAsync(
             "Configure Auto-Updates",
-            $"Enable automatic updates for '{SelectedInstalledMod.Name}'?\n\nThis will automatically download and install updates when they become available.");
+            $"Enable automatic updates for '{SelectedAvailableMod.Name}'?\n\nThis will automatically download and install updates when they become available.");
 
         if (enableAutoUpdate != settings.AutoUpdateEnabled)
         {
@@ -834,11 +812,11 @@ public partial class ModCatalogViewModel : BaseViewModel
 
             if (enableAutoUpdate)
             {
-                SetStatus($"Auto-updates enabled for {SelectedInstalledMod.Name}");
+                SetStatus($"Auto-updates enabled for {SelectedAvailableMod.Name}");
             }
             else
             {
-                SetStatus($"Auto-updates disabled for {SelectedInstalledMod.Name}");
+                SetStatus($"Auto-updates disabled for {SelectedAvailableMod.Name}");
             }
         }
     }
@@ -846,13 +824,13 @@ public partial class ModCatalogViewModel : BaseViewModel
     [RelayCommand]
     private async Task BackupModConfigsAsync()
     {
-        if (SelectedInstalledMod == null || GameInstallation == null) return;
+        if (SelectedAvailableMod == null || GameInstallation == null) return;
 
         await ExecuteAsync(async () =>
         {
             ModStatus = "Backing up mod configurations...";
 
-            var result = await _configService.BackupModConfigs(SelectedInstalledMod.Id, GameInstallation);
+            var result = await _configService.BackupModConfigs(SelectedAvailableMod.Id, GameInstallation);
 
             if (result.Success)
             {
@@ -870,11 +848,11 @@ public partial class ModCatalogViewModel : BaseViewModel
     [RelayCommand]
     private async Task RestoreModConfigsAsync()
     {
-        if (SelectedInstalledMod == null || GameInstallation == null) return;
+        if (SelectedAvailableMod == null || GameInstallation == null) return;
 
         var result = await _dialogService.ShowConfirmationDialogAsync(
             "Restore Mod Configurations",
-            $"Are you sure you want to restore configurations for '{SelectedInstalledMod.Name}'? This will overwrite current settings.");
+            $"Are you sure you want to restore configurations for '{SelectedAvailableMod.Name}'? This will overwrite current settings.");
 
         if (!result) return;
 
@@ -882,7 +860,7 @@ public partial class ModCatalogViewModel : BaseViewModel
         {
             ModStatus = "Restoring mod configurations...";
 
-            var restoreResult = await _configService.RestoreModConfigs(SelectedInstalledMod.Id, GameInstallation);
+            var restoreResult = await _configService.RestoreModConfigs(SelectedAvailableMod.Id, GameInstallation);
 
             if (restoreResult.Success)
             {
@@ -949,5 +927,28 @@ public partial class ModCatalogViewModel : BaseViewModel
                 SetStatus($"Failed to disable auto-updates: {cancelResult.Error}", true);
             }
         }, "Disabling auto-update system...");
+    }
+
+    [RelayCommand]
+    private void OpenModsFolder()
+    {
+        if (GameInstallation == null) return;
+        try
+        {
+            var modsPath = System.IO.Path.Combine(GameInstallation.InstallPath, GameInstallation.ModDirectory);
+            if (!System.IO.Directory.Exists(modsPath))
+            {
+                System.IO.Directory.CreateDirectory(modsPath);
+            }
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = modsPath,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"failed to open mods folder: {ex.Message}", true);
+        }
     }
 }

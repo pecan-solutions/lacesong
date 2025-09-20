@@ -58,7 +58,11 @@
                         
                         <ComboBox Style="{StaticResource DefaultComboBoxStyle}" ItemsSource="{Binding BepInExVersions}" 
                                      SelectedItem="{Binding BepInExVersion}"
-                                     Width="240" HorizontalAlignment="Left"/>
+                                     Width="240" HorizontalAlignment="Left">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource ComboBoxItemStyle}"/>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
                     </StackPanel>
                 </Border>
 
@@ -72,10 +76,14 @@
                         <ComboBox Style="{StaticResource DefaultComboBoxStyle}" ItemsSource="{Binding LogLevels}" 
                                      SelectedItem="{Binding LogLevel}"
                                      Width="240" HorizontalAlignment="Left" 
-                                     Margin="0,0,0,20"/>
+                                     Margin="0,0,0,20">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource ComboBoxItemStyle}"/>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
                         
-                        <StackPanel Orientation="Horizontal">
-                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Open Logs Folder" Command="{Binding OpenLogsFolderCommand}" Margin="0,0,8,0"/>
+                        <StackPanel>
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Open Logs Folder" Command="{Binding OpenLogsFolderCommand}" Margin="0,0,0,8"/>
                             <Button Style="{StaticResource SecondaryButtonStyle}" Content="Clear Logs" Command="{Binding ClearLogsCommand}"/>
                         </StackPanel>
                     </StackPanel>
@@ -97,8 +105,8 @@
                     <StackPanel>
                         <TextBlock Text="Settings Management" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,20"/>
                         
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Export Settings" Command="{Binding ExportSettingsCommand}" Margin="0,0,8,0"/>
+                        <StackPanel Margin="0,0,0,12">
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Export Settings" Command="{Binding ExportSettingsCommand}" Margin="0,0,0,8"/>
                             <Button Style="{StaticResource SecondaryButtonStyle}" Content="Import Settings" Command="{Binding ImportSettingsCommand}" />
                         </StackPanel>
                         
@@ -111,8 +119,8 @@
         <!-- Action Buttons -->
         <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Padding="16" Margin="0,16,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Style="{StaticResource SecondaryButtonStyle}" Content="Reset" Command="{Binding ResetToDefaultsCommand}" Margin="0,0,8,0"/>
-                <Button Style="{StaticResource PrimaryButtonStyle}" Content="Save Settings" Command="{Binding SaveSettingsCommand}" />
+                <Button Style="{StaticResource SecondaryButtonStyle}" Content="Reset" Command="{Binding ResetToDefaultsCommand}" Margin="0,0,8,0" MinWidth="100"/>
+                <Button Style="{StaticResource PrimaryButtonStyle}" Content="Save Settings" Command="{Binding SaveSettingsCommand}" MinWidth="120"/>
             </StackPanel>
         </Border>
     </Grid>

@@ -126,12 +126,75 @@ public class BepInExManager : IBepInExManager
     {
         try
         {
+            // try to get version from the main BepInEx.dll loader first
+            var loaderDllPath = Path.Combine(gameInstall.InstallPath, BepInExLoaderDll);
+            if (File.Exists(loaderDllPath))
+            {
+                var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(loaderDllPath);
+                if (!string.IsNullOrEmpty(versionInfo.FileVersion))
+                {
+                    return versionInfo.FileVersion;
+                }
+            }
+
+            // fallback to BepInEx.Core.dll if main loader doesn't have version info
             var coreDllPath = Path.Combine(gameInstall.InstallPath, BepInExCoreDll);
-            if (!File.Exists(coreDllPath))
+            if (File.Exists(coreDllPath))
+            {
+                var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(coreDllPath);
+                if (!string.IsNullOrEmpty(versionInfo.FileVersion))
+                {
+                    return versionInfo.FileVersion;
+                }
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public BepInExVersionInfo? GetBepInExVersionInfo(GameInstallation gameInstall)
+    {
+        try
+        {
+            var loaderDllPath = Path.Combine(gameInstall.InstallPath, BepInExLoaderDll);
+            var coreDllPath = Path.Combine(gameInstall.InstallPath, BepInExCoreDll);
+
+            System.Diagnostics.FileVersionInfo? loaderVersionInfo = null;
+            System.Diagnostics.FileVersionInfo? coreVersionInfo = null;
+
+            // get version info from main loader
+            if (File.Exists(loaderDllPath))
+            {
+                loaderVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(loaderDllPath);
+            }
+
+            // get version info from core dll
+            if (File.Exists(coreDllPath))
+            {
+                coreVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(coreDllPath);
+            }
+
+            // prefer loader version, fallback to core version
+            var primaryVersionInfo = loaderVersionInfo ?? coreVersionInfo;
+            if (primaryVersionInfo == null)
                 return null;
 
-            var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(coreDllPath);
-            return versionInfo.FileVersion;
+            return new BepInExVersionInfo
+            {
+                FileVersion = primaryVersionInfo.FileVersion,
+                ProductVersion = primaryVersionInfo.ProductVersion,
+                CompanyName = primaryVersionInfo.CompanyName,
+                ProductName = primaryVersionInfo.ProductName,
+                Description = primaryVersionInfo.FileDescription,
+                LoaderVersion = loaderVersionInfo?.FileVersion,
+                CoreVersion = coreVersionInfo?.FileVersion,
+                LoaderPath = loaderDllPath,
+                CorePath = coreDllPath
+            };
         }
         catch
         {
