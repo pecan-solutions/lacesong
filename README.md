@@ -288,7 +288,3 @@ Lacesong is not affiliated with Team Cherry or Hollow Knight: Silksong. It is a 
 ## Documentation
 
 - **[USAGE.md](USAGE.md)** - Comprehensive usage guide with step-by-step instructions
-- **Architecture Overview** - Technical documentation of the system design
-- **API Reference** - Core library interfaces and services
-- **Contributing Guidelines** - How to contribute to the project
-- **Build Instructions** - How to build and develop Lacesong locally
