@@ -33,9 +33,6 @@
         <Border Grid.Column="0" Background="{StaticResource SidebarBackgroundBrush}"
                 BorderBrush="{StaticResource GlassBorderBrush}"
                 BorderThickness="0,0,1,0">
-            <Border.Effect>
-                <BlurEffect Radius="20" />
-            </Border.Effect>
 
             <Grid>
                 <Grid.RowDefinitions>
@@ -80,7 +77,7 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:SettingsViewModel}" Style="{StaticResource NavigationButtonStyle}" VerticalAlignment="Bottom" Margin="12,0,12,24"
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:SettingsViewModel}" Style="{StaticResource NavigationButtonStyle}"
                             Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:SettingsViewModel}}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="⚙️" FontSize="16" />
@@ -103,9 +100,6 @@
             <Border Grid.Row="1" Background="{StaticResource CardBackgroundBrush}"
                     Margin="0,0,8,8"
                     CornerRadius="8,0,0,8">
-                <Border.Effect>
-                    <BlurEffect Radius="20" />
-                </Border.Effect>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
@@ -134,12 +128,12 @@
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <TextBlock Text="✅" FontSize="16" />
-                                               Foreground="{StaticResource SuccessBrush}"
-                                               Visibility="{Binding HasError, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                                <TextBlock Text="❌" FontSize="16" />
-                                               Foreground="{StaticResource ErrorBrush}"
-                                               Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                <TextBlock Text="✅" FontSize="16" 
+                                           Foreground="{StaticResource SuccessBrush}"
+                                           Visibility="{Binding HasError, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                <TextBlock Text="❌" FontSize="16" 
+                                           Foreground="{StaticResource ErrorBrush}"
+                                           Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                 <TextBlock Text="{Binding IsBusy, Converter={StaticResource BusyStatusConverter}}"
                                            VerticalAlignment="Center" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="8,0,0,0"/>
                             </StackPanel>

@@ -27,8 +27,10 @@ public class UpdateService : IUpdateService
     {
         _logger = logger;
         _githubClient = new GitHubClient(new ProductHeaderValue("Lacesong"));
-        _repositoryOwner = "YourOrg"; // replace with actual repository owner
-        _repositoryName = "Lacesong"; // replace with actual repository name
+        // temporarily disable update checking by using a non-existent repo
+        // this prevents startup crashes during development
+        _repositoryOwner = "placeholder"; 
+        _repositoryName = "placeholder"; 
     }
 
     public async Task<UpdateInfo> CheckForUpdatesAsync()
@@ -36,6 +38,13 @@ public class UpdateService : IUpdateService
         try
         {
             _logger.LogInformation("Checking for updates...");
+            
+            // skip update check during development with placeholder repo
+            if (_repositoryOwner == "placeholder" || _repositoryName == "placeholder")
+            {
+                _logger.LogInformation("Update checking disabled for development");
+                return new UpdateInfo { IsUpdateAvailable = false };
+            }
             
             var releases = await _githubClient.Repository.Release.GetAll(_repositoryOwner, _repositoryName);
             var latestRelease = releases.FirstOrDefault(r => !r.Prerelease);

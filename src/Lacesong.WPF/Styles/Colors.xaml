@@ -4,10 +4,10 @@
     <!-- Enhanced Glassmorphic Color Palette -->
 
     <!-- Base Colors -->
-    <Color x:Key="PrimaryColor">#6366f1</Color>
-    <Color x:Key="PrimaryHoverColor">#5b5cf0</Color>
-    <Color x:Key="AccentColor">#8b5cf6</Color>
-    <Color x:Key="AccentHoverColor">#7c3aed</Color>
+    <Color x:Key="PrimaryColor">#3b82f6</Color>
+    <Color x:Key="PrimaryHoverColor">#2563eb</Color>
+    <Color x:Key="AccentColor">#06b6d4</Color>
+    <Color x:Key="AccentHoverColor">#0891b2</Color>
 
     <!-- Text Colors -->
     <Color x:Key="PrimaryTextColor">#ffffff</Color>
@@ -35,18 +35,18 @@
     <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}"/>
 
     <!-- Glass Effect Brushes -->
-    <SolidColorBrush x:Key="GlassPrimaryBrush" Color="#14FFFFFF" /> <!-- 8% opacity -->
-    <SolidColorBrush x:Key="GlassSecondaryBrush" Color="#1FFFFFFF" /> <!-- 12% opacity -->
-    <SolidColorBrush x:Key="GlassTertiaryBrush" Color="#29FFFFFF" /> <!-- 16% opacity -->
-    <SolidColorBrush x:Key="GlassBorderBrush" Color="#33FFFFFF" /> <!-- 20% opacity -->
-    <SolidColorBrush x:Key="GlassBorderHoverBrush" Color="#4DFFFFFF" /> <!-- 30% opacity -->
+    <SolidColorBrush x:Key="GlassPrimaryBrush" Color="#0DFFFFFF" /> <!-- 5% opacity -->
+    <SolidColorBrush x:Key="GlassSecondaryBrush" Color="#14FFFFFF" /> <!-- 8% opacity -->
+    <SolidColorBrush x:Key="GlassTertiaryBrush" Color="#1AFFFFFF" /> <!-- 10% opacity -->
+    <SolidColorBrush x:Key="GlassBorderBrush" Color="#1FFFFFFF" /> <!-- 12% opacity -->
+    <SolidColorBrush x:Key="GlassBorderHoverBrush" Color="#26FFFFFF" /> <!-- 15% opacity -->
 
     <!-- Component Specific Brushes -->
-    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#0FFFFFFF" /> <!-- 6% opacity -->
-    <SolidColorBrush x:Key="CardHoverBrush" Color="#1AFFFFFF" /> <!-- 10% opacity -->
-    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#33000000" /> <!-- 20% opacity -->
-    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#26000000" /> <!-- 15% opacity -->
-    <SolidColorBrush x:Key="StatusBackgroundBrush" Color="#1A000000" /> <!-- 10% opacity -->
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#0AFFFFFF" /> <!-- 4% opacity -->
+    <SolidColorBrush x:Key="CardHoverBrush" Color="#14FFFFFF" /> <!-- 8% opacity -->
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#1A000000" /> <!-- 10% opacity -->
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#0D000000" /> <!-- 5% opacity -->
+    <SolidColorBrush x:Key="StatusBackgroundBrush" Color="#0A000000" /> <!-- 4% opacity -->
 
     <!-- Button Brushes -->
     <LinearGradientBrush x:Key="ButtonPrimaryBrush" StartPoint="0,0" EndPoint="1,1">
@@ -59,7 +59,7 @@
         <GradientStop Color="{StaticResource AccentHoverColor}" Offset="1.0" />
     </LinearGradientBrush>
 
-    <SolidColorBrush x:Key="ButtonSecondaryBrush" Color="#1AFFFFFF" /> <!-- 10% opacity -->
-    <SolidColorBrush x:Key="ButtonSecondaryHoverBrush" Color="#26FFFFFF" /> <!-- 15% opacity -->
+    <SolidColorBrush x:Key="ButtonSecondaryBrush" Color="#14FFFFFF" /> <!-- 8% opacity -->
+    <SolidColorBrush x:Key="ButtonSecondaryHoverBrush" Color="#1AFFFFFF" /> <!-- 10% opacity -->
 
 </ResourceDictionary>

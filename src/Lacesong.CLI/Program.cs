@@ -18,7 +18,7 @@ class Program
         // create services
         var gameDetector = new GameDetector();
         var bepinexManager = new BepInExManager();
-        var modManager = new ModManager();
+        var modManager = new ModManager(bepinexManager);
         var backupManager = new BackupManager();
         var modIndexService = new ModIndexService();
         var verificationService = new VerificationService();

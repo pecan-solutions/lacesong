@@ -95,9 +95,26 @@ public class BepInExManager : IBepInExManager
         try
         {
             var bepinexPath = Path.Combine(gameInstall.InstallPath, "BepInEx");
+            
+            // check if bepinex directory exists
+            if (!Directory.Exists(bepinexPath))
+                return false;
+            
+            // check for core bepinex files - these are the essential files for bepinex to work
+            var coreDllPath = Path.Combine(gameInstall.InstallPath, BepInExCoreDll);
+            var loaderDllPath = Path.Combine(gameInstall.InstallPath, BepInExLoaderDll);
+            
+            // bepinex is installed if we have the core dll files
+            var hasCoreFiles = File.Exists(coreDllPath) && File.Exists(loaderDllPath);
+            
+            // also check for alternative doorstop files that might be present
             var winhttpPath = Path.Combine(gameInstall.InstallPath, "winhttp.dll");
-
-            return Directory.Exists(bepinexPath) && File.Exists(winhttpPath);
+            var doorstopConfigPath = Path.Combine(gameInstall.InstallPath, "doorstop_config.ini");
+            
+            // bepinex is considered installed if we have either:
+            // 1. the core dll files (most reliable indicator)
+            // 2. or the doorstop files (legacy/alternative setup)
+            return hasCoreFiles || (File.Exists(winhttpPath) && File.Exists(doorstopConfigPath));
         }
         catch
         {

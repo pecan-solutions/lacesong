@@ -10,8 +10,14 @@ namespace Lacesong.Core.Services;
 /// </summary>
 public class ModManager : IModManager
 {
+    private readonly IBepInExManager _bepInExManager;
     private const string ModManifestFileName = "manifest.json";
     private const string ModInfoFileName = "modinfo.json";
+
+    public ModManager(IBepInExManager bepInExManager)
+    {
+        _bepInExManager = bepInExManager;
+    }
 
     public async Task<OperationResult> InstallModFromZip(string source, GameInstallation gameInstall)
     {
@@ -24,7 +30,7 @@ public class ModManager : IModManager
             }
 
             // check if bepinex is installed
-            if (!IsBepInExInstalled(gameInstall))
+            if (!_bepInExManager.IsBepInExInstalled(gameInstall))
             {
                 return OperationResult.ErrorResult("BepInEx is not installed", "BepInEx required for mod installation");
             }
@@ -301,11 +307,6 @@ public class ModManager : IModManager
         return File.Exists(executablePath);
     }
 
-    private bool IsBepInExInstalled(GameInstallation gameInstall)
-    {
-        var bepinexPath = Path.Combine(gameInstall.InstallPath, "BepInEx");
-        return Directory.Exists(bepinexPath);
-    }
 
     private async Task<OperationResult> DownloadMod(string url)
     {
