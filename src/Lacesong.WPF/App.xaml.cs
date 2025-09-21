@@ -61,6 +61,7 @@ public partial class App : Application
         services.AddTransient<MainViewModel>();
         services.AddTransient<HomeViewModel>();
         services.AddTransient<GameDetectionViewModel>();
+        services.AddTransient<GameNotSelectedViewModel>();
         services.AddTransient<BepInExInstallViewModel>();
         services.AddTransient<ModCatalogViewModel>();
         services.AddTransient<SettingsViewModel>();

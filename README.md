@@ -1,5 +1,8 @@
 # Lacesong
 
+![Latest Version Screenshot](docs/lacesongscreenshot.png)
+*Latest version of Lacesong showing the modern WPF interface*
+
 A cross-platform mod management and loader tool for Unity/Mono games (starting with Hollow Knight: Silksong).
 
 Lacesong provides players with a simple, safe, and consistent way to install, manage, and update community mods. Inspired by prior tools like Lumafly and Scarab, Lacesong focuses on automation, transparency, and cross-platform compatibility, eliminating the need for manual file editing or fragile patching processes.
@@ -285,7 +288,3 @@ Lacesong is not affiliated with Team Cherry or Hollow Knight: Silksong. It is a 
 ## Documentation
 
 - **[USAGE.md](USAGE.md)** - Comprehensive usage guide with step-by-step instructions
-- **Architecture Overview** - Technical documentation of the system design
-- **API Reference** - Core library interfaces and services
-- **Contributing Guidelines** - How to contribute to the project
-- **Build Instructions** - How to build and develop Lacesong locally

@@ -129,14 +129,24 @@ public partial class ModCatalogViewModel : BaseViewModel
         Categories.Add("Developer");
     }
 
+    public async Task InitializeAsync()
+    {
+        if (GameInstallation == null)
+        {
+            Logger.LogError("Cannot initialize {ViewModel} without a game installation", nameof(ModCatalogViewModel));
+            return;
+        }
+
+        await RefreshModsAsync();
+        await RefreshAvailableModsAsync();
+        await CheckForUpdatesAsync();
+        await DetectConflictsAsync();
+        await CheckCompatibilityAsync();
+    }
+
     public void SetGameInstallation(GameInstallation gameInstallation)
     {
         GameInstallation = gameInstallation;
-        _ = RefreshModsAsync(); // fire and forget
-        _ = RefreshAvailableModsAsync(); // fire and forget
-        _ = CheckForUpdatesAsync(); // fire and forget
-        _ = DetectConflictsAsync(); // fire and forget
-        _ = CheckCompatibilityAsync(); // fire and forget
     }
 
     [RelayCommand]

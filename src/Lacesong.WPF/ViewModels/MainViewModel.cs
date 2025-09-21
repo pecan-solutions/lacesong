@@ -84,13 +84,13 @@ public partial class MainViewModel : BaseViewModel
             // if game is detected, go directly to mod management
             if (IsGameDetected && CurrentGame != null)
             {
-                Navigate(typeof(HomeViewModel));
+                await NavigateAsync(typeof(HomeViewModel));
                 SetStatus($"Ready to manage mods for {CurrentGame.Name}");
             }
             else
             {
                 // navigate to game detection if no game is found
-                Navigate(typeof(GameDetectionViewModel));
+                await NavigateAsync(typeof(GameDetectionViewModel));
                 SetStatus("Please detect or select your game installation");
             }
         }, "Initializing Lacesong...");
@@ -111,14 +111,14 @@ public partial class MainViewModel : BaseViewModel
                 SetStatus($"Detected {game.Name} at {game.InstallPath}");
                 
                 // navigate to home if game is detected
-                Navigate(typeof(HomeViewModel));
+                await NavigateAsync(typeof(HomeViewModel));
             }
             else
             {
                 IsGameDetected = false;
                 SetStatus("No game installation detected. Please select a game directory manually.");
                 // stay on game detection screen
-                Navigate(typeof(GameDetectionViewModel));
+                await NavigateAsync(typeof(GameDetectionViewModel));
             }
         });
     }
@@ -139,7 +139,7 @@ public partial class MainViewModel : BaseViewModel
                     CurrentGame = game;
                     IsGameDetected = true;
                     SetStatus($"Detected {game.Name} at {game.InstallPath}");
-                    Navigate(typeof(HomeViewModel));
+                    await NavigateAsync(typeof(HomeViewModel));
                 }
                 else
                 {
@@ -148,20 +148,33 @@ public partial class MainViewModel : BaseViewModel
             });
         }
     }
-
+ 
     [RelayCommand]
-    private void Navigate(Type viewModelType)
+    private async Task NavigateAsync(Type viewModelType)
     {
-        CurrentViewModel = (BaseViewModel?)_serviceProvider.GetService(viewModelType);
+        // prevent navigation to certain views if no game is selected
+        if (CurrentGame == null &&
+            (viewModelType == typeof(ModCatalogViewModel) ||
+             viewModelType == typeof(BepInExInstallViewModel)))
+        {
+            await NavigateAsync(typeof(GameNotSelectedViewModel));
+            return;
+        }
         
+        CurrentViewModel = (BaseViewModel?)_serviceProvider.GetService(viewModelType);
+
         // pass current game to viewmodels that need it
         if (CurrentViewModel is BepInExInstallViewModel bepinexViewModel && CurrentGame != null)
         {
             bepinexViewModel.SetGameInstallation(CurrentGame);
         }
-        else if (CurrentViewModel is ModCatalogViewModel modCatalogViewModel && CurrentGame != null)
+        else if (CurrentViewModel is ModCatalogViewModel modCatalogViewModel)
         {
-            modCatalogViewModel.SetGameInstallation(CurrentGame);
+            if (CurrentGame != null)
+            {
+                modCatalogViewModel.SetGameInstallation(CurrentGame);
+                await modCatalogViewModel.InitializeAsync();
+            }
         }
     }
 
@@ -241,7 +254,7 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     private void OpenSettings()
     {
-        Navigate(typeof(SettingsViewModel));
+        NavigateAsync(typeof(SettingsViewModel));
     }
 
     [RelayCommand]
