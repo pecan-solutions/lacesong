@@ -11,7 +11,7 @@ Lacesong provides players with a simple, safe, and consistent way to install, ma
 
 ### Core Functionality
 - **Modern WPF Interface** - Clean, intuitive dark-themed UI with MVVM architecture
-- **Automatic Game Detection** - Finds Hollow Knight Silksong installations automatically via Steam/Epic/GoG registry scanning or manual selection
+- **Automatic Game Detection** - Finds Hollow Knight Silksong installations automatically via Steam/Epic/GoG/Xbox Game Pass registry scanning or manual selection
 - **BepInEx Management** - One-click BepInEx installation with version selection and configuration
 - **Comprehensive Mod Management** - Install mods from files or URLs with dependency resolution
 - **Built-in Logging System** - Comprehensive logging with easy access to log files

@@ -21,6 +21,8 @@
             <converters:EnabledStatusConverter x:Key="EnabledStatusConverter"/>
             <converters:ModStatusConverter x:Key="ModStatusConverter"/>
             <converters:ModStatusColorConverter x:Key="ModStatusColorConverter"/>
+            <converters:EnableDisableTextConverter x:Key="EnableDisableTextConverter"/>
+            <converters:SelectionBorderThicknessConverter x:Key="SelectionBorderThicknessConverter"/>
             <converters:GameStatusConverter x:Key="GameStatusConverter"/>
             <converters:ActiveViewConverter x:Key="ActiveViewConverter"/>
         </ResourceDictionary>

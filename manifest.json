@@ -41,6 +41,7 @@
       "steamAppId": "1030300",
       "epicAppId": "hollow-knight-silksong",
       "gogAppId": "hollow_knight_silksong",
+      "xboxAppId": "9NQZQZQZQZQZ",
       "bepInExVersion": "5.4.22",
       "modDirectory": "BepInEx/plugins"
     }

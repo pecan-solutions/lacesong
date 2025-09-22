@@ -12,14 +12,9 @@ public class ModStatusColorConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is string status)
+        if (value is bool isEnabled)
         {
-            return status switch
-            {
-                "Enabled" => Brushes.Green,
-                "Disabled" => Brushes.Orange,
-                _ => Brushes.Gray
-            };
+            return isEnabled ? Brushes.Green : Brushes.Orange;
         }
         return Brushes.Gray;
     }

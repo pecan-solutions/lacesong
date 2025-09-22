@@ -8,7 +8,7 @@ Lacesong is a comprehensive mod management system for Unity/Mono games (starting
 
 ### Lacesong.Core Library
 Complete implementation with all APIs:
-- **Game Detection**: Automatic detection from Steam/Epic/GOG/manual paths
+- **Game Detection**: Automatic detection from Steam/Epic/GOG/Xbox Game Pass/manual paths
 - **BepInEx Management**: Install, update, and manage BepInEx mod loader
 - **Mod Management**: Install, uninstall, enable/disable mods with dependency resolution
 - **Backup & Restore**: Complete configuration backups with restore points

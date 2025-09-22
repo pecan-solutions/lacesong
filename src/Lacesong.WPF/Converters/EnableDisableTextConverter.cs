@@ -5,17 +5,17 @@ using System.Windows.Data;
 namespace Lacesong.WPF.Converters;
 
 /// <summary>
-/// converts mod status to string
+/// converts enabled status to enable/disable text
 /// </summary>
-public class ModStatusConverter : IValueConverter
+public class EnableDisableTextConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is bool isEnabled)
         {
-            return isEnabled ? "Active" : "Inactive";
+            return isEnabled ? "Disable" : "Enable";
         }
-        return "Unknown";
+        return "Enable";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

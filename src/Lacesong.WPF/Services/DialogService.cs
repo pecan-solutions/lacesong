@@ -99,6 +99,20 @@ public class DialogService : IDialogService
             window.ShowDialog();
         });
     }
+
+    public async Task ShowModDetailsAsync(Lacesong.Core.Models.ThunderstorePackage package)
+    {
+        await Task.Run(() =>
+        {
+            var dlg = new Lacesong.WPF.Views.ModDetailsDialog
+            {
+                DataContext = package,
+                Owner = Application.Current.MainWindow,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+            dlg.ShowDialog();
+        });
+    }
 }
 
 /// <summary>

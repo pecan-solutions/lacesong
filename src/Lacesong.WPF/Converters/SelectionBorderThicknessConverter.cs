@@ -1,21 +1,22 @@
 using System;
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 
 namespace Lacesong.WPF.Converters;
 
 /// <summary>
-/// converts mod status to string
+/// converts selection status to border thickness
 /// </summary>
-public class ModStatusConverter : IValueConverter
+public class SelectionBorderThicknessConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is bool isEnabled)
+        if (value is bool isSelected)
         {
-            return isEnabled ? "Active" : "Inactive";
+            return isSelected ? new Thickness(2) : new Thickness(1);
         }
-        return "Unknown";
+        return new Thickness(1);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

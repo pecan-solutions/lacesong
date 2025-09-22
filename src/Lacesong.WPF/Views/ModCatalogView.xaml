@@ -50,54 +50,78 @@
             </Grid>
         </Border>
 
-        <!-- Mod List -->
-        <Grid Grid.Row="2">
-            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding InstalledMods}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,16,16" MinWidth="300" MaxWidth="350">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Name}" Style="{StaticResource SectionHeaderTextBlockStyle}" Margin="0,0,0,12"/>
-                                    <TextBlock Text="{Binding Description}" Style="{StaticResource SmallFadedTextBlockStyle}"
-                                               TextWrapping="Wrap" Margin="0,0,0,8" MaxHeight="60" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding Author, StringFormat='Author: {0}'}" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,0,0,4"/>
-                                    <TextBlock Text="{Binding Version, StringFormat='Version: {0}'}" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,0,0,16"/>
-
-                                    <!-- Action Buttons -->
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <Button Grid.Column="0" Style="{StaticResource SecondaryButtonStyle}" Content="Enable" 
-                                                Command="{Binding DataContext.EnableModCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}"
-                                                IsEnabled="{Binding CanBeEnabled}" Margin="0,0,4,0"/>
-
-                                        <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" Content="Disable"
-                                                Command="{Binding DataContext.DisableModCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}"
-                                                IsEnabled="{Binding IsEnabled}" Margin="4,0,4,0"/>
-
-                                        <Button Grid.Column="2" Style="{StaticResource DangerButtonStyle}" Content="Uninstall"
-                                                Command="{Binding DataContext.UninstallModCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}"
-                                                IsEnabled="{Binding CanBeUninstalled}" Margin="4,0,0,0"/>
-                                    </Grid>
+        <!-- Mod Cards -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding InstalledMods}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" Margin="0,0,0,16"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="320" Height="280" Margin="0,0,16,16" 
+                                Style="{StaticResource CardBorderStyle}"
+                                CornerRadius="12"
+                                Padding="16">
+                            <Border.InputBindings>
+                                <MouseBinding Gesture="LeftClick" Command="{Binding DataContext.SelectInstalledModCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                            </Border.InputBindings>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <!-- Header with Status -->
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                    <!-- Status Indicator -->
+                                    <Ellipse Width="12" Height="12" 
+                                             Fill="{Binding IsEnabled, Converter={StaticResource ModStatusColorConverter}}" 
+                                             Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongTextBlockStyle}" 
+                                               TextWrapping="Wrap" VerticalAlignment="Center"/>
                                 </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </Grid>
+                                
+                                <!-- Description -->
+                                <TextBlock Grid.Row="1" Text="{Binding Description}" 
+                                           Style="{StaticResource SmallFadedTextBlockStyle}"
+                                           TextWrapping="Wrap" Margin="0,0,0,12"
+                                           VerticalAlignment="Top"/>
+                                
+                                <!-- Author and Version -->
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,16">
+                                    <TextBlock Text="{Binding Author, StringFormat='by {0}'}" 
+                                               Style="{StaticResource SmallFadedTextBlockStyle}" 
+                                               Margin="0,0,12,0"/>
+                                    <TextBlock Text="{Binding Version, StringFormat='v{0}'}" 
+                                               Style="{StaticResource SmallFadedTextBlockStyle}"/>
+                                </StackPanel>
+                                
+                                <!-- Action Buttons -->
+                                <StackPanel Grid.Row="3" Orientation="Vertical">
+                                    <!-- Toggle Enable/Disable Button -->
+                                    <Button Style="{StaticResource PrimaryButtonStyle}" 
+                                            Content="{Binding IsEnabled, Converter={StaticResource EnableDisableTextConverter}}" 
+                                            Command="{Binding DataContext.ToggleModCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Stretch"
+                                            Margin="0,0,0,8"/>
+                                    
+                                    <!-- Uninstall Button -->
+                                    <Button Style="{StaticResource SecondaryButtonStyle}" 
+                                            Content="Uninstall" 
+                                            Command="{Binding DataContext.UninstallModCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Stretch"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
     </Grid>
 </UserControl>

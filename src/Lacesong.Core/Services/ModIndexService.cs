@@ -42,15 +42,22 @@ public class ModIndexService : IModIndexService
             response.EnsureSuccessStatusCode();
             
             var json = await response.Content.ReadAsStringAsync();
-            var modIndex = JsonSerializer.Deserialize<ModIndex>(json);
-            
-            if (modIndex != null)
+            try
             {
-                // cache the index
-                await CacheModIndex(modIndex, repositoryUrl);
+                var modIndex = JsonSerializer.Deserialize<ModIndex>(json);
+                if (modIndex != null)
+                {
+                    // cache the index
+                    await CacheModIndex(modIndex, repositoryUrl);
+                }
+                return modIndex;
             }
-            
-            return modIndex;
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"Error deserializing mod index from {repositoryUrl}: {ex.Message}");
+                Console.WriteLine($"Problematic JSON: {json}");
+                return null;
+            }
         }
         catch (Exception ex)
         {
@@ -370,7 +377,15 @@ public class ModIndexService : IModIndexService
             if (File.Exists(cachePath))
             {
                 var json = await File.ReadAllTextAsync(cachePath);
-                _cachedIndex = JsonSerializer.Deserialize<ModIndex>(json);
+                try
+                {
+                    _cachedIndex = JsonSerializer.Deserialize<ModIndex>(json);
+                }
+                catch (JsonException ex)
+                {
+                    Console.WriteLine($"Error deserializing cached index: {ex.Message}");
+                    Console.WriteLine($"Problematic JSON: {json}");
+                }
             }
         }
         catch (Exception ex)
@@ -399,10 +414,18 @@ public class ModIndexService : IModIndexService
             if (File.Exists(_repositoriesConfigPath))
             {
                 var json = await File.ReadAllTextAsync(_repositoriesConfigPath);
-                var savedRepositories = JsonSerializer.Deserialize<List<ModRepository>>(json);
-                if (savedRepositories != null)
+                try
                 {
-                    _repositories.AddRange(savedRepositories);
+                    var savedRepositories = JsonSerializer.Deserialize<List<ModRepository>>(json);
+                    if (savedRepositories != null)
+                    {
+                        _repositories.AddRange(savedRepositories);
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    Console.WriteLine($"Error loading repositories: {ex.Message}");
+                    Console.WriteLine($"Problematic JSON: {json}");
                 }
             }
         }

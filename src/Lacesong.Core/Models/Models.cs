@@ -28,6 +28,9 @@ public class GameInstallation
     [JsonPropertyName("gogAppId")]
     public string? GogAppId { get; set; }
 
+    [JsonPropertyName("xboxAppId")]
+    public string? XboxAppId { get; set; }
+
     [JsonPropertyName("bepInExVersion")]
     public string BepInExVersion { get; set; } = string.Empty;
 
@@ -67,6 +70,14 @@ public class ModInfo
     [JsonPropertyName("downloadUrl")]
     public string? DownloadUrl { get; set; }
 
+    // optional website/homepage for the mod
+    [JsonPropertyName("websiteUrl")]
+    public string? WebsiteUrl { get; set; }
+
+    // additional tags / categories supplied by the manifest (e.g., ["visual","cosmetic"])
+    [JsonPropertyName("tags")]
+    public List<string> Tags { get; set; } = new();
+
     [JsonPropertyName("filePath")]
     public string? FilePath { get; set; }
 
@@ -88,12 +99,6 @@ public class ModInfo
 
     [JsonPropertyName("installDate")]
     public DateTime? InstallDate { get; set; }
-    
-    [JsonIgnore]
-    public bool CanBeEnabled => IsInstalled && !IsEnabled;
-
-    [JsonIgnore]
-    public bool CanBeUninstalled => IsInstalled;
 }
 
 /// <summary>

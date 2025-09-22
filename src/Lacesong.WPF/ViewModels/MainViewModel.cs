@@ -173,7 +173,6 @@ public partial class MainViewModel : BaseViewModel
             if (CurrentGame != null)
             {
                 modCatalogViewModel.SetGameInstallation(CurrentGame);
-                await modCatalogViewModel.InitializeAsync();
             }
         }
     }

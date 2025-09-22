@@ -603,3 +603,9 @@ public interface IGameLauncher
     /// <returns>operation result</returns>
     Task<OperationResult> LaunchVanilla(GameInstallation gameInstall);
 }
+
+public interface IThunderstoreApiService
+{
+    Task<IReadOnlyList<ThunderstorePackage>> GetPackagesAsync(bool forceRefresh = false, CancellationToken token = default);
+    Task<ThunderstorePackage?> GetPackageAsync(string fullName, CancellationToken token = default);
+}
