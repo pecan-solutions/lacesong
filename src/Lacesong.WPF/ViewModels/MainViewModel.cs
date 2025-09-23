@@ -36,6 +36,10 @@ public partial class MainViewModel : BaseViewModel
         {
             modCatalogViewModel.SetGameInstallation(value);
         }
+        else if (CurrentViewModel is BrowseModsViewModel browse && CurrentGame != null)
+        {
+            browse.SetGameInstallation(CurrentGame);
+        }
     }
 
     [ObservableProperty]
@@ -155,7 +159,8 @@ public partial class MainViewModel : BaseViewModel
         // prevent navigation to certain views if no game is selected
         if (CurrentGame == null &&
             (viewModelType == typeof(ModCatalogViewModel) ||
-             viewModelType == typeof(BepInExInstallViewModel)))
+             viewModelType == typeof(BepInExInstallViewModel) ||
+             viewModelType == typeof(BrowseModsViewModel)))
         {
             await NavigateAsync(typeof(GameNotSelectedViewModel));
             return;
@@ -174,6 +179,10 @@ public partial class MainViewModel : BaseViewModel
             {
                 modCatalogViewModel.SetGameInstallation(CurrentGame);
             }
+        }
+        else if (CurrentViewModel is BrowseModsViewModel browse && CurrentGame != null)
+        {
+            browse.SetGameInstallation(CurrentGame);
         }
     }
 

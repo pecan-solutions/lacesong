@@ -19,8 +19,8 @@
 
         <!-- toolbar -->
         <Border Grid.Row="0" Style="{StaticResource CardBorderStyle}" Padding="16" Margin="0,0,0,16">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="12">
-                <TextBox Style="{StaticResource SearchTextBoxStyle}" Width="240" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Search mods..."/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0" >
+                <TextBox Style="{StaticResource SearchTextBoxStyle}" Width="240" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
                 <ComboBox Width="140" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"/>
                 <CheckBox Content="NSFW" IsChecked="{Binding IncludeNsfw}"/>
                 <CheckBox Content="Deprecated" IsChecked="{Binding IncludeDeprecated}"/>
@@ -47,7 +47,7 @@
                                 </Grid.RowDefinitions>
 
                                 <!-- header -->
-                                <StackPanel Orientation="Horizontal" Grid.Row="0" Spacing="8">
+                                <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0">
                                     <Image Source="{Binding Versions[0].Icon}" Width="32" Height="32"/>
                                     <StackPanel>
                                         <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis"/>
@@ -59,8 +59,8 @@
                                 <TextBlock Grid.Row="1" Text="{Binding Versions[0].Description}" TextWrapping="Wrap" Style="{StaticResource SmallFadedTextBlockStyle}" Margin="0,8,0,8"/>
 
                                 <!-- footer -->
-                                <StackPanel Grid.Row="2" Orientation="Vertical" Spacing="4">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0">
+                                    <StackPanel Orientation="Horizontal" Margin="0">
                                         <TextBlock Text="{Binding RatingScore}"/>
                                         <TextBlock Text="★"/>
                                         <TextBlock Text="{Binding Versions[0].Downloads}"/>
@@ -74,9 +74,7 @@
                                 </StackPanel>
                             </Grid>
                         </Border>
-                        <Border.InputBindings>
-                            <MouseBinding Gesture="LeftDoubleClick" Command="{Binding DataContext.ShowDetailsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                        </Border.InputBindings>
+                        <!-- double-click handled inside item template via event triggers in code-behind if needed -->
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

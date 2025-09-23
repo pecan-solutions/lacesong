@@ -18,6 +18,9 @@ public interface IDialogService
 
     // opens per-mod settings window
     Task ShowModSettingsAsync(GameInstallation installation, string modId);
+
+    // shows detailed thunderstore package dialog
+    Task ShowModDetailsAsync(ThunderstorePackage package);
 }
 
 /// <summary>

@@ -3,13 +3,14 @@ using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using Lacesong.Core.Models;
 using Microsoft.Extensions.Caching.Memory;
+using Lacesong.Core.Interfaces;
 
 namespace Lacesong.Core.Services;
 
 /// <summary>
 /// provides methods to interact with the thunderstore api for hollow knight silksong.
 /// </summary>
-public class ThunderstoreApiService
+public class ThunderstoreApiService : IThunderstoreApiService
 {
     private const string BaseUrl = "https://thunderstore.io/c/hollow-knight-silksong/api/v1/";
     private readonly HttpClient _http;

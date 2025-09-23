@@ -60,8 +60,8 @@ public class Phase5IntegrationTests
         backup.Setup(b => b.CreateBackup(It.IsAny<GameInstallation>(), It.IsAny<string>()))
               .ReturnsAsync(OperationResult.SuccessResult("ok", "backup_path"));
         // simulate restore
-        backup.Setup(b => b.RestoreBackup(It.IsAny<GameInstallation>(), "backup_path"))
-              .ReturnsAsync(OperationResult.SuccessResult());
+        backup.Setup(b => b.RestoreBackup("backup_path", It.IsAny<GameInstallation>()))
+              .ReturnsAsync(OperationResult.SuccessResult("restored"));
         // simulate install failure? We'll succeed install
         modManager.Setup(m => m.InstallModFromZip(It.IsAny<string>(), It.IsAny<GameInstallation>()))
                   .ReturnsAsync(OperationResult.SuccessResult());
@@ -78,7 +78,7 @@ public class Phase5IntegrationTests
         var update = new ModUpdate{ ModId="mod", CurrentVersion="1.0", AvailableVersion="2.0", DownloadUrl="url", UpdateType=UpdateType.Major };
         var res = await service.InstallUpdate(update, game);
         Assert.False(res.Success);
-        backup.Verify(b => b.RestoreBackup(game, "backup_path"), Times.Once);
+        backup.Verify(b => b.RestoreBackup("backup_path", game), Times.Once);
     }
 
     [Fact]

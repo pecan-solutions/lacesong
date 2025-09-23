@@ -18,7 +18,7 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <!-- header -->
-            <StackPanel Orientation="Horizontal" Spacing="12">
+            <StackPanel Orientation="Horizontal" Margin="0">
                 <Image Source="{Binding Versions[0].Icon}" Width="64" Height="64"/>
                 <StackPanel>
                     <TextBlock Text="{Binding FullName}" Style="{StaticResource TitleTextBlockStyle}"/>
@@ -30,13 +30,13 @@
 
             <!-- description & versions -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,16,0,16" Height="400" Width="600">
-                <StackPanel Spacing="16">
+                <StackPanel Margin="0">
                     <TextBlock Text="{Binding Versions[0].Description}" TextWrapping="Wrap"/>
                     <Expander Header="Versions">
                         <ItemsControl ItemsSource="{Binding Versions}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <StackPanel Orientation="Horizontal" Margin="0">
                                         <TextBlock Text="{Binding VersionNumber}" Width="80"/>
                                         <TextBlock Text="{Binding DateCreated, Converter={StaticResource RelativeTimeConverter}}"/>
                                         <TextBlock Text="{Binding Downloads}" Width="80" HorizontalAlignment="Right"/>
@@ -52,7 +52,7 @@
             </ScrollViewer>
 
             <!-- footer buttons -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0">
                 <Button Style="{StaticResource SecondaryButtonStyle}" Content="Close" IsCancel="True" Width="80"/>
                 <Button Style="{StaticResource PrimaryButtonStyle}" Content="Install" Width="100" IsDefault="True" Command="{Binding DataContext.InstallPackageCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
             </StackPanel>

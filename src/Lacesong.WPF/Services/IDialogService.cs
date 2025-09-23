@@ -1,1 +1,0 @@
-    Task ShowModDetailsAsync(ThunderstorePackage package);

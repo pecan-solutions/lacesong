@@ -21,6 +21,11 @@ public class ModManager : IModManager
         _thunderstore = thunderstoreApiService;
     }
 
+    // convenience constructor for test and cli legacy code
+    public ModManager() : this(new BepInExManager(), new ThunderstoreApiService())
+    {
+    }
+
     public async Task<OperationResult> InstallModFromZip(string source, GameInstallation gameInstall)
     {
         try

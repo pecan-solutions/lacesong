@@ -28,6 +28,7 @@
     <PackageReference Include="Karambolo.Extensions.Logging.File" Version="3.6.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.0" />
     <PackageReference Include="Octokit" Version="4.0.0" />
   </ItemGroup>
 

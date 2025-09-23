@@ -18,7 +18,8 @@ class Program
         // create services
         var gameDetector = new GameDetector();
         var bepinexManager = new BepInExManager();
-        var modManager = new ModManager(bepinexManager);
+        var thunderstoreApi = new ThunderstoreApiService();
+        var modManager = new ModManager(bepinexManager, thunderstoreApi);
         var backupManager = new BackupManager();
         var modIndexService = new ModIndexService();
         var verificationService = new VerificationService();
