@@ -70,11 +70,16 @@ public partial class BrowseModsViewModel : BaseViewModel
                 ApplySort();
             }
         };
+        _ = LoadPackagesAsync();
     }
 
     public void SetGameInstallation(GameInstallation install)
     {
         _gameInstall = install;
+        if (Packages.Count == 0)
+        {
+            _ = LoadPackagesAsync();
+        }
     }
 
     private bool FilterPackage(object obj)

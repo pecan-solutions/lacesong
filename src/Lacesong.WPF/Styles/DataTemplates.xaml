@@ -27,4 +27,13 @@
         <views:BrowseModsView />
     </DataTemplate>
 
+    <DataTemplate DataType="{x:Type vm:GameNotSelectedViewModel}">
+        <Border Padding="24">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="No game selected" Style="{StaticResource TitleTextBlockStyle}" HorizontalAlignment="Center" />
+                <TextBlock Text="Please detect or choose your Silksong installation before browsing mods." Style="{StaticResource SmallFadedTextBlockStyle}" TextWrapping="Wrap" Width="400" TextAlignment="Center" Margin="0,12,0,0" />
+            </StackPanel>
+        </Border>
+    </DataTemplate>
+
 </ResourceDictionary>

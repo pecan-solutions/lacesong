@@ -12,6 +12,8 @@ namespace Lacesong.Core.Services;
 /// </summary>
 public class ThunderstoreApiService : IThunderstoreApiService
 {
+    // thunderstore does not yet have a dedicated silksong community, so we temporarily fall back to the hollow knight community.
+    // once an official silksong namespace exists we can update this url or make it configurable via settings.
     private const string BaseUrl = "https://thunderstore.io/c/hollow-knight-silksong/api/v1/";
     private readonly HttpClient _http;
     private readonly ILogger<ThunderstoreApiService>? _logger;

@@ -48,6 +48,8 @@ public partial class App : Application
         services.AddSingleton<ICompatibilityService, CompatibilityService>();
         services.AddSingleton<IModConfigService, ModConfigService>();
         services.AddSingleton<IGameLauncher, GameLauncher>();
+        services.AddSingleton<Lacesong.Core.Services.ThunderstoreApiService>();
+        services.AddSingleton<IThunderstoreApiService>(sp => sp.GetRequiredService<Lacesong.Core.Services.ThunderstoreApiService>());
 
         // wpf services
         services.AddSingleton<ILoggingService, LoggingService>();
@@ -66,6 +68,7 @@ public partial class App : Application
         services.AddTransient<ModCatalogViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<ModSettingsViewModelFactory>();
+        services.AddTransient<BrowseModsViewModel>();
 
         // views
         services.AddTransient<MainWindow>();
@@ -74,6 +77,7 @@ public partial class App : Application
         services.AddTransient<Views.BepInExInstallView>();
         services.AddTransient<Views.ModCatalogView>();
         services.AddTransient<Views.SettingsView>();
+        services.AddTransient<Views.BrowseModsView>();
 
         // logging
         services.AddLogging(builder =>

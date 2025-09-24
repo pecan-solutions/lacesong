@@ -20,10 +20,10 @@
         <!-- toolbar -->
         <Border Grid.Row="0" Style="{StaticResource CardBorderStyle}" Padding="16" Margin="0,0,0,16">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0" >
-                <TextBox Style="{StaticResource SearchTextBoxStyle}" Width="240" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-                <ComboBox Width="140" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"/>
-                <CheckBox Content="NSFW" IsChecked="{Binding IncludeNsfw}"/>
-                <CheckBox Content="Deprecated" IsChecked="{Binding IncludeDeprecated}"/>
+                <TextBox Style="{StaticResource SearchTextBoxStyle}" Width="240" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0" />
+                <ComboBox Width="140" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" Margin="0,0,12,0"/>
+                <CheckBox Content="NSFW" IsChecked="{Binding IncludeNsfw}" Margin="0,0,12,0"/>
+                <CheckBox Content="Deprecated" IsChecked="{Binding IncludeDeprecated}" Margin="0,0,12,0"/>
                 <Button Style="{StaticResource PrimaryButtonStyle}" Content="Refresh" Command="{Binding LoadPackagesCommand}"/>
             </StackPanel>
         </Border>
@@ -47,8 +47,8 @@
                                 </Grid.RowDefinitions>
 
                                 <!-- header -->
-                                <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0">
-                                    <Image Source="{Binding Versions[0].Icon}" Width="32" Height="32"/>
+                                <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,8">
+                                    <Image Source="{Binding Versions[0].Icon}" Width="32" Height="32" Margin="0,0,8,0"/>
                                     <StackPanel>
                                         <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis"/>
                                         <TextBlock Text="{Binding Owner}" Style="{StaticResource SmallFadedTextBlockStyle}"/>
@@ -60,7 +60,7 @@
 
                                 <!-- footer -->
                                 <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0">
-                                    <StackPanel Orientation="Horizontal" Margin="0">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                         <TextBlock Text="{Binding RatingScore}"/>
                                         <TextBlock Text="★"/>
                                         <TextBlock Text="{Binding Versions[0].Downloads}"/>
