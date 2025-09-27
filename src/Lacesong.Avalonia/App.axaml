@@ -6,5 +6,9 @@
 
     <Application.Styles>
         <FluentTheme />
+        <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/Colors.axaml" />
+        <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/Typography.axaml" />
+        <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/Controls.axaml" />
+        <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/DataTemplates.axaml" />
     </Application.Styles>
 </Application>

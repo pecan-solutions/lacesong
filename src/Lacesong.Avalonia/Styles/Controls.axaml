@@ -1,0 +1,43 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- base button style -->
+    <Style Selector="Button.base">
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="MinWidth" Value="120" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- primary button style -->
+    <Style Selector="Button.primary" BasedOn="{StaticResource Button.base}">
+        <Setter Property="Background" Value="{DynamicResource ButtonPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <!-- hover state -->
+        <Setter Selector="&:pointerover" Property="Background" Value="{DynamicResource ButtonPrimaryHoverBrush}" />
+    </Style>
+
+    <!-- secondary button style -->
+    <Style Selector="Button.secondary" BasedOn="{StaticResource Button.base}">
+        <Setter Property="Background" Value="{DynamicResource ButtonSecondaryBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+        <!-- hover state -->
+        <Setter Selector="&:pointerover" Property="Background" Value="{DynamicResource ButtonSecondaryHoverBrush}" />
+        <Setter Selector="&:pointerover" Property="BorderBrush" Value="{DynamicResource GlassBorderHoverBrush}" />
+    </Style>
+
+    <!-- card border style for generic containers -->
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="32" />
+    </Style>
+</ResourceDictionary>

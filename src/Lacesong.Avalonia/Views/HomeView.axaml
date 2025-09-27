@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Lacesong.WPF.ViewModels"
+             x:Class="Lacesong.Avalonia.Views.HomeView">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid RowDefinitions="Auto,Auto">
+            <!-- header -->
+            <StackPanel Margin="0,0,0,32">
+                <TextBlock Text="Welcome to Lacesong" Classes="title" Margin="0,0,0,8"/>
+                <TextBlock Text="Your all-in-one mod manager for Silksong. Get started below." Classes="subtitle"/>
+            </StackPanel>
+
+            <!-- main content -->
+            <Grid Grid.Row="1" MinHeight="500" ColumnDefinitions="*,24,*">
+                <!-- quick actions -->
+                <Border Classes="card">
+                    <StackPanel>
+                        <TextBlock Text="Quick Actions" Classes="sectionHeader" Margin="0,0,0,20"/>
+                        <Button Content="Install Mod from File" Classes="primary"/>
+                        <Button Content="Install Mod from URL" Classes="secondary" Margin="0,0,0,12"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</UserControl>
