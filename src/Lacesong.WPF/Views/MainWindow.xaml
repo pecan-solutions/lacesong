@@ -76,13 +76,6 @@
                             <TextBlock Text="Mods" Margin="16,0,0,0" />
                         </StackPanel>
                     </Button>
-                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:BrowseModsViewModel}" Style="{StaticResource NavigationButtonStyle}"
-                            Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:BrowseModsViewModel}}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🌐" FontSize="16" />
-                            <TextBlock Text="Browse Mods" Margin="16,0,0,0" />
-                        </StackPanel>
-                    </Button>
 
                     <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:SettingsViewModel}" Style="{StaticResource NavigationButtonStyle}"
                             Tag="{Binding CurrentViewModel, Converter={StaticResource ActiveViewConverter}, ConverterParameter={x:Type vm:SettingsViewModel}}">

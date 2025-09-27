@@ -603,25 +603,3 @@ public interface IGameLauncher
     /// <returns>operation result</returns>
     Task<OperationResult> LaunchVanilla(GameInstallation gameInstall);
 }
-
-/// <summary>
-/// interface for interacting with the thunderstore api
-/// </summary>
-public interface IThunderstoreApiService
-{
-    /// <summary>
-    /// fetches the list of all available packages from thunderstore
-    /// </summary>
-    /// <param name="forceRefresh">bypass the local cache when true</param>
-    /// <param name="token">cancellation token</param>
-    /// <returns>read-only list of thunderstore packages</returns>
-    Task<IReadOnlyList<ThunderstorePackage>> GetPackagesAsync(bool forceRefresh = false, CancellationToken token = default);
-
-    /// <summary>
-    /// fetches a single package by its full owner-package name
-    /// </summary>
-    /// <param name="fullName">full package name (e.g. owner-modname)</param>
-    /// <param name="token">cancellation token</param>
-    /// <returns>thunderstore package or null when not found</returns>
-    Task<ThunderstorePackage?> GetPackageAsync(string fullName, CancellationToken token = default);
-}

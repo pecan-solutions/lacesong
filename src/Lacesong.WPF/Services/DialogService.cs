@@ -2,6 +2,7 @@ using Microsoft.Win32;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Linq;
 
 namespace Lacesong.WPF.Services;
 
@@ -104,13 +105,12 @@ public class DialogService : IDialogService
     {
         await Task.Run(() =>
         {
-            var dlg = new Lacesong.WPF.Views.ModDetailsDialog
-            {
-                DataContext = package,
-                Owner = Application.Current.MainWindow,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-            dlg.ShowDialog();
+            // build basic detail string using available properties
+            var latestVersion = package.Versions.FirstOrDefault();
+            var versionNumber = latestVersion?.VersionNumber ?? "unknown";
+            var description = latestVersion?.Description ?? "no description";
+            var details = $"{package.FullName}\nversion: {versionNumber}\nauthor: {package.Owner}\n\n{description}";
+            MessageBox.Show(details, "Mod Details", MessageBoxButton.OK, MessageBoxImage.Information);
         });
     }
 }

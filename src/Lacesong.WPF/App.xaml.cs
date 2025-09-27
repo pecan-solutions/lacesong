@@ -48,8 +48,7 @@ public partial class App : Application
         services.AddSingleton<ICompatibilityService, CompatibilityService>();
         services.AddSingleton<IModConfigService, ModConfigService>();
         services.AddSingleton<IGameLauncher, GameLauncher>();
-        services.AddSingleton<Lacesong.Core.Services.ThunderstoreApiService>();
-        services.AddSingleton<IThunderstoreApiService>(sp => sp.GetRequiredService<Lacesong.Core.Services.ThunderstoreApiService>());
+        services.AddSingleton<IThunderstoreApiService, ThunderstoreApiService>();
 
         // wpf services
         services.AddSingleton<ILoggingService, LoggingService>();

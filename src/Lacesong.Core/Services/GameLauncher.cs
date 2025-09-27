@@ -37,15 +37,22 @@ public class GameLauncher : IGameLauncher
         // ensure mods directory exists even for vanilla launches
         ModManager.EnsureModsDirectory(gameInstall);
         var bepinexPath = Path.Combine(gameInstall.InstallPath, "BepInEx");
-        var tempDisabledPath = bepinexPath + "_disabled";
+        var pluginsPath = Path.Combine(bepinexPath, "plugins");
+
+        // when launching vanilla we only need to hide plugins so that bepinex loads with no mods.
+        // moving the entire bepinex folder caused unnecessary io and increased risk of corrupting the install.
+        // instead, we temporarily rename the plugins folder (or symlink target) and restore after we finish starting the game.
+        var tempDisabledPath = pluginsPath + "_disabled";
         try
         {
-            // temporarily disable BepInEx folder
-            if (Directory.Exists(bepinexPath))
+            // temporarily disable plugins folder (symlinks) to ensure a pure vanilla launch
+            if (Directory.Exists(pluginsPath))
             {
                 if (Directory.Exists(tempDisabledPath))
                     Directory.Delete(tempDisabledPath, true);
-                Directory.Move(bepinexPath, tempDisabledPath);
+
+                // use move to keep operation fast even for large plugin sets. this is effectively O(1) as it just changes directory entry.
+                Directory.Move(pluginsPath, tempDisabledPath);
             }
 
             var result = await StartGame(gameInstall);
@@ -54,8 +61,9 @@ public class GameLauncher : IGameLauncher
         }
         finally
         {
-            // restore folder after exit
-            RestoreBepInEx(bepinexPath, tempDisabledPath);
+            // restore plugins folder immediately after launch attempt – this mirrors previous behaviour where bepinex was restored right away.
+            // note: we don't wait for game process exit to remain non-blocking. this keeps previous semantics while avoiding heavy directory moves.
+            RestorePluginsFolder(pluginsPath, tempDisabledPath);
         }
     }
 
@@ -84,7 +92,7 @@ public class GameLauncher : IGameLauncher
         }
     }
 
-    private static void RestoreBepInEx(string originalPath, string disabledPath)
+    private static void RestorePluginsFolder(string originalPath, string disabledPath)
     {
         try
         {

@@ -11,7 +11,7 @@
     <Authors>Lacesong Team</Authors>
     <Description>Core library for Lacesong mod management tool</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/YourOrg/lacesong.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/pecan-solutions/lacesong.git</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
