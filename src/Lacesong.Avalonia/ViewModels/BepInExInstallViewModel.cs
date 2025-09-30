@@ -12,8 +12,8 @@ namespace Lacesong.Avalonia.ViewModels;
 public partial class BepInExInstallViewModel : BaseViewModel
 {
     private readonly IBepInExManager _bepinexManager;
-    // private readonly IDialogService _dialogService;
-    // private readonly ISnackbarService _snackbarService;
+    private readonly IDialogService _dialogService;
+    private readonly ISnackbarService _snackbarService;
 
     [ObservableProperty]
     private GameInstallation? _gameInstallation;
@@ -50,13 +50,13 @@ public partial class BepInExInstallViewModel : BaseViewModel
 
     public BepInExInstallViewModel(
         ILogger<BepInExInstallViewModel> logger,
-        IBepInExManager bepinexManager
-        /*IDialogService dialogService,
-        ISnackbarService snackbarService*/) : base(logger)
+        IBepInExManager bepinexManager,
+        IDialogService dialogService,
+        ISnackbarService snackbarService) : base(logger)
     {
         _bepinexManager = bepinexManager;
-        // _dialogService = dialogService;
-        // _snackbarService = snackbarService;
+        _dialogService = dialogService;
+        _snackbarService = snackbarService;
     }
 
     public void SetGameInstallation(GameInstallation gameInstallation)
@@ -89,13 +89,10 @@ public partial class BepInExInstallViewModel : BaseViewModel
     {
         if (GameInstallation == null) return;
 
-        // var result = await _dialogService.ShowConfirmationDialogAsync(
-        //     "Install BepInEx",
-        //     $"Are you sure you want to install BepInEx {SelectedVersion} to {GameInstallation.Name}?");
-        //     
-        // if (!result) return;
-        var result = true; // Placeholder
-
+        var result = await _dialogService.ShowConfirmationDialogAsync(
+            "Install BepInEx",
+            $"Are you sure you want to install BepInEx {SelectedVersion} to {GameInstallation.Name}?");
+            
         if (!result) return;
 
         await ExecuteAsync(async () =>
@@ -115,23 +112,23 @@ public partial class BepInExInstallViewModel : BaseViewModel
             if (installResult.Success)
             {
                 InstallationStatus = "BepInEx installed successfully";
-                /*_snackbarService.Show(
+                _snackbarService.Show(
                     "Success", 
                     "BepInEx was installed successfully.", 
                     "Success", 
                     "✅", 
-                    TimeSpan.FromSeconds(3));*/
+                    TimeSpan.FromSeconds(3));
                 CheckBepInExStatus();
             }
             else
             {
                 InstallationStatus = $"Installation failed: {installResult.Error}";
-                /*_snackbarService.Show(
+                _snackbarService.Show(
                     "Installation Failed", 
                     installResult.Error, 
                     "Error", 
                     "❌", 
-                    TimeSpan.FromSeconds(5));*/
+                    TimeSpan.FromSeconds(5));
             }
         }, "Installing BepInEx...");
     }
@@ -141,13 +138,10 @@ public partial class BepInExInstallViewModel : BaseViewModel
     {
         if (GameInstallation == null || !IsBepInExInstalled) return;
 
-        // var result = await _dialogService.ShowConfirmationDialogAsync(
-        //     "Uninstall BepInEx",
-        //     $"Are you sure you want to uninstall BepInEx from {GameInstallation.Name}? This will remove all mods and configurations.");
-        //     
-        // if (!result) return;
-        var result = true; // Placeholder
-
+        var result = await _dialogService.ShowConfirmationDialogAsync(
+            "Uninstall BepInEx",
+            $"Are you sure you want to uninstall BepInEx from {GameInstallation.Name}? This will remove all mods and configurations.");
+            
         if (!result) return;
 
         await ExecuteAsync(async () =>
@@ -159,23 +153,23 @@ public partial class BepInExInstallViewModel : BaseViewModel
             if (uninstallResult.Success)
             {
                 InstallationStatus = "BepInEx uninstalled successfully";
-                /*_snackbarService.Show(
+                _snackbarService.Show(
                     "Success", 
                     "BepInEx was uninstalled successfully.", 
                     "Success", 
                     "✅", 
-                    TimeSpan.FromSeconds(3));*/
+                    TimeSpan.FromSeconds(3));
                 CheckBepInExStatus();
             }
             else
             {
                 InstallationStatus = $"Uninstallation failed: {uninstallResult.Error}";
-                /*_snackbarService.Show(
+                _snackbarService.Show(
                     "Uninstallation Failed", 
                     uninstallResult.Error, 
                     "Error", 
                     "❌", 
-                    TimeSpan.FromSeconds(5));*/
+                    TimeSpan.FromSeconds(5));
             }
         }, "Uninstalling BepInEx...");
     }

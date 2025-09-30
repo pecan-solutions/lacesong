@@ -58,6 +58,7 @@ public partial class App : Application
         services.AddSingleton<ILoggingService, Services.LoggingService>();
         services.AddSingleton<IUpdateService, Services.UpdateService>();
         services.AddSingleton<IDialogService, Services.DialogService>();
+        services.AddSingleton<IContentDialogService, Services.ContentDialogService>();
         services.AddSingleton<INavigationService, Services.NavigationService>();
         services.AddSingleton<ISnackbarService, Services.SnackbarService>();
 

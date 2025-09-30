@@ -1,23 +1,79 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:Lacesong.WPF.ViewModels"
-             x:Class="Lacesong.Avalonia.Views.HomeView">
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Lacesong.Avalonia.Views.HomeView"
+             x:DataType="vm:HomeViewModel">
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Grid RowDefinitions="Auto,Auto">
-            <!-- header -->
-            <StackPanel Margin="0,0,0,32">
-                <TextBlock Text="Welcome to Lacesong" Classes="title" Margin="0,0,0,8"/>
-                <TextBlock Text="Your all-in-one mod manager for Silksong. Get started below." Classes="subtitle"/>
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,32">
+                <TextBlock Text="Welcome to Lacesong" Classes="Title" Margin="0,0,0,8"/>
+                <TextBlock Text="Your all-in-one mod manager for Silksong. Get started below." 
+                           Classes="Subtitle"/>
             </StackPanel>
 
-            <!-- main content -->
+            <!-- Main Content -->
             <Grid Grid.Row="1" MinHeight="500" ColumnDefinitions="*,24,*">
-                <!-- quick actions -->
-                <Border Classes="card">
+                <!-- Quick Actions -->
+                <Border Grid.Column="0" Classes="Card">
                     <StackPanel>
-                        <TextBlock Text="Quick Actions" Classes="sectionHeader" Margin="0,0,0,20"/>
-                        <Button Content="Install Mod from File" Classes="primary"/>
-                        <Button Content="Install Mod from URL" Classes="secondary" Margin="0,0,0,12"/>
+                        <TextBlock Text="Quick Actions" Classes="SectionHeader" Margin="0,0,0,20"/>
+
+                        <Button Content="Install Mod from File" Command="{Binding InstallModFromFileCommand}" 
+                                  Classes="Primary" Margin="0,0,0,12"/>
+
+                        <Button Content="Install Mod from URL" Command="{Binding InstallModFromUrlCommand}" 
+                                  Classes="Secondary" Margin="0,0,0,12"/>
+
+                        <Button Content="Browse Mod Catalog" Command="{Binding $parent[Window].DataContext.NavigateCommand}" 
+                                  CommandParameter="{x:Type vm:BrowseModsViewModel}" 
+                                  Classes="Secondary" Margin="0,0,0,16"/>
+
+                        <Separator Margin="0,8,0,16"/>
+
+                        <TextBlock Text="New to Modding?" Classes="SmallHeader" Margin="0,0,0,8"/>
+                        <TextBlock Classes="Body" Margin="0,0,0,4" Text="1. Make sure your game is detected" />
+                        <TextBlock Classes="Body" Margin="0,0,0,4" Text="2. Install the mod loader if needed" />
+                        <TextBlock Classes="Body" Text="3. Install your favorite mods" Margin="0,0,0,24" />
+                        <Button Content="Launch Modded Game" Command="{Binding $parent[Window].DataContext.LaunchModdedCommand}"
+                                Classes="Primary" Margin="0,0,0,12" MinWidth="160" MinHeight="44"/>
+                        <Button Content="Launch Vanilla Game" Command="{Binding $parent[Window].DataContext.LaunchVanillaCommand}"
+                                Classes="Secondary" Margin="0,0,0,12" MinWidth="160" MinHeight="44"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Game Status -->
+                <Border Grid.Column="2" Classes="Card">
+                    <StackPanel>
+                        <TextBlock Text="Game Status" Classes="SectionHeader" Margin="0,0,0,20"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="✅" FontSize="16"
+                                       IsVisible="{Binding $parent[Window].DataContext.IsGameDetected}"/>
+                            <TextBlock Text="⚠️" FontSize="16"
+                                       IsVisible="{Binding !$parent[Window].DataContext.IsGameDetected}"/>
+                            <TextBlock Text="{Binding $parent[Window].DataContext.IsGameDetected, Converter={StaticResource GameStatusConverter}}" 
+                                       Classes="BodyStrong" Margin="8,0,0,0"/>
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding $parent[Window].DataContext.CurrentGame.Name, StringFormat='Game: {0}'}" 
+                                   Classes="Body" Margin="0,0,0,8"/>
+
+                        <TextBlock Text="{Binding $parent[Window].DataContext.CurrentGame.InstallPath}"
+                                   Classes="SmallFaded"
+                                   TextWrapping="Wrap" Margin="0,0,0,16"/>
+
+                        <Button Content="Detect Game" Command="{Binding $parent[Window].DataContext.DetectGameCommand}" 
+                                  Classes="Secondary"
+                                  IsEnabled="{Binding !$parent[Window].DataContext.IsGameDetected}"
+                                  Margin="0,0,0,8"/>
+
+                        <Button Content="Change Game" Command="{Binding $parent[Window].DataContext.SelectGameDirectoryCommand}" 
+                                  Classes="Secondary"
+                                  IsEnabled="{Binding $parent[Window].DataContext.IsGameDetected}"/>
                     </StackPanel>
                 </Border>
             </Grid>

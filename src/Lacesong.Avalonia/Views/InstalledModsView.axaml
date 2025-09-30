@@ -7,7 +7,7 @@
              x:Class="Lacesong.Avalonia.Views.InstalledModsView"
              x:DataType="vm:InstalledModsViewModel">
 
-    <Grid RowDefinitions="Auto,Auto,*" Margin="24">
+    <Grid RowDefinitions="Auto,Auto,*">
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
             <TextBlock Text="Mod Management" Classes="Title" Margin="0,0,0,8"/>
@@ -49,7 +49,7 @@
                             <Grid RowDefinitions="Auto,*,Auto,Auto">
                                 <!-- Header with Status -->
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
-                                    <Ellipse Width="12" Height="12" VerticalAlignment="Center"/>
+                                    <Ellipse Width="12" Height="12" VerticalAlignment="Center" Fill="{Binding IsEnabled, Converter={StaticResource ModStatusColorConverter}}"/>
                                     <TextBlock Text="{Binding Name}" Classes="BodyStrong" TextWrapping="Wrap" VerticalAlignment="Center"/>
                                 </StackPanel>
                                 

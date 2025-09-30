@@ -6,7 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="Lacesong.Avalonia.Views.BepInExInstallView"
              x:DataType="vm:BepInExInstallViewModel">
-    <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+    <Grid RowDefinitions="Auto,*,Auto">
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
             <TextBlock Text="Mod Loader Installation" Classes="Title" Margin="0,0,0,8"/>

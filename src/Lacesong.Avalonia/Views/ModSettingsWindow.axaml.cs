@@ -1,19 +1,17 @@
 using Avalonia.Controls;
 using Lacesong.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
-using Avalonia.Interactivity;
+using Lacesong.Avalonia.ViewModels;
 
-namespace Lacesong.Avalonia.Views;
-
-public partial class ModSettingsWindow : Window
+namespace Lacesong.Avalonia.Views
 {
-    public ModSettingsWindow()
+    public partial class ModSettingsWindow : Window
     {
-        InitializeComponent();
-    }
-
-    public void CloseWindow(object sender, RoutedEventArgs args)
-    {
-        Close();
+        public ModSettingsWindow(GameInstallation install, string modId)
+        {
+            InitializeComponent();
+            var vm = ((App)App.Current).Services.GetRequiredService<ModSettingsViewModelFactory>()(install, modId);
+            DataContext = vm;
+        }
     }
 }

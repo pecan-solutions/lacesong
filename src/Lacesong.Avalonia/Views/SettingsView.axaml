@@ -7,7 +7,7 @@
              x:Class="Lacesong.Avalonia.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
-    <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+    <Grid RowDefinitions="Auto,*,Auto">
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
             <TextBlock Text="Settings" Classes="Title" Margin="0,0,0,8"/>

@@ -6,7 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="Lacesong.Avalonia.Views.GameDetectionView"
              x:DataType="vm:GameDetectionViewModel">
-    <Grid RowDefinitions="Auto,Auto,*" Margin="24">
+    <Grid RowDefinitions="Auto,Auto,*">
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
             <TextBlock Text="Game Detection" Classes="Title" Margin="0,0,0,8"/>
@@ -48,7 +48,7 @@
         </Grid>
 
         <!-- Detected Games -->
-        <Border Grid.Row="2" Classes="Card" Margin="0,24,0,0" IsVisible="{Binding DetectedGames.Count}">
+        <Border Grid.Row="2" Classes="Card" Margin="0,24,0,0" IsVisible="{Binding DetectedGames.Count, Converter={StaticResource CountToVisibilityConverter}}">
             <StackPanel>
                 <TextBlock Text="Detected Games" Classes="SectionHeader" Margin="0,0,0,16"/>
                 <ListBox ItemsSource="{Binding DetectedGames}" SelectedItem="{Binding SelectedGame}"
