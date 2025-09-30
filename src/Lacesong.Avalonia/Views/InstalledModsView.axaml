@@ -1,0 +1,77 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Lacesong.Avalonia.Views.InstalledModsView"
+             x:DataType="vm:InstalledModsViewModel">
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="24">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock Text="Mod Management" Classes="Title" Margin="0,0,0,8"/>
+            <TextBlock Text="Manage your installed mods and discover new ones." Classes="Subtitle"/>
+        </StackPanel>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="1" Classes="Card" Padding="16" Margin="0,0,0,16">
+            <StackPanel Spacing="12">
+                <!-- Search and Filters -->
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBox Text="{Binding SearchText}" Watermark="Search..." Width="200"/>
+                    <CheckBox Content="Installed Only" IsChecked="{Binding ShowInstalledOnly}"/>
+                    <CheckBox Content="Enabled Only" IsChecked="{Binding ShowEnabledOnly}" />
+                </StackPanel>
+
+                <!-- Action Buttons -->
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Install from File" Command="{Binding InstallModFromFileCommand}"/>
+                    <Button Content="Install from URL" Command="{Binding InstallModFromUrlCommand}"/>
+                    <Button Content="Refresh" Command="{Binding RefreshModsCommand}"/>
+                    <Button Content="Open Mods Folder" Command="{Binding OpenModsFolderCommand}"/>
+                    <Button Content="Settings" Command="{Binding OpenModSettingsCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Mod Cards -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding InstalledMods}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" Margin="0,0,0,16" ItemWidth="320" ItemHeight="280"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Classes="Card" CornerRadius="12" Padding="16" Margin="0,0,16,16">
+                            <Grid RowDefinitions="Auto,*,Auto,Auto">
+                                <!-- Header with Status -->
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                                    <Ellipse Width="12" Height="12" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Name}" Classes="BodyStrong" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <!-- Description -->
+                                <TextBlock Grid.Row="1" Text="{Binding Description}" Classes="SmallFaded" TextWrapping="Wrap" Margin="0,0,0,12" VerticalAlignment="Top"/>
+                                
+                                <!-- Author and Version -->
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
+                                    <TextBlock Text="{Binding Author, StringFormat='by {0}'}" Classes="SmallFaded" />
+                                    <TextBlock Text="{Binding Version, StringFormat='v{0}'}" Classes="SmallFaded"/>
+                                </StackPanel>
+                                
+                                <!-- Action Buttons -->
+                                <StackPanel Grid.Row="3" Spacing="8">
+                                    <Button Content="{Binding IsEnabled, Converter={StaticResource EnableDisableTextConverter}}" Command="{Binding $parent[UserControl].DataContext.ToggleModCommand}" CommandParameter="{Binding}" HorizontalAlignment="Stretch" Classes="Primary"/>
+                                    <Button Content="Uninstall" Command="{Binding $parent[UserControl].DataContext.UninstallModCommand}" CommandParameter="{Binding}" HorizontalAlignment="Stretch"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

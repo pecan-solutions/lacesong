@@ -1,0 +1,58 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:Lacesong.Avalonia.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
+        x:Class="Lacesong.Avalonia.Views.ModSettingsWindow"
+        x:DataType="vm:ModSettingsViewModel"
+        Title="Mod Settings"
+        WindowStartupLocation="CenterScreen"
+        Width="400" MinWidth="400"
+        Height="450" MinHeight="450">
+
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.65" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                <TextBlock Text="{Binding ModId}" Classes="Title" Margin="0,0,0,8"/>
+                <TextBlock Text="Configure update and backup settings for this mod." Classes="Subtitle"/>
+            </StackPanel>
+
+            <!-- Settings Content -->
+            <StackPanel Grid.Row="1" Spacing="16">
+                <CheckBox Content="Enable Automatic Updates" IsChecked="{Binding AutoUpdateEnabled}"/>
+
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Update Channel" Classes="BodyStrong"/>
+                    <ComboBox SelectedItem="{Binding UpdateChannel}" Width="200" HorizontalAlignment="Left">
+                        <ComboBoxItem Content="Stable"/>
+                        <ComboBoxItem Content="Beta"/>
+                        <ComboBoxItem Content="Alpha"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <CheckBox Content="Preserve Configurations on Update" IsChecked="{Binding PreserveConfigs}"/>
+                <CheckBox Content="Create Backup Before Updating" IsChecked="{Binding BackupBeforeUpdate}"/>
+            </StackPanel>
+
+            <!-- Footer -->
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="0,24,0,0">
+                <TextBlock Grid.Column="0" Text="{Binding Status}" Classes="SmallFaded" TextWrapping="Wrap" VerticalAlignment="Center"/>
+
+                <Button Grid.Column="1" Content="Save" Command="{Binding SaveCommand}" Classes="Primary" Margin="0,0,8,0"/>
+                <Button Grid.Column="2" Content="Cancel" Click="CloseWindow"/>
+            </Grid>
+        </Grid>
+    </Panel>
+</Window>

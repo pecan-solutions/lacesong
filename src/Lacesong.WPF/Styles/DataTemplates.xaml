@@ -15,16 +15,8 @@
         <views:BepInExInstallView />
     </DataTemplate>
 
-    <DataTemplate DataType="{x:Type vm:ModCatalogViewModel}">
-        <views:ModCatalogView />
-    </DataTemplate>
-
     <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
         <views:SettingsView />
-    </DataTemplate>
-
-    <DataTemplate DataType="{x:Type vm:BrowseModsViewModel}">
-        <views:BrowseModsView />
     </DataTemplate>
 
 </ResourceDictionary>

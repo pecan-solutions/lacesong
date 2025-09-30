@@ -2,8 +2,138 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
+        xmlns:views="clr-namespace:Lacesong.Avalonia.Views"
+        mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="720"
         x:Class="Lacesong.Avalonia.MainWindow"
-        Title="Lacesong.Avalonia">
-    Welcome to Avalonia!
+        x:DataType="vm:MainViewModel"
+        Title="Lacesong" 
+        Height="720" 
+        Width="1080"
+        MinHeight="600"
+        MinWidth="940"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FF0A0A0A" Offset="0" />
+            <GradientStop Color="#FF1A1A1A" Offset="0.25" />
+            <GradientStop Color="#FF2A2A2A" Offset="0.5" />
+            <GradientStop Color="#FF1A1A1A" Offset="0.75" />
+            <GradientStop Color="#FF0A0A0A" Offset="1" />
+        </LinearGradientBrush>
+    </Window.Background>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" MinWidth="240" />
+            <ColumnDefinition Width="*" MinWidth="600" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{DynamicResource SidebarBackgroundBrush}"
+                BorderBrush="{DynamicResource GlassBorderBrush}"
+                BorderThickness="0,0,1,0">
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Title Bar Area in Sidebar -->
+                <StackPanel Orientation="Horizontal" Margin="24,20">
+                    <Border Width="24" Height="24" Background="{DynamicResource ButtonPrimaryBrush}" CornerRadius="6" />
+                    <TextBlock Text="Lacesong" Classes="subtitle" VerticalAlignment="Center" Margin="12,0,0,0" />
+                </StackPanel>
+
+                <!-- Navigation -->
+                <StackPanel Grid.Row="1" Margin="0,12">
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:HomeViewModel}" Classes="navButton">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🏠" FontSize="16" />
+                            <TextBlock Text="Home" Margin="16,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:GameDetectionViewModel}" Classes="navButton">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🎮" FontSize="16" />
+                            <TextBlock Text="Game Detection" Margin="16,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:BepInExInstallViewModel}" Classes="navButton">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📦" FontSize="16" />
+                            <TextBlock Text="Mod Loader" Margin="16,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:BrowseModsViewModel}" Classes="navButton">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📱" FontSize="16" />
+                            <TextBlock Text="Mods" Margin="16,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="{x:Type vm:SettingsViewModel}" Classes="navButton">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚙️" FontSize="16" />
+                            <TextBlock Text="Settings" Margin="16,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            
+            <Border Grid.Row="1" Background="{DynamicResource CardBackgroundBrush}"
+                    Margin="0,0,8,8"
+                    CornerRadius="8,0,0,8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    
+                    <ContentPresenter x:Name="ContentArea" Grid.Row="0" Margin="24" Content="{Binding CurrentViewModel}" />
+
+                    <!-- Status Bar -->
+                    <Border Grid.Row="1" Background="{DynamicResource StatusBackgroundBrush}" 
+                            BorderBrush="{DynamicResource GlassBorderBrush}" 
+                            BorderThickness="0,1,0,0"
+                            Padding="16,8"
+                            CornerRadius="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Classes="smallFaded" />
+                                <TextBlock Text="|" VerticalAlignment="Center" Margin="8,0" Classes="smallFaded" />
+                                <TextBlock Text="{Binding CurrentGame.Name, StringFormat='Game: {0}'}" VerticalAlignment="Center" Classes="smallFaded" Margin="0,0,8,0"/>
+                                <TextBlock Text="{Binding CurrentGame.InstallPath}" VerticalAlignment="Center" Classes="smallFaded" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <TextBlock Text="✅" FontSize="16" 
+                                           Foreground="{DynamicResource SuccessBrush}"
+                                           IsVisible="{Binding !HasError}"/>
+                                <TextBlock Text="❌" FontSize="16" 
+                                           Foreground="{DynamicResource ErrorBrush}"
+                                           IsVisible="{Binding HasError}"/>
+                                <TextBlock Text="{Binding IsBusy, Converter={StaticResource BusyStatusConverter}}"
+                                           VerticalAlignment="Center" Classes="smallFaded" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
 </Window>

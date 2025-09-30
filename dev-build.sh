@@ -27,10 +27,15 @@ dotnet build src/Lacesong.CLI/Lacesong.CLI.csproj --configuration Debug --no-res
 echo "Building WPF application..."
 dotnet build src/Lacesong.WPF/Lacesong.WPF.csproj --configuration Debug --no-restore --runtime win-x64
 
+# Build Avalonia application
+echo "Building Avalonia application..."
+dotnet build src/Lacesong.Avalonia/Lacesong.Avalonia.csproj --configuration Debug --no-restore
+
 # Create dev output directories
 echo "Creating development output directories..."
 mkdir -p ./dev-build/WPF
 mkdir -p ./dev-build/CLI
+mkdir -p ./dev-build/Avalonia
 
 # Publish WPF application for development
 echo "Publishing WPF application for development..."
@@ -51,16 +56,28 @@ dotnet publish src/Lacesong.CLI/Lacesong.CLI.csproj \
     --output ./dev-build/CLI \
     --no-build
 
+# Publish Avalonia application for development
+echo "Publishing Avalonia application for development..."
+dotnet publish src/Lacesong.Avalonia/Lacesong.Avalonia.csproj \
+    --configuration Debug \
+    --self-contained false \
+    --output ./dev-build/Avalonia \
+    --no-build
+
 echo "Development build completed successfully!"
 echo ""
 echo "Applications ready in ./dev-build/:"
 echo "   - WPF: ./dev-build/WPF/Lacesong.WPF.exe"
 echo "   - CLI: ./dev-build/CLI/modman.exe"
+echo "   - Avalonia: ./dev-build/Avalonia/Lacesong.Avalonia"
 echo ""
 echo "To run the WPF application:"
 echo "   ./dev-build/WPF/Lacesong.WPF.exe"
 echo ""
 echo "To run the CLI application:"
 echo "   ./dev-build/CLI/modman.exe --help"
+echo ""
+echo "To run the Avalonia application:"
+echo "   ./dev-build/Avalonia/Lacesong.Avalonia"
 echo ""
 echo "Ready for development!"

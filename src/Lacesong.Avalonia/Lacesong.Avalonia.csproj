@@ -22,6 +22,7 @@
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="MessageBox.Avalonia" Version="3.2.0" />
     <!-- added project reference and common dependencies -->
     <ProjectReference Include="..\Lacesong.Core\Lacesong.Core.csproj" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
@@ -29,6 +30,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
     <PackageReference Include="Karambolo.Extensions.Logging.File" Version="3.6.0" />
-    <Compile Include="Converters\*.cs" />
+    <PackageReference Include="Octokit" Version="4.0.0" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.3.6" />
   </ItemGroup>
 </Project>

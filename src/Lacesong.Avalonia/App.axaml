@@ -1,14 +1,100 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
+             xmlns:views="clr-namespace:Lacesong.Avalonia.Views"
              x:Class="Lacesong.Avalonia.App"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Dark">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
+           <Application.Resources>
+               <ResourceDictionary>
+                   <!-- enhanced glassmorphic color palette -->
+
+                   <!-- base colors -->
+                   <Color x:Key="PrimaryColor">#3b82f6</Color>
+                   <Color x:Key="PrimaryHoverColor">#2563eb</Color>
+                   <Color x:Key="AccentColor">#06b6d4</Color>
+                   <Color x:Key="AccentHoverColor">#0891b2</Color>
+
+                   <!-- text colors -->
+                   <Color x:Key="PrimaryTextColor">#ffffff</Color>
+                   <Color x:Key="SecondaryTextColor">#e5e7eb</Color>
+                   <Color x:Key="MutedTextColor">#9ca3af</Color>
+
+                   <!-- status colors -->
+                   <Color x:Key="SuccessColor">#10b981</Color>
+                   <Color x:Key="SuccessHoverColor">#059669</Color>
+                   <Color x:Key="WarningColor">#f59e0b</Color>
+                   <Color x:Key="WarningHoverColor">#d97706</Color>
+                   <Color x:Key="ErrorColor">#ef4444</Color>
+                   <Color x:Key="ErrorHoverColor">#dc2626</Color>
+
+                   <!-- brushes -->
+                   <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource PrimaryColor}"/>
+                   <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource AccentColor}"/>
+
+                   <SolidColorBrush x:Key="PrimaryTextBrush" Color="{DynamicResource PrimaryTextColor}"/>
+                   <SolidColorBrush x:Key="SecondaryTextBrush" Color="{DynamicResource SecondaryTextColor}"/>
+                   <SolidColorBrush x:Key="MutedTextBrush" Color="{DynamicResource MutedTextColor}"/>
+
+                   <SolidColorBrush x:Key="SuccessBrush" Color="{DynamicResource SuccessColor}"/>
+                   <SolidColorBrush x:Key="WarningBrush" Color="{DynamicResource WarningColor}"/>
+                   <SolidColorBrush x:Key="ErrorBrush" Color="{DynamicResource ErrorColor}"/>
+
+                   <!-- glass effect brushes -->
+                   <SolidColorBrush x:Key="GlassPrimaryBrush" Color="#0DFFFFFF" />
+                   <SolidColorBrush x:Key="GlassSecondaryBrush" Color="#14FFFFFF" />
+                   <SolidColorBrush x:Key="GlassTertiaryBrush" Color="#1AFFFFFF" />
+                   <SolidColorBrush x:Key="GlassBorderBrush" Color="#1FFFFFFF" />
+                   <SolidColorBrush x:Key="GlassBorderHoverBrush" Color="#26FFFFFF" />
+
+                   <!-- component specific brushes -->
+                   <SolidColorBrush x:Key="CardBackgroundBrush" Color="#0AFFFFFF" />
+                   <SolidColorBrush x:Key="CardHoverBrush" Color="#14FFFFFF" />
+                   <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#1A000000" />
+                   <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#0D000000" />
+                   <SolidColorBrush x:Key="StatusBackgroundBrush" Color="#0A000000" />
+
+                   <!-- button brushes -->
+                   <LinearGradientBrush x:Key="ButtonPrimaryBrush" StartPoint="0,0" EndPoint="1,1">
+                       <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0.0" />
+                       <GradientStop Color="{DynamicResource AccentColor}" Offset="1.0" />
+                   </LinearGradientBrush>
+
+                   <LinearGradientBrush x:Key="ButtonPrimaryHoverBrush" StartPoint="0,0" EndPoint="1,1">
+                       <GradientStop Color="{DynamicResource PrimaryHoverColor}" Offset="0.0" />
+                       <GradientStop Color="{DynamicResource AccentHoverColor}" Offset="1.0" />
+                   </LinearGradientBrush>
+
+                   <SolidColorBrush x:Key="ButtonSecondaryBrush" Color="#14FFFFFF" />
+                   <SolidColorBrush x:Key="ButtonSecondaryHoverBrush" Color="#1AFFFFFF" />
+               </ResourceDictionary>
+           </Application.Resources>
+
+           <Application.DataTemplates>
+               <DataTemplate DataType="{x:Type vm:HomeViewModel}">
+                   <views:HomeView />
+               </DataTemplate>
+               <DataTemplate DataType="{x:Type vm:GameDetectionViewModel}">
+                   <views:GameDetectionView />
+               </DataTemplate>
+               <DataTemplate DataType="{x:Type vm:BepInExInstallViewModel}">
+                   <views:BepInExInstallView />
+               </DataTemplate>
+               <DataTemplate DataType="{x:Type vm:InstalledModsViewModel}">
+                   <views:InstalledModsView />
+               </DataTemplate>
+               <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+                   <views:SettingsView />
+               </DataTemplate>
+               <DataTemplate DataType="{x:Type vm:BrowseModsViewModel}">
+                   <views:BrowseModsView />
+               </DataTemplate>
+           </Application.DataTemplates>
+    
     <Application.Styles>
         <FluentTheme />
-        <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/Colors.axaml" />
-        <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/Typography.axaml" />
-        <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/Controls.axaml" />
-        <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/DataTemplates.axaml" />
+        <StyleInclude Source="avares://Lacesong.Avalonia/Styles/Typography.axaml" />
+        <StyleInclude Source="avares://Lacesong.Avalonia/Styles/Controls.axaml" />
     </Application.Styles>
 </Application>

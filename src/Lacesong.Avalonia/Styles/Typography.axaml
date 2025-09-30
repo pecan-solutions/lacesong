@@ -1,60 +1,52 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- base font family -->
-    <FontFamily x:Key="AppFontFamily">avares://Lacesong.Avalonia/Resources/Fonts#Inter</FontFamily>
-    <FontFamily x:Key="MonospaceFontFamily">avares://Lacesong.Avalonia/Resources/Fonts#JetBrains Mono</FontFamily>
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- base textblock style -->
-    <Style Selector="TextBlock" x:Key="BaseTextBlockStyle">
-        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-        <Setter Property="TextWrapping" Value="Wrap" />
-        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
-
-    <!-- title styles -->
-    <Style Selector="TextBlock.title" BasedOn="{StaticResource BaseTextBlockStyle}">
+    <!-- Class-based styles for Avalonia -->
+    <Style Selector="TextBlock.title">
         <Setter Property="FontSize" Value="32" />
         <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
     </Style>
 
-    <Style Selector="TextBlock.subtitle" BasedOn="{StaticResource BaseTextBlockStyle}">
+    <Style Selector="TextBlock.subtitle">
         <Setter Property="FontSize" Value="20" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
     </Style>
 
-    <!-- header styles -->
-    <Style Selector="TextBlock.sectionHeader" BasedOn="{StaticResource BaseTextBlockStyle}">
+    <Style Selector="TextBlock.sectionHeader">
         <Setter Property="FontSize" Value="24" />
         <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
     </Style>
 
-    <Style Selector="TextBlock.smallHeader" BasedOn="{StaticResource BaseTextBlockStyle}">
+    <Style Selector="TextBlock.smallHeader">
         <Setter Property="FontSize" Value="18" />
         <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
     </Style>
 
-    <!-- body text styles -->
-    <Style Selector="TextBlock.body" BasedOn="{StaticResource BaseTextBlockStyle}">
+    <Style Selector="TextBlock.body">
         <Setter Property="FontSize" Value="15" />
         <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
     </Style>
 
-    <Style Selector="TextBlock.bodyStrong" BasedOn="{StaticResource BaseTextBlockStyle}">
+    <Style Selector="TextBlock.bodyStrong">
         <Setter Property="FontSize" Value="15" />
         <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
     </Style>
 
-    <Style Selector="TextBlock.smallFaded" BasedOn="{StaticResource BaseTextBlockStyle}">
+    <Style Selector="TextBlock.smallFaded">
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
     </Style>
 
-    <!-- monospace -->
-    <Style Selector="TextBlock.monospace" BasedOn="{StaticResource BaseTextBlockStyle}">
+    <Style Selector="TextBlock.monospace">
         <Setter Property="FontFamily" Value="{DynamicResource MonospaceFontFamily}" />
         <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
     </Style>
-</ResourceDictionary>
+
+</Styles>

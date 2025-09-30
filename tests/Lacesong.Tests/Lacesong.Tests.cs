@@ -232,7 +232,7 @@ public class ModManagerTests
 
     public ModManagerTests()
     {
-        _modManager = new ModManager(new BepInExManager(), new ThunderstoreApiService());
+        _modManager = new ModManager(new BepInExManager());
     }
 
     [Fact]

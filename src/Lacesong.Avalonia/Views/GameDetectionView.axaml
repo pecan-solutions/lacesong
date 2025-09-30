@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Lacesong.Avalonia.Views.GameDetectionView"
+             x:DataType="vm:GameDetectionViewModel">
+    <Grid RowDefinitions="Auto,Auto,*" Margin="24">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock Text="Game Detection" Classes="Title" Margin="0,0,0,8"/>
+            <TextBlock Text="Let's find your Silksong installation. You can detect automatically or browse for the game folder." 
+                       Classes="Subtitle"/>
+        </StackPanel>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,20,*">
+            <!-- Detection Panel -->
+            <Border Grid.Column="0" Classes="Card">
+                <StackPanel>
+                    <TextBlock Text="Automatic Detection" Classes="SectionHeader" Margin="0,0,0,16"/>
+                    <TextBlock Text="{Binding DetectionStatus}" TextWrapping="Wrap" Margin="0,0,0,20"/>
+                    <Button Classes="Primary" Content="Detect Games" Command="{Binding DetectGamesCommand}" 
+                            IsEnabled="{Binding !IsDetecting}"
+                            Margin="0,0,0,20"/>
+                    <TextBlock Text="Lacesong will scan for Silksong in:" 
+                               Classes="SmallFaded" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                    <TextBlock Text="• Steam Library" Classes="SmallFaded" Margin="16,0,0,4"/>
+                    <TextBlock Text="• Epic Games Store" Classes="SmallFaded" Margin="16,0,0,4"/>
+                    <TextBlock Text="• GOG Galaxy" Classes="SmallFaded" Margin="16,0,0,4"/>
+                    <TextBlock Text="• Common installation paths" Classes="SmallFaded" Margin="16,0,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Manual Selection Panel -->
+            <Border Grid.Column="2" Classes="Card">
+                <StackPanel>
+                    <TextBlock Text="Manual Selection" Classes="SectionHeader" Margin="0,0,0,16"/>
+                    <TextBlock Text="If automatic detection fails, you can point Lacesong to your game folder directly." 
+                               TextWrapping="Wrap" Margin="0,0,0,20"/>
+                    <Button Classes="Secondary" Content="Browse for Game" Command="{Binding BrowseForGameCommand}" Margin="0,0,0,20"/>
+                    <TextBlock Text="Select the folder containing:" 
+                               Classes="SmallFaded" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                    <TextBlock Text="Hollow Knight Silksong.exe" Classes="Monospace" Margin="16,0,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Detected Games -->
+        <Border Grid.Row="2" Classes="Card" Margin="0,24,0,0" IsVisible="{Binding DetectedGames.Count}">
+            <StackPanel>
+                <TextBlock Text="Detected Games" Classes="SectionHeader" Margin="0,0,0,16"/>
+                <ListBox ItemsSource="{Binding DetectedGames}" SelectedItem="{Binding SelectedGame}"
+                         Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Name}" Classes="BodyStrong"/>
+                                    <TextBlock Text="{Binding InstallPath}" Classes="SmallFaded"
+                                               TextWrapping="Wrap" Margin="0,4,0,4"/>
+                                    <TextBlock Text="{Binding DetectedBy, StringFormat='Detected via: {0}'}" 
+                                               Classes="SmallFaded"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Select" 
+                                        Command="{Binding $parent[UserControl].DataContext.SelectGameCommand}"
+                                        CommandParameter="{Binding}"
+                                        Classes="Primary"
+                                        VerticalAlignment="Center"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Button Classes="Primary" Content="Continue" Command="{Binding ProceedToNextCommand}" 
+                        HorizontalAlignment="Right" Margin="0,16,0,0"
+                        IsEnabled="{Binding CanProceedToNext}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

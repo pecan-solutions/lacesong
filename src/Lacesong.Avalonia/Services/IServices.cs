@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Lacesong.Core.Models;
 
-namespace Lacesong.WPF.Services;
+namespace Lacesong.Avalonia.Services;
 
 /// <summary>
 /// interface for dialog services
@@ -54,4 +54,20 @@ public class UpdateInfo
     public string DownloadUrl { get; set; } = string.Empty;
     public string ReleaseNotes { get; set; } = string.Empty;
     public DateTime ReleaseDate { get; set; }
+}
+
+/// <summary>
+/// service for navigating between views
+/// </summary>
+public interface INavigationService
+{
+    void NavigateTo<TViewModel>() where TViewModel : class;
+}
+
+/// <summary>
+/// service for showing snackbar notifications
+/// </summary>
+public interface ISnackbarService
+{
+    void Show(string title, string message, string type = "Information", string icon = "ℹ️", TimeSpan? duration = null);
 }

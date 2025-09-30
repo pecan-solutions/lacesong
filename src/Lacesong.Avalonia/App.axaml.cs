@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Karambolo.Extensions.Logging.File;
 using Lacesong.Core.Interfaces;
 using Lacesong.Core.Services;
+using Lacesong.Avalonia.Services;
 using CommunityToolkit.Mvvm.DependencyInjection;
 
 namespace Lacesong.Avalonia;
@@ -52,7 +53,13 @@ public partial class App : Application
         services.AddSingleton<ICompatibilityService, CompatibilityService>();
         services.AddSingleton<IModConfigService, ModConfigService>();
         services.AddSingleton<IGameLauncher, GameLauncher>();
-        services.AddSingleton<IThunderstoreApiService, ThunderstoreApiService>();
+
+        // avalonia services
+        services.AddSingleton<ILoggingService, Services.LoggingService>();
+        services.AddSingleton<IUpdateService, Services.UpdateService>();
+        services.AddSingleton<IDialogService, Services.DialogService>();
+        services.AddSingleton<INavigationService, Services.NavigationService>();
+        services.AddSingleton<ISnackbarService, Services.SnackbarService>();
 
         // logging
         services.AddLogging(builder =>
@@ -61,13 +68,27 @@ public partial class App : Application
             builder.AddFile(o => { o.Files = new[] { new LogFileOptions { Path = "logs/lacesong-{Date}.log" } }; });
         });
 
+        // view models
+        services.AddTransient<ViewModels.MainViewModel>();
+        services.AddTransient<ViewModels.HomeViewModel>();
+        services.AddTransient<ViewModels.GameDetectionViewModel>();
+        services.AddTransient<ViewModels.GameNotSelectedViewModel>();
+        services.AddTransient<ViewModels.BepInExInstallViewModel>();
+        services.AddTransient<ViewModels.InstalledModsViewModel>();
+        services.AddTransient<ViewModels.SettingsViewModel>();
+        services.AddTransient<ViewModels.ModSettingsViewModel>();
+        services.AddTransient<ViewModels.ModSettingsViewModelFactory>();
+        services.AddTransient<ViewModels.BrowseModsViewModel>();
+
         // views
         services.AddTransient<MainWindow>();
+        services.AddTransient<Views.HomeView>();
+        services.AddTransient<Views.GameDetectionView>();
+        services.AddTransient<Views.BepInExInstallView>();
+        services.AddTransient<Views.InstalledModsView>();
+        services.AddTransient<Views.SettingsView>();
+        services.AddTransient<Views.ModSettingsWindow>();
+        services.AddTransient<Views.BrowseModsView>();
     }
 
-    public override void OnExited()
-    {
-        _serviceProvider?.Dispose();
-        base.OnExited();
-    }
 }

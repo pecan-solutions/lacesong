@@ -1,14 +1,18 @@
 using System;
-using Avalonia.Data.Converters;
 using System.Globalization;
+using Avalonia.Data.Converters;
 
 namespace Lacesong.Avalonia.Converters;
 
-public class InverseBooleanToVisibilityConverter : IValueConverter
+public class BusyStatusConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        return value is bool b && !b;
+        if (value is bool isBusy)
+        {
+            return isBusy ? "Working..." : "Ready";
+        }
+        return "Ready";
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

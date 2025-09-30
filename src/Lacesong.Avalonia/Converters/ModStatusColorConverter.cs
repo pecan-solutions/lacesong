@@ -1,14 +1,19 @@
 using System;
-using Avalonia.Data.Converters;
 using System.Globalization;
+using Avalonia.Data.Converters;
+using Avalonia.Media;
 
 namespace Lacesong.Avalonia.Converters;
 
-public class InverseBooleanToVisibilityConverter : IValueConverter
+public class ModStatusColorConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        return value is bool b && !b;
+        if (value is bool isEnabled)
+        {
+            return isEnabled ? Brushes.Green : Brushes.Orange;
+        }
+        return Brushes.Gray;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

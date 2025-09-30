@@ -1,0 +1,65 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Lacesong.Avalonia.Views.BepInExInstallView"
+             x:DataType="vm:BepInExInstallViewModel">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock Text="Mod Loader Installation" Classes="Title" Margin="0,0,0,8"/>
+            <TextBlock Text="Install and manage the BepInEx mod loader for Silksong." Classes="Subtitle"/>
+        </StackPanel>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,20,*">
+            <!-- Status Panel -->
+            <Border Grid.Column="0" Classes="Card">
+                <StackPanel>
+                    <TextBlock Text="Current Status" Classes="SectionHeader" Margin="0,0,0,16"/>
+                    <TextBlock Text="{Binding InstallationStatus}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                        <TextBlock Text="✅" FontSize="16" IsVisible="{Binding IsBepInExInstalled}"/>
+                        <TextBlock Text="⚠️" FontSize="16" IsVisible="{Binding !IsBepInExInstalled}"/>
+                        <TextBlock Text="{Binding IsBepInExInstalled, Converter={StaticResource BepInExStatusConverter}}" 
+                                   Classes="BodyStrong" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <Button Classes="Secondary" Content="Refresh Status" Command="{Binding RefreshStatusCommand}" Margin="0,0,0,20"/>
+                    <TextBlock Text="BepInEx is the mod loader required to use most mods with Silksong. It must be installed before you can load any mods." 
+                               Classes="SmallFaded" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Installation Panel -->
+            <Border Grid.Column="2" Classes="Card">
+                <StackPanel>
+                    <TextBlock Text="Install Options" Classes="SectionHeader" Margin="0,0,0,16"/>
+                    <TextBlock Text="BepInEx Version" Classes="BodyStrong" Margin="0,0,0,8"/>
+                    <ComboBox ItemsSource="{Binding AvailableVersions}" SelectedItem="{Binding SelectedVersion}"
+                              Margin="0,0,0,16"/>
+                    <CheckBox Content="Force reinstall (if already installed)" IsChecked="{Binding ForceReinstall}"
+                              Margin="0,0,0,8"/>
+                    <CheckBox Content="Create backup before installation" IsChecked="{Binding CreateBackup}"
+                              Margin="0,0,0,8"/>
+                    <CheckBox Content="Create desktop shortcut" IsChecked="{Binding CreateDesktopShortcut}"
+                              Margin="0,0,0,20"/>
+                    <Button Classes="Primary" Content="Install BepInEx" Command="{Binding InstallBepInExCommand}" 
+                            IsEnabled="{Binding CanInstallBepInEx}" Margin="0,0,0,8" MinWidth="160" MinHeight="44"/>
+                    <Button Classes="Secondary" Content="Uninstall BepInEx" Command="{Binding UninstallBepInExCommand}" 
+                            IsEnabled="{Binding CanUninstallBepInEx}" MinWidth="160" MinHeight="44"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Progress/Status -->
+        <Border Grid.Row="2" Classes="Card" Margin="0,16,0,0" IsVisible="{Binding IsBusy}">
+            <StackPanel>
+                <TextBlock Text="Installation in Progress..." Classes="BodyStrong" Margin="0,0,0,12"/>
+                <ProgressBar IsIndeterminate="True" Height="4" />
+                <TextBlock Text="{Binding StatusMessage}" Classes="SmallFaded" Margin="0,8,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

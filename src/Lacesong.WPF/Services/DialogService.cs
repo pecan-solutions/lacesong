@@ -100,19 +100,6 @@ public class DialogService : IDialogService
             window.ShowDialog();
         });
     }
-
-    public async Task ShowModDetailsAsync(Lacesong.Core.Models.ThunderstorePackage package)
-    {
-        await Task.Run(() =>
-        {
-            // build basic detail string using available properties
-            var latestVersion = package.Versions.FirstOrDefault();
-            var versionNumber = latestVersion?.VersionNumber ?? "unknown";
-            var description = latestVersion?.Description ?? "no description";
-            var details = $"{package.FullName}\nversion: {versionNumber}\nauthor: {package.Owner}\n\n{description}";
-            MessageBox.Show(details, "Mod Details", MessageBoxButton.OK, MessageBoxImage.Information);
-        });
-    }
 }
 
 /// <summary>
