@@ -23,6 +23,7 @@
             <converters:EnabledStatusConverter x:Key="EnabledStatusConverter" />
             <converters:ModStatusConverter x:Key="ModStatusConverter" />
             <converters:SelectionBorderThicknessConverter x:Key="SelectionBorderThicknessConverter" />
+            <converters:BooleanToActiveClassConverter x:Key="BooleanToActiveClassConverter" />
             
             <!-- 
             Modern, Glassmorphic Dark Theme by AI Assistant

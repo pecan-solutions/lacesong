@@ -67,6 +67,9 @@ public partial class MainViewModel : BaseViewModel
 
         // Navigate to the home view model on startup
         _navigationService.NavigateTo<HomeViewModel>();
+        
+        // ensure initial active state is set
+        UpdateActiveNavigationItem();
     }
     
     private void OnGameStateChanged()
