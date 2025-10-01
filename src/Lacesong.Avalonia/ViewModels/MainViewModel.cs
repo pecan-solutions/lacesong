@@ -11,11 +11,24 @@ using System.ComponentModel;
 
 namespace Lacesong.Avalonia.ViewModels;
 
-public class NavigationItem
+public class NavigationItem : ObservableObject
 {
+    private bool _isActive;
+
     public string Label { get; set; } = string.Empty;
     public string Icon { get; set; } = string.Empty;
     public Type ViewModelType { get; set; }
+    public bool IsActive 
+    { 
+        get => _isActive; 
+        set 
+        { 
+            SetProperty(ref _isActive, value);
+            OnPropertyChanged(nameof(ActiveClass));
+        }
+    }
+
+    public string ActiveClass => IsActive ? "active" : "";
 
     // command that triggers navigation to this item's view model
     public IRelayCommand? NavigateCommand { get; set; }
@@ -72,6 +85,9 @@ public partial class MainViewModel : BaseViewModel
 
         OnPropertyChanged(nameof(CurrentViewModel));
 
+        // update active navigation item
+        UpdateActiveNavigationItem();
+
         if (CurrentViewModel is INotifyPropertyChanged newVm)
         {
             _trackedViewModel = newVm;
@@ -116,6 +132,15 @@ public partial class MainViewModel : BaseViewModel
     
     [RelayCommand]
     private void GoToSettings() => _navigationService.NavigateTo<SettingsViewModel>();
+
+    private void UpdateActiveNavigationItem()
+    {
+        var currentType = CurrentViewModel?.GetType();
+        foreach (var item in NavigationItems)
+        {
+            item.IsActive = item.ViewModelType == currentType;
+        }
+    }
 
     private NavigationItem CreateNavItem(string label, string icon, Type vmType)
     {
