@@ -2,6 +2,7 @@ using Lacesong.Core.Interfaces;
 using Lacesong.Core.Models;
 using Microsoft.Win32;
 using System.Text.Json;
+using System.Runtime.InteropServices;
 
 namespace Lacesong.Core.Services;
 
@@ -81,15 +82,27 @@ public class GameDetector : IGameDetector
             // look for game executables in the directory
             foreach (var game in _supportedGames)
             {
-                var executablePath = Path.Combine(path, game.Executable);
-                if (File.Exists(executablePath))
+                var executableName = GetPlatformExecutableName(game.Executable);
+                var executablePath = Path.Combine(path, executableName);
+
+                // on macos, also check for .app bundles
+                if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
+                {
+                    var appBundlePath = Path.Combine(path, $"{Path.GetFileNameWithoutExtension(executableName)}.app");
+                    if (Directory.Exists(appBundlePath))
+                    {
+                        executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(executableName));
+                    }
+                }
+
+                if (PlatformDetector.IsValidExecutable(executablePath))
                 {
                     return new GameInstallation
                     {
                         Name = game.Name,
                         Id = game.Id,
                         InstallPath = path,
-                        Executable = game.Executable,
+                        Executable = executableName,
                         SteamAppId = game.SteamAppId,
                         EpicAppId = game.EpicAppId,
                         GogAppId = game.GogAppId,
@@ -117,63 +130,92 @@ public class GameDetector : IGameDetector
 
         try
         {
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            // get steam installation paths for current platform
+            var steamPaths = PlatformDetector.GetSteamPaths();
+            if (steamPaths.Count == 0)
                 return detectedGames;
 
-            // steam installation path
-            var steamPath = GetSteamInstallPath();
-            if (string.IsNullOrEmpty(steamPath))
-                return detectedGames;
-
-            var libraryFoldersPath = Path.Combine(steamPath, "steamapps", "libraryfolders.vdf");
-            if (!File.Exists(libraryFoldersPath))
-                return detectedGames;
-
-            // parse library folders and look for games
-            var libraryPaths = ParseSteamLibraryFolders(libraryFoldersPath);
-            
-            foreach (var libraryPath in libraryPaths)
+            foreach (var steamPath in steamPaths)
             {
-                var steamAppsPath = Path.Combine(libraryPath, "steamapps", "common");
-                if (!Directory.Exists(steamAppsPath))
-                    continue;
+                var libraryPaths = new List<string> { steamPath };
 
-                foreach (var game in _supportedGames)
+                // on windows, parse library folders from vdf file
+                if (PlatformDetector.IsWindows)
                 {
-                    if (string.IsNullOrEmpty(game.SteamAppId))
+                    var libraryFoldersPath = Path.Combine(steamPath, "steamapps", "libraryfolders.vdf");
+                    if (File.Exists(libraryFoldersPath))
+                    {
+                        libraryPaths.AddRange(ParseSteamLibraryFolders(libraryFoldersPath));
+                    }
+                }
+                // on macos and linux, check common library locations
+                else
+                {
+                    var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                    if (PlatformDetector.IsMacOS)
+                    {
+                        libraryPaths.AddRange(GetMacOSSteamLibraryPaths(homeDir));
+                    }
+                    else if (PlatformDetector.IsLinux)
+                    {
+                        libraryPaths.AddRange(GetLinuxSteamLibraryPaths(homeDir));
+                    }
+                }
+
+                foreach (var libraryPath in libraryPaths.Distinct())
+                {
+                    var steamAppsPath = Path.Combine(libraryPath, "steamapps", "common");
+                    if (!Directory.Exists(steamAppsPath))
                         continue;
 
-                    // try different possible folder names for the game
-                    var possibleFolderNames = new[]
+                    foreach (var game in _supportedGames)
                     {
-                        game.Name, // "Hollow Knight: Silksong"
-                        game.Name.Replace(":", ""), // "Hollow Knight Silksong"
-                        "Hollow Knight Silksong" // explicit fallback
-                    };
+                        if (string.IsNullOrEmpty(game.SteamAppId))
+                            continue;
 
-                    foreach (var folderName in possibleFolderNames)
-                    {
-                        var gamePath = Path.Combine(steamAppsPath, folderName);
-                        var executablePath = Path.Combine(gamePath, game.Executable);
-
-                        if (File.Exists(executablePath))
+                        // try different possible folder names for the game
+                        var possibleFolderNames = new[]
                         {
-                            detectedGames.Add(new GameInstallation
+                            game.Name, // "Hollow Knight: Silksong"
+                            game.Name.Replace(":", ""), // "Hollow Knight Silksong"
+                            "Hollow Knight Silksong" // explicit fallback
+                        };
+
+                        foreach (var folderName in possibleFolderNames)
+                        {
+                            var gamePath = Path.Combine(steamAppsPath, folderName);
+                            var executableName = GetPlatformExecutableName(game.Executable);
+                            var executablePath = Path.Combine(gamePath, executableName);
+
+                            // on macos, also check for .app bundles
+                            if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
                             {
-                                Name = game.Name,
-                                Id = game.Id,
-                                InstallPath = gamePath,
-                                Executable = game.Executable,
-                                SteamAppId = game.SteamAppId,
-                                EpicAppId = game.EpicAppId,
-                                GogAppId = game.GogAppId,
-                                XboxAppId = game.XboxAppId,
-                                BepInExVersion = game.BepInExVersion,
-                                ModDirectory = game.ModDirectory,
-                                IsValid = true,
-                                DetectedBy = "Steam"
-                            });
-                            break; // found the game, no need to check other folder names
+                                var appBundlePath = Path.Combine(gamePath, $"{Path.GetFileNameWithoutExtension(executableName)}.app");
+                                if (Directory.Exists(appBundlePath))
+                                {
+                                    executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(executableName));
+                                }
+                            }
+
+                            if (PlatformDetector.IsValidExecutable(executablePath))
+                            {
+                                detectedGames.Add(new GameInstallation
+                                {
+                                    Name = game.Name,
+                                    Id = game.Id,
+                                    InstallPath = gamePath,
+                                    Executable = executableName,
+                                    SteamAppId = game.SteamAppId,
+                                    EpicAppId = game.EpicAppId,
+                                    GogAppId = game.GogAppId,
+                                    XboxAppId = game.XboxAppId,
+                                    BepInExVersion = game.BepInExVersion,
+                                    ModDirectory = game.ModDirectory,
+                                    IsValid = true,
+                                    DetectedBy = "Steam"
+                                });
+                                break; // found the game, no need to check other folder names
+                            }
                         }
                     }
                 }
@@ -193,48 +235,61 @@ public class GameDetector : IGameDetector
 
         try
         {
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            // get epic games launcher paths for current platform
+            var epicPaths = PlatformDetector.GetEpicPaths();
+            if (epicPaths.Count == 0)
                 return detectedGames;
 
-            // epic games launcher installation path
-            var epicPath = GetEpicInstallPath();
-            if (string.IsNullOrEmpty(epicPath))
-                return detectedGames;
-
-            var manifestsPath = Path.Combine(epicPath, "Epic", "EpicGamesLauncher", "Data", "Manifests");
-            if (!Directory.Exists(manifestsPath))
-                return detectedGames;
-
-            // look for game manifests
-            var manifestFiles = Directory.GetFiles(manifestsPath, "*.item");
-            foreach (var manifestFile in manifestFiles)
+            foreach (var epicPath in epicPaths)
             {
-                var manifest = await ParseEpicManifest(manifestFile);
-                if (manifest == null)
+                // look for game manifests
+                var manifestsPath = Path.Combine(epicPath, "Epic", "EpicGamesLauncher", "Data", "Manifests");
+                if (!Directory.Exists(manifestsPath))
                     continue;
 
-                foreach (var game in _supportedGames)
+                var manifestFiles = Directory.GetFiles(manifestsPath, "*.item");
+                foreach (var manifestFile in manifestFiles)
                 {
-                    if (string.IsNullOrEmpty(game.EpicAppId) || manifest.AppId != game.EpicAppId)
+                    var manifest = await ParseEpicManifest(manifestFile);
+                    if (manifest == null)
                         continue;
 
-                    var executablePath = Path.Combine(manifest.InstallLocation, game.Executable);
-                    if (File.Exists(executablePath))
+                    foreach (var game in _supportedGames)
                     {
-                        detectedGames.Add(new GameInstallation
+                        if (string.IsNullOrEmpty(game.EpicAppId) || manifest.AppId != game.EpicAppId)
+                            continue;
+
+                        var executableName = GetPlatformExecutableName(game.Executable);
+                        var executablePath = Path.Combine(manifest.InstallLocation, executableName);
+
+                        // on macos, also check for .app bundles
+                        if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
                         {
-                            Name = game.Name,
-                            Id = game.Id,
-                            InstallPath = manifest.InstallLocation,
-                            Executable = game.Executable,
-                            SteamAppId = game.SteamAppId,
-                            EpicAppId = game.EpicAppId,
-                            GogAppId = game.GogAppId,
-                            BepInExVersion = game.BepInExVersion,
-                            ModDirectory = game.ModDirectory,
-                            IsValid = true,
-                            DetectedBy = "Epic Games"
-                        });
+                            var appBundlePath = Path.Combine(manifest.InstallLocation, $"{Path.GetFileNameWithoutExtension(executableName)}.app");
+                            if (Directory.Exists(appBundlePath))
+                            {
+                                executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(executableName));
+                            }
+                        }
+
+                        if (PlatformDetector.IsValidExecutable(executablePath))
+                        {
+                            detectedGames.Add(new GameInstallation
+                            {
+                                Name = game.Name,
+                                Id = game.Id,
+                                InstallPath = manifest.InstallLocation,
+                                Executable = executableName,
+                                SteamAppId = game.SteamAppId,
+                                EpicAppId = game.EpicAppId,
+                                GogAppId = game.GogAppId,
+                                XboxAppId = game.XboxAppId,
+                                BepInExVersion = game.BepInExVersion,
+                                ModDirectory = game.ModDirectory,
+                                IsValid = true,
+                                DetectedBy = "Epic Games"
+                            });
+                        }
                     }
                 }
             }
@@ -253,26 +308,57 @@ public class GameDetector : IGameDetector
 
         try
         {
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            // get gog galaxy installation paths for current platform
+            var gogPaths = PlatformDetector.GetGogPaths();
+            if (gogPaths.Count == 0)
                 return detectedGames;
 
-            // gog galaxy installation path
-            var gogPath = GetGogInstallPath();
-            if (string.IsNullOrEmpty(gogPath))
-                return detectedGames;
-
-            // look for games in common gog installation paths
-            var commonPaths = new[]
+            // build common gog installation paths for current platform
+            var commonPaths = new List<string>();
+            foreach (var gogPath in gogPaths)
             {
-                Path.Combine(gogPath, "Games"),
-                Path.Combine(gogPath, "Galaxy", "Games"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GOG Galaxy", "Games"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GOG Galaxy", "Games"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GOG.com", "Galaxy", "Applications"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GOG.com", "Galaxy", "Games")
-            };
+                commonPaths.AddRange(new[]
+                {
+                    Path.Combine(gogPath, "Games"),
+                    Path.Combine(gogPath, "Galaxy", "Games"),
+                    Path.Combine(gogPath, "Applications"),
+                    Path.Combine(gogPath, "Galaxy", "Applications")
+                });
+            }
 
-            foreach (var commonPath in commonPaths)
+            // add platform-specific common paths
+            if (PlatformDetector.IsWindows)
+            {
+                commonPaths.AddRange(new[]
+                {
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GOG Galaxy", "Games"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GOG Galaxy", "Games"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GOG.com", "Galaxy", "Applications"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GOG.com", "Galaxy", "Games")
+                });
+            }
+            else if (PlatformDetector.IsMacOS)
+            {
+                var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                commonPaths.AddRange(new[]
+                {
+                    Path.Combine(homeDir, "Applications", "GOG Galaxy", "Games"),
+                    Path.Combine(homeDir, "Games", "GOG"),
+                    Path.Combine(homeDir, "Library", "Application Support", "GOG.com", "Galaxy", "Games")
+                });
+            }
+            else if (PlatformDetector.IsLinux)
+            {
+                var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                commonPaths.AddRange(new[]
+                {
+                    Path.Combine(homeDir, "Games", "GOG"),
+                    Path.Combine(homeDir, ".local", "share", "GOG.com", "Galaxy", "Games"),
+                    Path.Combine(homeDir, ".gog", "Games")
+                });
+            }
+
+            foreach (var commonPath in commonPaths.Distinct())
             {
                 if (!Directory.Exists(commonPath))
                     continue;
@@ -290,16 +376,27 @@ public class GameDetector : IGameDetector
                     foreach (var folderName in possibleFolderNames)
                     {
                         var gamePath = Path.Combine(commonPath, folderName);
-                        var executablePath = Path.Combine(gamePath, game.Executable);
+                        var executableName = GetPlatformExecutableName(game.Executable);
+                        var executablePath = Path.Combine(gamePath, executableName);
 
-                        if (File.Exists(executablePath))
+                        // on macos, also check for .app bundles
+                        if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
+                        {
+                            var appBundlePath = Path.Combine(gamePath, $"{Path.GetFileNameWithoutExtension(executableName)}.app");
+                            if (Directory.Exists(appBundlePath))
+                            {
+                                executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(executableName));
+                            }
+                        }
+
+                        if (PlatformDetector.IsValidExecutable(executablePath))
                         {
                             detectedGames.Add(new GameInstallation
                             {
                                 Name = game.Name,
                                 Id = game.Id,
                                 InstallPath = gamePath,
-                                Executable = game.Executable,
+                                Executable = executableName,
                                 SteamAppId = game.SteamAppId,
                                 EpicAppId = game.EpicAppId,
                                 GogAppId = game.GogAppId,
@@ -329,11 +426,12 @@ public class GameDetector : IGameDetector
 
         try
         {
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            // xbox game pass is only available on windows
+            if (!PlatformDetector.IsWindows)
                 return detectedGames;
 
             // xbox game pass installation paths
-            var xboxPaths = GetXboxInstallPaths();
+            var xboxPaths = PlatformDetector.GetXboxPaths();
             if (xboxPaths.Count == 0)
                 return detectedGames;
 
@@ -359,16 +457,17 @@ public class GameDetector : IGameDetector
                     foreach (var folderName in possibleFolderNames)
                     {
                         var gamePath = Path.Combine(xboxPath, folderName);
-                        var executablePath = Path.Combine(gamePath, game.Executable);
+                        var executableName = GetPlatformExecutableName(game.Executable);
+                        var executablePath = Path.Combine(gamePath, executableName);
 
-                        if (File.Exists(executablePath))
+                        if (PlatformDetector.IsValidExecutable(executablePath))
                         {
                             detectedGames.Add(new GameInstallation
                             {
                                 Name = game.Name,
                                 Id = game.Id,
                                 InstallPath = gamePath,
-                                Executable = game.Executable,
+                                Executable = executableName,
                                 SteamAppId = game.SteamAppId,
                                 EpicAppId = game.EpicAppId,
                                 GogAppId = game.GogAppId,
@@ -398,19 +497,8 @@ public class GameDetector : IGameDetector
 
         try
         {
-            // common game installation paths
-            var commonPaths = new[]
-            {
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Steam", "steamapps", "common"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam", "steamapps", "common"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Epic Games"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GOG Galaxy", "Games"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GOG Galaxy", "Games"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WindowsApps"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "WindowsApps")
-            };
+            // get common game installation paths for current platform
+            var commonPaths = GetPlatformCommonPaths();
 
             foreach (var commonPath in commonPaths)
             {
@@ -430,16 +518,27 @@ public class GameDetector : IGameDetector
                     foreach (var folderName in possibleFolderNames)
                     {
                         var gamePath = Path.Combine(commonPath, folderName);
-                        var executablePath = Path.Combine(gamePath, game.Executable);
+                        var executableName = GetPlatformExecutableName(game.Executable);
+                        var executablePath = Path.Combine(gamePath, executableName);
 
-                        if (File.Exists(executablePath))
+                        // on macos, also check for .app bundles
+                        if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
+                        {
+                            var appBundlePath = Path.Combine(gamePath, $"{Path.GetFileNameWithoutExtension(executableName)}.app");
+                            if (Directory.Exists(appBundlePath))
+                            {
+                                executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(executableName));
+                            }
+                        }
+
+                        if (PlatformDetector.IsValidExecutable(executablePath))
                         {
                             detectedGames.Add(new GameInstallation
                             {
                                 Name = game.Name,
                                 Id = game.Id,
                                 InstallPath = gamePath,
-                                Executable = game.Executable,
+                                Executable = executableName,
                                 SteamAppId = game.SteamAppId,
                                 EpicAppId = game.EpicAppId,
                                 GogAppId = game.GogAppId,
@@ -491,178 +590,28 @@ public class GameDetector : IGameDetector
 
     private List<GameInstallation> GetDefaultSupportedGames()
     {
+        var executableName = PlatformDetector.IsWindows ? "Hollow Knight Silksong.exe" : "Hollow Knight Silksong";
+        var modDirectory = PlatformDetector.IsWindows 
+            ? "Hollow Knight Silksong_Data\\Managed\\Mods" 
+            : "Hollow Knight Silksong_Data/Managed/Mods";
+
         return new List<GameInstallation>
         {
             new GameInstallation
             {
                 Name = "Hollow Knight: Silksong",
                 Id = "hollow-knight-silksong",
-                Executable = "Hollow Knight Silksong.exe",
+                Executable = executableName,
                 SteamAppId = "1030300",
                 EpicAppId = "hollow-knight-silksong",
                 GogAppId = "hollow_knight_silksong",
                 XboxAppId = "9NQZQZQZQZQZ",
                 BepInExVersion = "5.4.22",
-                ModDirectory = "Hollow Knight Silksong_Data\\Managed\\Mods"
+                ModDirectory = modDirectory
             }
         };
     }
 
-    private string? GetSteamInstallPath()
-    {
-        try
-        {
-            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Valve\Steam");
-            return key?.GetValue("InstallPath")?.ToString();
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private string? GetEpicInstallPath()
-    {
-        try
-        {
-            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Epic Games\EpicGamesLauncher");
-            return key?.GetValue("AppDataPath")?.ToString();
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private string? GetGogInstallPath()
-    {
-        try
-        {
-            // try multiple registry locations for gog galaxy
-            var registryPaths = new[]
-            {
-                @"SOFTWARE\GOG.com\Galaxy",
-                @"SOFTWARE\WOW6432Node\GOG.com\Galaxy",
-                @"SOFTWARE\GOG.com\Galaxy\Settings",
-                @"SOFTWARE\WOW6432Node\GOG.com\Galaxy\Settings"
-            };
-
-            foreach (var registryPath in registryPaths)
-            {
-                using var key = Registry.LocalMachine.OpenSubKey(registryPath);
-                var installPath = key?.GetValue("InstallPath")?.ToString();
-                if (!string.IsNullOrEmpty(installPath) && Directory.Exists(installPath))
-                    return installPath;
-            }
-
-            // fallback to common installation paths
-            var commonPaths = new[]
-            {
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GOG Galaxy"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GOG Galaxy"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GOG.com", "Galaxy")
-            };
-
-            foreach (var path in commonPaths)
-            {
-                if (Directory.Exists(path))
-                    return path;
-            }
-        }
-        catch
-        {
-            // ignore registry access errors
-        }
-
-        return null;
-    }
-
-    private List<string> GetXboxInstallPaths()
-    {
-        var xboxPaths = new List<string>();
-
-        try
-        {
-            // xbox game pass installation paths
-            var commonPaths = new[]
-            {
-                // microsoft store / xbox game pass paths
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WindowsApps"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "WindowsApps"),
-                
-                // xbox app specific paths
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "XboxGames"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "XboxLive"),
-                
-                // alternative xbox game pass paths
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Windows", "INetCache", "IE"),
-                
-                // registry-based paths
-                GetXboxInstallPathFromRegistry()
-            };
-
-            foreach (var path in commonPaths)
-            {
-                if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
-                    xboxPaths.Add(path);
-            }
-
-            // also check for xbox game pass games in user's documents
-            var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            var xboxDocumentsPath = Path.Combine(documentsPath, "Xbox Games");
-            if (Directory.Exists(xboxDocumentsPath))
-                xboxPaths.Add(xboxDocumentsPath);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error getting Xbox install paths: {ex.Message}");
-        }
-
-        return xboxPaths;
-    }
-
-    private string? GetXboxInstallPathFromRegistry()
-    {
-        try
-        {
-            // check microsoft store registry locations
-            var registryPaths = new[]
-            {
-                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Applications",
-                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Packages",
-                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Applications\Microsoft.XboxApp",
-                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Packages\Microsoft.XboxApp"
-            };
-
-            foreach (var registryPath in registryPaths)
-            {
-                using var key = Registry.LocalMachine.OpenSubKey(registryPath);
-                if (key != null)
-                {
-                    // try to find xbox-related installation paths
-                    var subKeyNames = key.GetSubKeyNames();
-                    foreach (var subKeyName in subKeyNames)
-                    {
-                        if (subKeyName.Contains("Xbox") || subKeyName.Contains("Microsoft"))
-                        {
-                            using var subKey = key.OpenSubKey(subKeyName);
-                            var installPath = subKey?.GetValue("InstallLocation")?.ToString();
-                            if (!string.IsNullOrEmpty(installPath) && Directory.Exists(installPath))
-                                return installPath;
-                        }
-                    }
-                }
-            }
-        }
-        catch
-        {
-            // ignore registry access errors
-        }
-
-        return null;
-    }
 
     private List<string> ParseSteamLibraryFolders(string libraryFoldersPath)
     {
@@ -715,5 +664,113 @@ public class GameDetector : IGameDetector
     {
         public string AppId { get; set; } = string.Empty;
         public string InstallLocation { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// gets the appropriate executable name for the current platform
+    /// </summary>
+    private string GetPlatformExecutableName(string baseExecutable)
+    {
+        return PlatformDetector.GetExecutableName(baseExecutable);
+    }
+
+    /// <summary>
+    /// gets common installation paths for the current platform
+    /// </summary>
+    private List<string> GetPlatformCommonPaths()
+    {
+        var paths = new List<string>();
+
+        if (PlatformDetector.IsWindows)
+        {
+            paths.AddRange(new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Steam", "steamapps", "common"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam", "steamapps", "common"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Epic Games"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GOG Galaxy", "Games"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GOG Galaxy", "Games"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WindowsApps"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "WindowsApps")
+            });
+        }
+        else if (PlatformDetector.IsMacOS)
+        {
+            var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            paths.AddRange(new[]
+            {
+                Path.Combine(homeDir, "Applications"),
+                Path.Combine(homeDir, "Games"),
+                Path.Combine(homeDir, "Library", "Application Support", "Steam", "steamapps", "common"),
+                Path.Combine(homeDir, "Library", "Application Support", "Epic", "EpicGamesLauncher"),
+                Path.Combine(homeDir, "Library", "Application Support", "GOG.com", "Galaxy", "Games")
+            });
+        }
+        else if (PlatformDetector.IsLinux)
+        {
+            var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            paths.AddRange(new[]
+            {
+                Path.Combine(homeDir, "Games"),
+                Path.Combine(homeDir, ".local", "share", "Steam", "steamapps", "common"),
+                Path.Combine(homeDir, ".steam", "steam", "steamapps", "common"),
+                Path.Combine(homeDir, ".local", "share", "Epic", "EpicGamesLauncher"),
+                Path.Combine(homeDir, ".local", "share", "GOG.com", "Galaxy", "Games"),
+                Path.Combine(homeDir, ".gog", "Games"),
+                "/usr/local/games",
+                "/opt/games"
+            });
+        }
+
+        return paths;
+    }
+
+    /// <summary>
+    /// gets macos steam library paths
+    /// </summary>
+    private List<string> GetMacOSSteamLibraryPaths(string homeDir)
+    {
+        var paths = new List<string>
+        {
+            Path.Combine(homeDir, "Library", "Application Support", "Steam")
+        };
+
+        // check for additional steam library locations on macos
+        var additionalPaths = new[]
+        {
+            Path.Combine(homeDir, "Games", "Steam"),
+            Path.Combine(homeDir, "Documents", "Steam"),
+            "/Applications/Steam.app/Contents/MacOS"
+        };
+
+        paths.AddRange(additionalPaths.Where(Directory.Exists));
+        return paths;
+    }
+
+    /// <summary>
+    /// gets linux steam library paths
+    /// </summary>
+    private List<string> GetLinuxSteamLibraryPaths(string homeDir)
+    {
+        var paths = new List<string>
+        {
+            Path.Combine(homeDir, ".steam", "steam"),
+            Path.Combine(homeDir, ".local", "share", "Steam")
+        };
+
+        // check for additional steam library locations on linux
+        var additionalPaths = new[]
+        {
+            Path.Combine(homeDir, "Games", "Steam"),
+            Path.Combine(homeDir, "Steam"),
+            "/usr/lib/steam",
+            "/usr/lib64/steam",
+            "/usr/local/lib/steam"
+        };
+
+        paths.AddRange(additionalPaths.Where(Directory.Exists));
+        return paths;
     }
 }

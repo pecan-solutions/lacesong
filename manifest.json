@@ -38,12 +38,16 @@
       "name": "Hollow Knight: Silksong",
       "id": "hollow-knight-silksong",
       "executable": "Hollow Knight Silksong.exe",
+      "executableMacOS": "Hollow Knight Silksong",
+      "executableLinux": "Hollow Knight Silksong",
       "steamAppId": "1030300",
       "epicAppId": "hollow-knight-silksong",
       "gogAppId": "hollow_knight_silksong",
       "xboxAppId": "9NQZQZQZQZQZ",
       "bepInExVersion": "5.4.22",
-      "modDirectory": "BepInEx/plugins"
+      "modDirectory": "BepInEx/plugins",
+      "modDirectoryMacOS": "BepInEx/plugins",
+      "modDirectoryLinux": "BepInEx/plugins"
     }
   ],
   "modRegistry": {
