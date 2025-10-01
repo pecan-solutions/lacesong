@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace Lacesong.Avalonia.ViewModels;
 
@@ -25,11 +26,14 @@ public partial class MainViewModel : BaseViewModel
 {
     private readonly INavigationService _navigationService;
     private readonly IGameStateService _gameStateService;
+    private INotifyPropertyChanged? _trackedViewModel;
 
     public ObservableCollection<NavigationItem> NavigationItems { get; }
     
     public object? CurrentViewModel => _navigationService.CurrentViewModel;
     public GameInstallation CurrentGame => _gameStateService.CurrentGame;
+    public bool IsGameDetected => _gameStateService.IsGameDetected;
+    public string GameDetectionStatus => IsGameDetected ? $"Game: {CurrentGame.Name} - {CurrentGame.InstallPath}" : "Game not detected";
 
     public MainViewModel(ILogger<MainViewModel> logger, INavigationService navigationService, IGameStateService gameStateService) : base(logger)
     {
@@ -55,11 +59,41 @@ public partial class MainViewModel : BaseViewModel
     private void OnGameStateChanged()
     {
         OnPropertyChanged(nameof(CurrentGame));
+        OnPropertyChanged(nameof(IsGameDetected));
+        OnPropertyChanged(nameof(GameDetectionStatus));
     }
 
     private void OnCurrentViewModelChanged()
     {
+        if (_trackedViewModel != null)
+        {
+            _trackedViewModel.PropertyChanged -= CurrentViewModel_PropertyChanged;
+        }
+
         OnPropertyChanged(nameof(CurrentViewModel));
+
+        if (CurrentViewModel is INotifyPropertyChanged newVm)
+        {
+            _trackedViewModel = newVm;
+            _trackedViewModel.PropertyChanged += CurrentViewModel_PropertyChanged;
+        }
+
+        if (CurrentViewModel is BaseViewModel bvm)
+        {
+            StatusMessage = bvm.StatusMessage;
+        }
+        else
+        {
+            StatusMessage = string.Empty;
+        }
+    }
+    
+    private void CurrentViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(StatusMessage) && sender is BaseViewModel vm)
+        {
+            StatusMessage = vm.StatusMessage;
+        }
     }
 
     [RelayCommand]

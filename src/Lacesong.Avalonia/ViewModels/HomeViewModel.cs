@@ -19,8 +19,12 @@ public partial class HomeViewModel : BaseViewModel
     private readonly IGameLauncher _gameLauncher;
 
 
+    [ObservableProperty]
+    private string _gameStatusText;
+
     public GameInstallation CurrentGame => _gameStateService.CurrentGame;
     public bool IsGameDetected => _gameStateService.IsGameDetected;
+    public string SelectGameButtonText => IsGameDetected ? "Change Game" : "Select Game Manually";
 
     public HomeViewModel(
         ILogger<HomeViewModel> logger, 
@@ -39,18 +43,46 @@ public partial class HomeViewModel : BaseViewModel
         _gameLauncher = gameLauncher;
 
         _gameStateService.GameStateChanged += OnGameStateChanged;
+        
+        _ = InitialGameDetectionAsync();
     }
 
+    private async Task InitialGameDetectionAsync()
+    {
+        GameStatusText = "Attempting to automatically detect game...";
+        if (!IsGameDetected)
+        {
+            await DetectGameCommand.ExecuteAsync(null);
+        }
+    }
+    
     private void OnGameStateChanged()
     {
         OnPropertyChanged(nameof(CurrentGame));
         OnPropertyChanged(nameof(IsGameDetected));
+        OnPropertyChanged(nameof(SelectGameButtonText));
+        
+        UpdateGameStatusText();
+    }
+
+    private void UpdateGameStatusText()
+    {
+        if (IsGameDetected)
+        {
+            GameStatusText = $"Game: {CurrentGame.Name}\nPath: {CurrentGame.InstallPath}";
+        }
+        else
+        {
+            GameStatusText = "Game path not detected. Please select manually.";
+        }
     }
 
     [RelayCommand]
     private void GoToBrowseMods() => _navigationService.NavigateTo<BrowseModsViewModel>();
 
-    [RelayCommand]
+    private bool CanExecuteGameCommands() => IsGameDetected;
+
+    [RelayCommand(CanExecute = nameof(CanExecuteGameCommands))]
     private async Task LaunchModded()
     {
         await ExecuteAsync(async () =>
@@ -65,7 +97,7 @@ public partial class HomeViewModel : BaseViewModel
         }, "Launching modded game...");
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanExecuteGameCommands))]
     private async Task LaunchVanilla()
     {
         await ExecuteAsync(async () =>
@@ -93,7 +125,7 @@ public partial class HomeViewModel : BaseViewModel
             }
             else
             {
-                SetStatus("Could not automatically detect game.");
+                UpdateGameStatusText();
             }
         }, "Detecting game...");
     }
@@ -115,12 +147,13 @@ public partial class HomeViewModel : BaseViewModel
                 else
                 {
                     SetStatus("Selected directory is not a valid game installation.");
+                    UpdateGameStatusText();
                 }
             }
         }, "Selecting game directory...");
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanExecuteGameCommands))]
     private async Task InstallModFromFile()
     {
         await ExecuteAsync(async () =>
@@ -140,7 +173,7 @@ public partial class HomeViewModel : BaseViewModel
         }, "Installing mod from file...");
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanExecuteGameCommands))]
     private async Task InstallModFromUrl()
     {
         await ExecuteAsync(async () =>

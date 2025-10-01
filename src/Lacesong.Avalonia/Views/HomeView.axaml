@@ -36,11 +36,9 @@
                 <Border Grid.Row="2" Grid.Column="2" Classes="card">
                     <StackPanel>
                         <TextBlock Text="Game Status" Classes="h2" Margin="0,0,0,20"/>
-                        <TextBlock Text="{Binding IsGameDetected, Converter={StaticResource GameStatusConverter}}" Classes="bodyStrong" Margin="0,0,0,12"/>
-                        <TextBlock Text="{Binding CurrentGame.Name, StringFormat='Game: {0}'}" Classes="body" Margin="0,0,0,8"/>
-                        <TextBlock Text="{Binding CurrentGame.InstallPath}" Classes="smallFaded" TextWrapping="Wrap" Margin="0,0,0,16"/>
-                        <Button Content="Detect Game" Command="{Binding DetectGameCommand}" IsEnabled="{Binding !IsGameDetected}" Margin="0,0,0,8"/>
-                        <Button Content="Change Game" Command="{Binding SelectGameDirectoryCommand}" IsEnabled="{Binding IsGameDetected}"/>
+                        <TextBlock Text="{Binding GameStatusText}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+                        <Button Content="Detect Game" Command="{Binding DetectGameCommand}" Margin="0,0,0,8"/>
+                        <Button Content="{Binding SelectGameButtonText}" Command="{Binding SelectGameDirectoryCommand}"/>
                     </StackPanel>
                 </Border>
             </Grid>

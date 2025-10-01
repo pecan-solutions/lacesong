@@ -26,6 +26,11 @@ public partial class GameDetectionViewModel : BaseViewModel
     [ObservableProperty]
     private string _detectionStatus = "Ready to scan for games";
 
+    // explicitly define commands to ensure they're always available
+    public IAsyncRelayCommand DetectGamesAsyncCommand { get; }
+    public IAsyncRelayCommand BrowseForGameAsyncCommand { get; }
+    public IRelayCommand SetSelectedGameCommand { get; }
+
     public GameDetectionViewModel(
         ILogger<GameDetectionViewModel> logger,
         IGameDetector gameDetector,
@@ -35,9 +40,13 @@ public partial class GameDetectionViewModel : BaseViewModel
         _gameDetector = gameDetector;
         _gameStateService = gameStateService;
         _dialogService = dialogService;
+
+        // initialize commands
+        DetectGamesAsyncCommand = new AsyncRelayCommand(DetectGamesAsync);
+        BrowseForGameAsyncCommand = new AsyncRelayCommand(BrowseForGameAsync);
+        SetSelectedGameCommand = new RelayCommand(SetSelectedGame);
     }
 
-    [RelayCommand]
     private async Task DetectGamesAsync()
     {
         await ExecuteAsync(async () =>
@@ -70,7 +79,6 @@ public partial class GameDetectionViewModel : BaseViewModel
         }, "Detecting games...");
     }
 
-    [RelayCommand]
     private async Task BrowseForGameAsync()
     {
         var selectedPath = await _dialogService.ShowFolderDialogAsync("Select Game Directory");
@@ -100,7 +108,6 @@ public partial class GameDetectionViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand]
     private void SetSelectedGame()
     {
         if (SelectedGame != null)

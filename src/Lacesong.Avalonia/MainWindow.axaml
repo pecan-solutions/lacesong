@@ -40,8 +40,9 @@
                     <ContentControl Grid.Row="0" Margin="24" Content="{Binding CurrentViewModel}" />
                     <Border Grid.Row="1" Background="{DynamicResource StatusBackgroundBrush}" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource GlassBorderBrush}" Padding="16,8">
                         <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                                 <TextBlock Text="{Binding StatusMessage}" Classes="smallFaded" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding GameDetectionStatus}" Classes="smallFaded" VerticalAlignment="Center"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="{Binding CurrentGame.Name}" Classes="smallFaded" VerticalAlignment="Center"/>

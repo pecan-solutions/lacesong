@@ -3,6 +3,7 @@ build/
 bin/
 obj/
 out/
+dev-build/
 
 # .NET
 *.user

@@ -26,8 +26,7 @@
                     <TextBlock Text="Lacesong will scan for Silksong in:" 
                                Classes="SmallFaded" TextWrapping="Wrap" Margin="0,0,0,8"/>
                     <TextBlock Text="• Steam Library" Classes="SmallFaded" Margin="16,0,0,4"/>
-                    <TextBlock Text="• Epic Games Store" Classes="SmallFaded" Margin="16,0,0,4"/>
-                    <TextBlock Text="• GOG Galaxy" Classes="SmallFaded" Margin="16,0,0,4"/>
+                    <TextBlock Text="• GoG" Classes="SmallFaded" Margin="16,0,0,4"/>
                     <TextBlock Text="• Common installation paths" Classes="SmallFaded" Margin="16,0,0,0"/>
                 </StackPanel>
             </Border>

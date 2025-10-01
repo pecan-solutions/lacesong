@@ -1,5 +1,7 @@
 # Lacesong
 
+![Lacesong Banner](docs/lacesongbanner.png)
+
 A cross-platform mod management tool for Unity/Mono games, starting with Hollow Knight: Silksong. Built with .NET 9 and Avalonia UI, Lacesong runs natively on Windows, macOS, and Linux.
 
 ## Overview
