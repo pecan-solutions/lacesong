@@ -27,7 +27,7 @@ public class Phase5IntegrationTests
         await File.WriteAllTextAsync(newIniTemp, "[Section]\nKey=Default\nNewKey=Added\n");
 
         var verificationMock = new Mock<IVerificationService>();
-        verificationMock.Setup(v => v.CalculateChecksum(It.IsAny<string>())).ReturnsAsync("sum");
+        verificationMock.Setup(v => v.CalculateChecksum(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("sum");
         var service = new ModConfigService(verificationMock.Object);
 
         var gameInstall = new GameInstallation { InstallPath = tempDir };
@@ -69,7 +69,7 @@ public class Phase5IntegrationTests
         var modInfo = new ModInfo{ Id="mod", Version="2.0"};
         modManager.Setup(m => m.GetModInfo("mod", It.IsAny<GameInstallation>())).ReturnsAsync(modInfo);
         // conflict returns error -> verification will detect critical conflict
-        conflict.Setup(c => c.DetectConflicts(It.IsAny<GameInstallation>())).ReturnsAsync(new List<ModConflict>{
+        conflict.Setup(c => c.DetectConflicts(It.IsAny<GameInstallation>(), It.IsAny<ModInfo>())).ReturnsAsync(new List<ModConflict>{
             new ModConflict{ConflictType=ConflictType.FileConflict, Severity=ConflictSeverity.Error, ConflictingMods=new List<string>{"mod"}}
         });
 

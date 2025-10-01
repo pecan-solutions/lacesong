@@ -1,12 +1,18 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using Lacesong.Avalonia.ViewModels;
 using System;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lacesong.Avalonia.Services;
 
-public class NavigationService : INavigationService
+public partial class NavigationService : ObservableObject, INavigationService
 {
     private readonly IServiceProvider _serviceProvider;
+
+    [ObservableProperty]
+    private object? _currentViewModel;
+    
+    public event Action? CurrentViewModelChanged;
 
     public NavigationService(IServiceProvider serviceProvider)
     {
@@ -15,7 +21,19 @@ public class NavigationService : INavigationService
 
     public void NavigateTo<TViewModel>() where TViewModel : class
     {
-        var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
-        mainViewModel.CurrentView = _serviceProvider.GetRequiredService(typeof(TViewModel));
+        var vm = _serviceProvider.GetRequiredService(typeof(TViewModel));
+        SetCurrentViewModel(vm);
+    }
+    
+    public void NavigateTo(Type viewModelType)
+    {
+        var vm = _serviceProvider.GetRequiredService(viewModelType);
+        SetCurrentViewModel(vm);
+    }
+
+    private void SetCurrentViewModel(object? viewModel)
+    {
+        CurrentViewModel = viewModel;
+        CurrentViewModelChanged?.Invoke();
     }
 }

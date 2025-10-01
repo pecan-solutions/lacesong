@@ -17,8 +17,8 @@ public class DependencyResolverTests
 
     public DependencyResolverTests()
     {
-        _modManager = new ModManager();
         _bepinexManager = new BepInExManager();
+        _modManager = new ModManager(_bepinexManager);
         _dependencyResolver = new DependencyResolver(_modManager, _bepinexManager);
     }
 
@@ -314,7 +314,8 @@ public class InstallationStagerTests
     public InstallationStagerTests()
     {
         _verificationService = new VerificationService();
-        _dependencyResolver = new DependencyResolver(new ModManager(), new BepInExManager());
+        var bepInExManager = new BepInExManager();
+        _dependencyResolver = new DependencyResolver(new ModManager(bepInExManager), bepInExManager);
         _installationStager = new InstallationStager(_verificationService, _dependencyResolver);
     }
 

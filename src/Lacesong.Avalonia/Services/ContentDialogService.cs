@@ -1,25 +1,50 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using System.Threading.Tasks;
 
 namespace Lacesong.Avalonia.Services
 {
     public class ContentDialogService : IContentDialogService
     {
-        private readonly MainWindow _mainWindow;
+        private Window? MainWindow => (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
 
-        public ContentDialogService(MainWindow mainWindow)
+        public ContentDialogService()
         {
-            _mainWindow = mainWindow;
+        }
+
+        public async Task<bool> ShowConfirmationDialogAsync(string title, string message)
+        {
+            // TODO: Implement confirmation dialog using Avalonia controls
+            return await Task.FromResult(false);
+        }
+
+        public async Task<string?> ShowInputDialogAsync(string title, string message, string defaultValue = "")
+        {
+            // TODO: Implement input dialog using Avalonia controls
+            return await Task.FromResult<string?>(null);
+        }
+
+        public async Task ShowMessageDialogAsync(string title, string message)
+        {
+            // TODO: Implement message dialog using Avalonia controls
+            await Task.CompletedTask;
         }
 
         public async Task ShowDialogAsync(object content)
         {
-            var dialog = _mainWindow.FindControl<ContentDialog>("DialogHost");
-            if (dialog != null)
+            // fallback generic content dialog using avalonia window wrapper
+            var dialogWindow = new Window
             {
-                dialog.Content = content;
-                await dialog.ShowAsync();
-            }
+                Content = content,
+                SizeToContent = SizeToContent.WidthAndHeight,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+
+            if (MainWindow is not null)
+                await dialogWindow.ShowDialog(MainWindow);
+            else
+                dialogWindow.Show();
         }
     }
 }

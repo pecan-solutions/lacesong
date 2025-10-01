@@ -9,69 +9,54 @@
 
     <Grid RowDefinitions="Auto,Auto,*">
         <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,24">
-            <TextBlock Text="Mod Management" Classes="Title" Margin="0,0,0,8"/>
-            <TextBlock Text="Manage your installed mods and discover new ones." Classes="Subtitle"/>
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="Installed Mods" Classes="h1" Margin="0,0,0,8"/>
+            <TextBlock Text="Manage your currently installed mods." Classes="h3"/>
         </StackPanel>
 
-        <!-- Toolbar -->
-        <Border Grid.Row="1" Classes="Card" Padding="16" Margin="0,0,0,16">
-            <StackPanel Spacing="12">
-                <!-- Search and Filters -->
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                    <TextBox Text="{Binding SearchText}" Watermark="Search..." Width="200"/>
-                    <CheckBox Content="Installed Only" IsChecked="{Binding ShowInstalledOnly}"/>
-                    <CheckBox Content="Enabled Only" IsChecked="{Binding ShowEnabledOnly}" />
-                </StackPanel>
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,0,0,16">
+            <Button Content="Refresh" Command="{Binding RefreshModsCommand}"/>
+            <Button Content="Install from File" Command="{Binding InstallModFromFileCommand}"/>
+            <Button Content="Install from URL" Command="{Binding InstallModFromUrlCommand}"/>
+            <Button Content="Open Mods Folder" Command="{Binding OpenModsFolderCommand}"/>
+        </StackPanel>
 
-                <!-- Action Buttons -->
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Install from File" Command="{Binding InstallModFromFileCommand}"/>
-                    <Button Content="Install from URL" Command="{Binding InstallModFromUrlCommand}"/>
-                    <Button Content="Refresh" Command="{Binding RefreshModsCommand}"/>
-                    <Button Content="Open Mods Folder" Command="{Binding OpenModsFolderCommand}"/>
-                    <Button Content="Settings" Command="{Binding OpenModSettingsCommand}"/>
-                </StackPanel>
-            </StackPanel>
-        </Border>
+        <DataGrid Grid.Row="2" ItemsSource="{Binding InstalledMods}"
+                  AutoGenerateColumns="False" CanUserReorderColumns="True"
+                  CanUserResizeColumns="True" CanUserSortColumns="True"
+                  IsReadOnly="True" GridLinesVisibility="None">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Status" Width="SizeToCells">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Ellipse Width="10" Height="10"
+                                     Fill="{Binding IsEnabled, Converter={StaticResource ModStatusColorConverter}}"
+                                     VerticalAlignment="Center" HorizontalAlignment="Center" Margin="12,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
-        <!-- Mod Cards -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <ItemsControl ItemsSource="{Binding InstalledMods}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal" Margin="0,0,0,16" ItemWidth="320" ItemHeight="280"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Classes="Card" CornerRadius="12" Padding="16" Margin="0,0,16,16">
-                            <Grid RowDefinitions="Auto,*,Auto,Auto">
-                                <!-- Header with Status -->
-                                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
-                                    <Ellipse Width="12" Height="12" VerticalAlignment="Center" Fill="{Binding IsEnabled, Converter={StaticResource ModStatusColorConverter}}"/>
-                                    <TextBlock Text="{Binding Name}" Classes="BodyStrong" TextWrapping="Wrap" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                
-                                <!-- Description -->
-                                <TextBlock Grid.Row="1" Text="{Binding Description}" Classes="SmallFaded" TextWrapping="Wrap" Margin="0,0,0,12" VerticalAlignment="Top"/>
-                                
-                                <!-- Author and Version -->
-                                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
-                                    <TextBlock Text="{Binding Author, StringFormat='by {0}'}" Classes="SmallFaded" />
-                                    <TextBlock Text="{Binding Version, StringFormat='v{0}'}" Classes="SmallFaded"/>
-                                </StackPanel>
-                                
-                                <!-- Action Buttons -->
-                                <StackPanel Grid.Row="3" Spacing="8">
-                                    <Button Content="{Binding IsEnabled, Converter={StaticResource EnableDisableTextConverter}}" Command="{Binding $parent[UserControl].DataContext.ToggleModCommand}" CommandParameter="{Binding}" HorizontalAlignment="Stretch" Classes="Primary"/>
-                                    <Button Content="Uninstall" Command="{Binding $parent[UserControl].DataContext.UninstallModCommand}" CommandParameter="{Binding}" HorizontalAlignment="Stretch"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Author" Binding="{Binding Author}" Width="*"/>
+                <DataGridTextColumn Header="Version" Binding="{Binding Version}" Width="SizeToCells"/>
+
+                <DataGridTemplateColumn Header="Actions" Width="SizeToCells">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,12,0">
+                                <Button Content="{Binding IsEnabled, Converter={StaticResource EnableDisableTextConverter}}" 
+                                        Command="{Binding $parent[UserControl].DataContext.ToggleModEnabledCommand}" 
+                                        CommandParameter="{Binding}"/>
+                                <Button Content="Uninstall" 
+                                        Command="{Binding $parent[UserControl].DataContext.UninstallModCommand}" 
+                                        CommandParameter="{Binding}"
+                                        Classes="danger"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </UserControl>

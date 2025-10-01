@@ -6,9 +6,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Lacesong.Avalonia.Views;
 using Lacesong.Core.Models;
-using MessageBox.Avalonia;
-using MessageBox.Avalonia.DTO;
-using MessageBox.Avalonia.Enums;
 
 namespace Lacesong.Avalonia.Services;
 
@@ -66,66 +63,19 @@ public class DialogService : IDialogService
 
     public async Task<string?> ShowInputDialogAsync(string title, string message, string defaultValue = "")
     {
-        var messageBoxStandardWindow = MessageBoxManager
-            .GetMessageBoxInputWindow(new MessageBoxInputParams
-            {
-                ButtonDefinitions = new[]
-                {
-                    new ButtonDefinition { Name = "OK", IsDefault = true },
-                    new ButtonDefinition { Name = "Cancel", IsCancel = true }
-                },
-                ContentTitle = title,
-                ContentMessage = message,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            });
-
-        var result = await messageBoxStandardWindow.ShowDialog(MainWindow);
-
-        if (result.Button == "OK")
-        {
-            return result.Message;
-        }
-
-        return null;
+        // TODO: Implement input dialog using Avalonia controls
+        return await Task.FromResult<string?>(null);
     }
 
     public async Task<bool> ShowConfirmationDialogAsync(string title, string message)
     {
-        var messageBoxStandardWindow = MessageBoxManager
-            .GetMessageBoxStandardWindow(new MessageBoxStandardParams
-            {
-                ButtonDefinitions = ButtonEnum.YesNo,
-                ContentTitle = title,
-                ContentMessage = message,
-                Icon = Icon.Question,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            });
-
-        var result = await messageBoxStandardWindow.ShowDialog(MainWindow);
-        return result == ButtonResult.Yes;
+        // TODO: Implement confirmation dialog using Avalonia controls
+        return await Task.FromResult(false);
     }
 
     public async Task ShowMessageDialogAsync(string title, string message)
     {
-        var messageBoxStandardWindow = MessageBoxManager
-            .GetMessageBoxStandardWindow(new MessageBoxStandardParams
-            {
-                ButtonDefinitions = ButtonEnum.Ok,
-                ContentTitle = title,
-                ContentMessage = message,
-                Icon = Icon.Info,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            });
-
-        await messageBoxStandardWindow.ShowDialog(MainWindow);
-    }
-
-    public async Task ShowModSettingsAsync(GameInstallation installation, string modId)
-    {
-        var settingsWindow = new ModSettingsWindow
-        {
-            // DataContext will be set to the appropriate ViewModel
-        };
-        await settingsWindow.ShowDialog(MainWindow);
+        // TODO: Implement message dialog using Avalonia controls
+        await Task.CompletedTask;
     }
 }

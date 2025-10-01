@@ -1,88 +1,156 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-
-    <!-- base button style -->
-    <Style Selector="Button.base">
-        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-        <Setter Property="FontSize" Value="15" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Padding" Value="16,12" />
-        <Setter Property="MinWidth" Value="120" />
-        <Setter Property="MinHeight" Value="40" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="VerticalAlignment" Value="Center" />
+    <Style Selector="Panel.page">
+        <Style.Animations>
+            <Animation Duration="0:0:0.2" Easing="CubicEaseOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="Opacity" Value="0.0"/>
+                    <Setter Property="TranslateTransform.Y" Value="20"/>
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="Opacity" Value="1.0"/>
+                    <Setter Property="TranslateTransform.Y" Value="0"/>
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
     </Style>
 
-    <!-- primary button style -->
+    <!-- Base Control Styles -->
+    <Style Selector="Window">
+        <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+    </Style>
+    
+    <Style Selector="Button">
+        <Setter Property="Background" Value="{DynamicResource ButtonSecondaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button:hover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ButtonSecondaryHoverBrush}"/>
+    </Style>
+
     <Style Selector="Button.primary">
-        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-        <Setter Property="FontSize" Value="15" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Padding" Value="16,12" />
-        <Setter Property="MinWidth" Value="120" />
-        <Setter Property="MinHeight" Value="40" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Background" Value="{DynamicResource ButtonPrimaryBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <!-- hover state -->
-        <Style Selector="Button.primary:pointerover">
-            <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHoverBrush}" />
-        </Style>
+        <Setter Property="Background" Value="{DynamicResource ButtonPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
-    <!-- secondary button style -->
-    <Style Selector="Button.secondary">
-        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-        <Setter Property="FontSize" Value="15" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Padding" Value="16,12" />
-        <Setter Property="MinWidth" Value="120" />
-        <Setter Property="MinHeight" Value="40" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Background" Value="{DynamicResource ButtonSecondaryBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
-        <!-- hover state -->
-        <Style Selector="Button.secondary:pointerover">
-            <Setter Property="Background" Value="{DynamicResource ButtonSecondaryHoverBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderHoverBrush}" />
-        </Style>
+    <Style Selector="Button.primary:hover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHoverBrush}"/>
     </Style>
 
-    <!-- card border style for generic containers -->
-    <Style Selector="Border.card">
-        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="16" />
-        <Setter Property="Padding" Value="32" />
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="{DynamicResource ErrorBrush}"/>
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    
+    <Style Selector="Button.danger:hover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ErrorColor}"/>
     </Style>
 
-    <!-- navigation button style -->
+    <!-- Navigation Button Style -->
     <Style Selector="Button.navButton">
-        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-        <Setter Property="FontSize" Value="15" />
-        <Setter Property="FontWeight" Value="Normal" />
-        <Setter Property="Padding" Value="16,12" />
-        <Setter Property="MinWidth" Value="200" />
-        <Setter Property="MinHeight" Value="48" />
-        <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="Margin" Value="8,4" />
-        <!-- hover state -->
-        <Style Selector="Button.navButton:pointerover">
-            <Setter Property="Background" Value="{DynamicResource ButtonSecondaryBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
-        </Style>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Padding" Value="12,10"/>
     </Style>
+    
+    <Style Selector="Button.navButton:hover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource GlassHoverFillColor}"/>
+    </Style>
+
+    <Style Selector="Button.navButton.active /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource GlassFillColor}"/>
+    </Style>
+
+    <!-- Window Control Button Style -->
+    <Style Selector="Button.windowButton">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="32"/>
+    </Style>
+
+    <Style Selector="Button.windowButton:hover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource GlassHoverFillColor}"/>
+    </Style>
+    
+    <Style Selector="Button.windowButton.close:hover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ErrorBrush}"/>
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+    </Style>
+
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}"/>
+        <Setter Property="Padding" Value="20"/>
+    </Style>
+
+    <Style Selector="ComboBox">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12,8"/>
+    </Style>
+
+    <Style Selector="TextBox">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12,8"/>
+    </Style>
+
+    <Style Selector="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+    </Style>
+    
+    <Style Selector="DataGrid">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}"/>
+        <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="RowBackground" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="DataGridColumnHeader">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Padding" Value="12"/>
+    </Style>
+
+    <Style Selector="DataGridRow:hover">
+        <Setter Property="Background" Value="{DynamicResource GlassHoverFillColor}"/>
+    </Style>
+    
 </Styles>

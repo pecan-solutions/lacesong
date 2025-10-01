@@ -9,7 +9,7 @@ namespace Lacesong.Avalonia.ViewModels;
 /// <summary>
 /// base view model with common functionality
 /// </summary>
-public abstract class BaseViewModel : ObservableObject
+public abstract partial class BaseViewModel : ObservableObject
 {
     protected readonly ILogger Logger;
 
@@ -18,33 +18,17 @@ public abstract class BaseViewModel : ObservableObject
         Logger = logger;
     }
 
+    [ObservableProperty]
     private bool _isBusy;
-    public bool IsBusy
-    {
-        get => _isBusy;
-        set => SetProperty(ref _isBusy, value);
-    }
 
+    [ObservableProperty]
     private string _statusMessage = string.Empty;
-    public string StatusMessage
-    {
-        get => _statusMessage;
-        set => SetProperty(ref _statusMessage, value);
-    }
 
+    [ObservableProperty]
     private bool _hasError;
-    public bool HasError
-    {
-        get => _hasError;
-        set => SetProperty(ref _hasError, value);
-    }
 
+    [ObservableProperty]
     private string _errorMessage = string.Empty;
-    public string ErrorMessage
-    {
-        get => _errorMessage;
-        set => SetProperty(ref _errorMessage, value);
-    }
 
     protected void SetStatus(string message, bool isError = false)
     {

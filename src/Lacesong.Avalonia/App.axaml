@@ -2,99 +2,122 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
              xmlns:views="clr-namespace:Lacesong.Avalonia.Views"
+             xmlns:converters="clr-namespace:Lacesong.Avalonia.Converters"
              x:Class="Lacesong.Avalonia.App"
              RequestedThemeVariant="Dark">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
-           <Application.Resources>
-               <ResourceDictionary>
-                   <!-- enhanced glassmorphic color palette -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- converters -->
+            <converters:ActiveViewConverter x:Key="ActiveViewConverter" />
+            <converters:BusyStatusConverter x:Key="BusyStatusConverter" />
+            <converters:GameStatusConverter x:Key="GameStatusConverter" />
+            <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+            <converters:BepInExStatusConverter x:Key="BepInExStatusConverter" />
+            <converters:ModStatusColorConverter x:Key="ModStatusColorConverter" />
+            <converters:EnableDisableTextConverter x:Key="EnableDisableTextConverter" />
+            <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+            <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+            <converters:EnabledStatusConverter x:Key="EnabledStatusConverter" />
+            <converters:ModStatusConverter x:Key="ModStatusConverter" />
+            <converters:SelectionBorderThicknessConverter x:Key="SelectionBorderThicknessConverter" />
+            
+            <!-- 
+            Modern, Glassmorphic Dark Theme by AI Assistant
+            Palette: Muted dark backgrounds, cool blues/purples for accents.
+            -->
 
-                   <!-- base colors -->
-                   <Color x:Key="PrimaryColor">#3b82f6</Color>
-                   <Color x:Key="PrimaryHoverColor">#2563eb</Color>
-                   <Color x:Key="AccentColor">#06b6d4</Color>
-                   <Color x:Key="AccentHoverColor">#0891b2</Color>
+            <!-- Base Colors -->
+            <Color x:Key="PrimaryAccentColor">#8257E5</Color> <!-- Vibrant Purple -->
+            <Color x:Key="PrimaryAccentHoverColor">#9466FF</Color>
+            <Color x:Key="SecondaryAccentColor">#00C7E5</Color> <!-- Bright Cyan -->
+            <Color x:Key="SecondaryAccentHoverColor">#10D7F5</Color>
+            
+            <!-- Text Colors -->
+            <Color x:Key="PrimaryTextColor">#E1E1E6</Color>
+            <Color x:Key="SecondaryTextColor">#C4C4CC</Color>
+            <Color x:Key="MutedTextColor">#8D8D99</Color>
+            <Color x:Key="DisabledTextColor">#7C7C8A</Color>
 
-                   <!-- text colors -->
-                   <Color x:Key="PrimaryTextColor">#ffffff</Color>
-                   <Color x:Key="SecondaryTextColor">#e5e7eb</Color>
-                   <Color x:Key="MutedTextColor">#9ca3af</Color>
+            <!-- Background Colors -->
+            <Color x:Key="BackgroundColor">#121214</Color>
+            <Color x:Key="SurfaceColor">#202024</Color>
+            <Color x:Key="HeaderColor">#1A1A1D</Color>
+            <Color x:Key="CardColor">#252529</Color>
 
-                   <!-- status colors -->
-                   <Color x:Key="SuccessColor">#10b981</Color>
-                   <Color x:Key="SuccessHoverColor">#059669</Color>
-                   <Color x:Key="WarningColor">#f59e0b</Color>
-                   <Color x:Key="WarningHoverColor">#d97706</Color>
-                   <Color x:Key="ErrorColor">#ef4444</Color>
-                   <Color x:Key="ErrorHoverColor">#dc2626</Color>
+            <!-- Status Colors -->
+            <Color x:Key="SuccessColor">#00B37E</Color>
+            <Color x:Key="WarningColor">#F79F1B</Color>
+            <Color x:Key="ErrorColor">#F75A68</Color>
 
-                   <!-- brushes -->
-                   <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource PrimaryColor}"/>
-                   <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource AccentColor}"/>
+            <!-- Glass Effect Colors (Alpha Channel is Key) -->
+            <Color x:Key="GlassFillColor">#1AFFFFFF</Color> <!-- 10% White -->
+            <Color x:Key="GlassStrokeColor">#33FFFFFF</Color> <!-- 20% White -->
+            <Color x:Key="GlassHoverFillColor">#26FFFFFF</Color> <!-- 15% White -->
 
-                   <SolidColorBrush x:Key="PrimaryTextBrush" Color="{DynamicResource PrimaryTextColor}"/>
-                   <SolidColorBrush x:Key="SecondaryTextBrush" Color="{DynamicResource SecondaryTextColor}"/>
-                   <SolidColorBrush x:Key="MutedTextBrush" Color="{DynamicResource MutedTextColor}"/>
+            <!-- Brushes -->
+            <SolidColorBrush x:Key="PrimaryAccentBrush" Color="{StaticResource PrimaryAccentColor}" />
+            <SolidColorBrush x:Key="SecondaryAccentBrush" Color="{StaticResource SecondaryAccentColor}" />
+            <SolidColorBrush x:Key="PrimaryTextBrush" Color="{StaticResource PrimaryTextColor}" />
+            <SolidColorBrush x:Key="SecondaryTextBrush" Color="{StaticResource SecondaryTextColor}" />
+            <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}" />
+            <SolidColorBrush x:Key="DisabledTextBrush" Color="{StaticResource DisabledTextColor}" />
 
-                   <SolidColorBrush x:Key="SuccessBrush" Color="{DynamicResource SuccessColor}"/>
-                   <SolidColorBrush x:Key="WarningBrush" Color="{DynamicResource WarningColor}"/>
-                   <SolidColorBrush x:Key="ErrorBrush" Color="{DynamicResource ErrorColor}"/>
+            <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+            <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+            <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
 
-                   <!-- glass effect brushes -->
-                   <SolidColorBrush x:Key="GlassPrimaryBrush" Color="#0DFFFFFF" />
-                   <SolidColorBrush x:Key="GlassSecondaryBrush" Color="#14FFFFFF" />
-                   <SolidColorBrush x:Key="GlassTertiaryBrush" Color="#1AFFFFFF" />
-                   <SolidColorBrush x:Key="GlassBorderBrush" Color="#1FFFFFFF" />
-                   <SolidColorBrush x:Key="GlassBorderHoverBrush" Color="#26FFFFFF" />
+            <!-- Component Brushes -->
+            <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
+            <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+            <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="{StaticResource HeaderColor}" />
+            <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{StaticResource HeaderColor}" />
+            <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardColor}" />
+            <SolidColorBrush x:Key="StatusBackgroundBrush" Color="{StaticResource HeaderColor}" />
+            
+            <SolidColorBrush x:Key="GlassBorderBrush" Color="{StaticResource GlassStrokeColor}" />
 
-                   <!-- component specific brushes -->
-                   <SolidColorBrush x:Key="CardBackgroundBrush" Color="#0AFFFFFF" />
-                   <SolidColorBrush x:Key="CardHoverBrush" Color="#14FFFFFF" />
-                   <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#1A000000" />
-                   <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#0D000000" />
-                   <SolidColorBrush x:Key="StatusBackgroundBrush" Color="#0A000000" />
+            <!-- Button Brushes -->
+            <LinearGradientBrush x:Key="ButtonPrimaryBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="{StaticResource PrimaryAccentColor}" Offset="0.0" />
+                <GradientStop Color="{StaticResource SecondaryAccentColor}" Offset="1.0" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="ButtonPrimaryHoverBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="{StaticResource PrimaryAccentHoverColor}" Offset="0.0" />
+                <GradientStop Color="{StaticResource SecondaryAccentHoverColor}" Offset="1.0" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="ButtonSecondaryBrush" Color="{StaticResource SurfaceColor}"/>
+            <SolidColorBrush x:Key="ButtonSecondaryHoverBrush" Color="{StaticResource CardColor}"/>
+        </ResourceDictionary>
+    </Application.Resources>
 
-                   <!-- button brushes -->
-                   <LinearGradientBrush x:Key="ButtonPrimaryBrush" StartPoint="0,0" EndPoint="1,1">
-                       <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0.0" />
-                       <GradientStop Color="{DynamicResource AccentColor}" Offset="1.0" />
-                   </LinearGradientBrush>
+    <Application.DataTemplates>
+        <!-- view model -> view mapping -->
+        <DataTemplate DataType="{x:Type vm:HomeViewModel}">
+            <views:HomeView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:GameDetectionViewModel}">
+            <views:GameDetectionView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BepInExInstallViewModel}">
+            <views:BepInExInstallView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:InstalledModsViewModel}">
+            <views:InstalledModsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <views:SettingsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BrowseModsViewModel}">
+            <views:BrowseModsView />
+        </DataTemplate>
+    </Application.DataTemplates>
 
-                   <LinearGradientBrush x:Key="ButtonPrimaryHoverBrush" StartPoint="0,0" EndPoint="1,1">
-                       <GradientStop Color="{DynamicResource PrimaryHoverColor}" Offset="0.0" />
-                       <GradientStop Color="{DynamicResource AccentHoverColor}" Offset="1.0" />
-                   </LinearGradientBrush>
-
-                   <SolidColorBrush x:Key="ButtonSecondaryBrush" Color="#14FFFFFF" />
-                   <SolidColorBrush x:Key="ButtonSecondaryHoverBrush" Color="#1AFFFFFF" />
-               </ResourceDictionary>
-           </Application.Resources>
-
-           <Application.DataTemplates>
-               <DataTemplate DataType="{x:Type vm:HomeViewModel}">
-                   <views:HomeView />
-               </DataTemplate>
-               <DataTemplate DataType="{x:Type vm:GameDetectionViewModel}">
-                   <views:GameDetectionView />
-               </DataTemplate>
-               <DataTemplate DataType="{x:Type vm:BepInExInstallViewModel}">
-                   <views:BepInExInstallView />
-               </DataTemplate>
-               <DataTemplate DataType="{x:Type vm:InstalledModsViewModel}">
-                   <views:InstalledModsView />
-               </DataTemplate>
-               <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
-                   <views:SettingsView />
-               </DataTemplate>
-               <DataTemplate DataType="{x:Type vm:BrowseModsViewModel}">
-                   <views:BrowseModsView />
-               </DataTemplate>
-           </Application.DataTemplates>
-    
     <Application.Styles>
         <FluentTheme />
-        <StyleInclude Source="avares://Lacesong.Avalonia/Styles/Typography.axaml" />
         <StyleInclude Source="avares://Lacesong.Avalonia/Styles/Controls.axaml" />
+        <StyleInclude Source="avares://Lacesong.Avalonia/Styles/Typography.axaml" />
     </Application.Styles>
 </Application>

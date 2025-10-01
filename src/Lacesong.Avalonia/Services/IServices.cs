@@ -15,9 +15,6 @@ public interface IDialogService
     Task<string?> ShowInputDialogAsync(string title, string message, string defaultValue = "");
     Task<bool> ShowConfirmationDialogAsync(string title, string message);
     Task ShowMessageDialogAsync(string title, string message);
-
-    // opens per-mod settings window
-    Task ShowModSettingsAsync(GameInstallation installation, string modId);
 }
 
 /// <summary>
@@ -61,7 +58,10 @@ public class UpdateInfo
 /// </summary>
 public interface INavigationService
 {
+    object? CurrentViewModel { get; }
+    event Action? CurrentViewModelChanged;
     void NavigateTo<TViewModel>() where TViewModel : class;
+    void NavigateTo(Type viewModelType);
 }
 
 /// <summary>
@@ -70,4 +70,12 @@ public interface INavigationService
 public interface ISnackbarService
 {
     void Show(string title, string message, string type = "Information", string icon = "ℹ️", TimeSpan? duration = null);
+}
+
+public interface IGameStateService
+{
+    GameInstallation CurrentGame { get; }
+    bool IsGameDetected { get; }
+    event Action GameStateChanged;
+    void SetCurrentGame(GameInstallation game);
 }

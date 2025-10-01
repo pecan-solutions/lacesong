@@ -53,6 +53,7 @@ public partial class App : Application
         services.AddSingleton<ICompatibilityService, CompatibilityService>();
         services.AddSingleton<IModConfigService, ModConfigService>();
         services.AddSingleton<IGameLauncher, GameLauncher>();
+        services.AddSingleton<ISettingsService, SettingsService>();
 
         // avalonia services
         services.AddSingleton<ILoggingService, Services.LoggingService>();
@@ -60,35 +61,36 @@ public partial class App : Application
         services.AddSingleton<IDialogService, Services.DialogService>();
         services.AddSingleton<IContentDialogService, Services.ContentDialogService>();
         services.AddSingleton<INavigationService, Services.NavigationService>();
-        services.AddSingleton<ISnackbarService, Services.SnackbarService>();
+        services.AddSingleton<ISnackbarService, Services.SnackbarService>(); // parameterless now
+        services.AddSingleton<IGameStateService, Services.GameStateService>();
 
         // logging
         services.AddLogging(builder =>
         {
             builder.AddConsole();
-            builder.AddFile(o => { o.Files = new[] { new LogFileOptions { Path = "logs/lacesong-{Date}.log" } }; });
+            builder.AddFile(o =>
+            {
+                o.RootPath = AppContext.BaseDirectory;
+                o.Files = new[] { new LogFileOptions { Path = "logs/lacesong-{Date}.log" } };
+            });
         });
 
         // view models
-        services.AddTransient<ViewModels.MainViewModel>();
+        services.AddSingleton<ViewModels.MainViewModel>();
         services.AddTransient<ViewModels.HomeViewModel>();
         services.AddTransient<ViewModels.GameDetectionViewModel>();
-        services.AddTransient<ViewModels.GameNotSelectedViewModel>();
         services.AddTransient<ViewModels.BepInExInstallViewModel>();
         services.AddTransient<ViewModels.InstalledModsViewModel>();
         services.AddTransient<ViewModels.SettingsViewModel>();
-        services.AddTransient<ViewModels.ModSettingsViewModel>();
-        services.AddTransient<ViewModels.ModSettingsViewModelFactory>();
         services.AddTransient<ViewModels.BrowseModsViewModel>();
 
         // views
-        services.AddTransient<MainWindow>();
+        services.AddSingleton<MainWindow>();
         services.AddTransient<Views.HomeView>();
         services.AddTransient<Views.GameDetectionView>();
         services.AddTransient<Views.BepInExInstallView>();
         services.AddTransient<Views.InstalledModsView>();
         services.AddTransient<Views.SettingsView>();
-        services.AddTransient<Views.ModSettingsWindow>();
         services.AddTransient<Views.BrowseModsView>();
     }
 

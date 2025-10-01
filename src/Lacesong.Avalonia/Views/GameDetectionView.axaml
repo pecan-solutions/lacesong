@@ -5,7 +5,7 @@
              xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="Lacesong.Avalonia.Views.GameDetectionView"
-             x:DataType="vm:GameDetectionViewModel">
+             x:CompileBindings="False">
     <Grid RowDefinitions="Auto,Auto,*">
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
@@ -21,8 +21,7 @@
                 <StackPanel>
                     <TextBlock Text="Automatic Detection" Classes="SectionHeader" Margin="0,0,0,16"/>
                     <TextBlock Text="{Binding DetectionStatus}" TextWrapping="Wrap" Margin="0,0,0,20"/>
-                    <Button Classes="Primary" Content="Detect Games" Command="{Binding DetectGamesCommand}" 
-                            IsEnabled="{Binding !IsDetecting}"
+                    <Button Classes="Primary" Content="Detect Games" Command="{Binding DetectGamesAsyncCommand}" 
                             Margin="0,0,0,20"/>
                     <TextBlock Text="Lacesong will scan for Silksong in:" 
                                Classes="SmallFaded" TextWrapping="Wrap" Margin="0,0,0,8"/>
@@ -39,7 +38,7 @@
                     <TextBlock Text="Manual Selection" Classes="SectionHeader" Margin="0,0,0,16"/>
                     <TextBlock Text="If automatic detection fails, you can point Lacesong to your game folder directly." 
                                TextWrapping="Wrap" Margin="0,0,0,20"/>
-                    <Button Classes="Secondary" Content="Browse for Game" Command="{Binding BrowseForGameCommand}" Margin="0,0,0,20"/>
+                    <Button Classes="Secondary" Content="Browse for Game" Command="{Binding BrowseForGameAsyncCommand}" Margin="0,0,0,20"/>
                     <TextBlock Text="Select the folder containing:" 
                                Classes="SmallFaded" TextWrapping="Wrap" Margin="0,0,0,8"/>
                     <TextBlock Text="Hollow Knight Silksong.exe" Classes="Monospace" Margin="16,0,0,0"/>
@@ -64,17 +63,16 @@
                                                Classes="SmallFaded"/>
                                 </StackPanel>
                                 <Button Grid.Column="1" Content="Select" 
-                                        Command="{Binding $parent[UserControl].DataContext.SelectGameCommand}"
-                                        CommandParameter="{Binding}"
+                                        Command="{Binding $parent[UserControl].DataContext.SetSelectedGameCommand}"
                                         Classes="Primary"
                                         VerticalAlignment="Center"/>
                             </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                <Button Classes="Primary" Content="Continue" Command="{Binding ProceedToNextCommand}" 
+                <Button Classes="Primary" Content="Continue" Command="{Binding SetSelectedGameCommand}" 
                         HorizontalAlignment="Right" Margin="0,16,0,0"
-                        IsEnabled="{Binding CanProceedToNext}"/>
+                        IsEnabled="{Binding SelectedGame, Converter={x:Static ObjectConverters.IsNotNull}}"/>
             </StackPanel>
         </Border>
     </Grid>

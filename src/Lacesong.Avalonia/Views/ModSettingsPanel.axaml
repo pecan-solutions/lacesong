@@ -2,8 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="350"
-             x:Class="Lacesong.Avalonia.Views.ModSettingsPanel">
+             x:Class="Lacesong.Avalonia.Views.ModSettingsPanel"
+             x:CompileBindings="False">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -11,20 +13,20 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Mod Settings" Classes="Title"/>
+        <TextBlock Text="Mod Settings" Classes="title"/>
 
         <StackPanel Grid.Row="1" Margin="0,24,0,0">
-            <CheckBox Classes="Default" Content="Enable automatic updates" IsChecked="{Binding AutoUpdateEnabled}" Margin="0,0,0,12"/>
+            <CheckBox Classes="default" Content="Enable automatic updates" IsChecked="{Binding AutoUpdateEnabled}" Margin="0,0,0,12"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                 <TextBlock Text="Update channel:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <ComboBox Classes="Default" Width="150" SelectedItem="{Binding UpdateChannel}">
+                <ComboBox Classes="default" Width="150" SelectedItem="{Binding UpdateChannel}">
                     <ComboBoxItem Content="Stable"/>
                     <ComboBoxItem Content="Beta"/>
                     <ComboBoxItem Content="Alpha"/>
                 </ComboBox>
             </StackPanel>
-            <CheckBox Classes="Default" Content="Preserve configuration on update" IsChecked="{Binding PreserveConfigs}" Margin="0,0,0,12"/>
-            <CheckBox Classes="Default" Content="Create backup before updating" IsChecked="{Binding BackupBeforeUpdate}"/>
+            <CheckBox Classes="default" Content="Preserve configuration on update" IsChecked="{Binding PreserveConfigs}" Margin="0,0,0,12"/>
+            <CheckBox Classes="default" Content="Create backup before updating" IsChecked="{Binding BackupBeforeUpdate}"/>
         </StackPanel>
 
         <Grid Grid.Row="2" Margin="0,16,0,0">
@@ -32,8 +34,8 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Status}" VerticalAlignment="Center" Classes="SmallFaded"/>
-            <Button Grid.Column="1" Classes="Primary" Content="Save" Command="{Binding SaveCommand}"/>
+            <TextBlock Text="{Binding Status}" VerticalAlignment="Center" Classes="smallFaded"/>
+            <Button Grid.Column="1" Classes="primary" Content="Save" Command="{Binding SaveCommand}"/>
         </Grid>
     </Grid>
 </UserControl>

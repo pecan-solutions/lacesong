@@ -7,99 +7,55 @@
              x:Class="Lacesong.Avalonia.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,*">
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
-            <TextBlock Text="Settings" Classes="Title" Margin="0,0,0,8"/>
-            <TextBlock Text="Configure Lacesong to fit your modding workflow." 
-                       Classes="Subtitle"/>
+            <TextBlock Text="Settings" Classes="h1" Margin="0,0,0,8"/>
+            <TextBlock Text="Configure Lacesong to fit your modding workflow." Classes="h3"/>
         </StackPanel>
 
         <!-- Settings Content -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Spacing="16">
                 <!-- General Settings -->
-                <Border Classes="Card">
+                <Border Classes="card">
                     <StackPanel Spacing="12">
-                        <TextBlock Text="General" Classes="SectionHeader"/>
-                        
-                        <CheckBox Content="Automatically check for updates on startup" 
-                                  IsChecked="{Binding AutoCheckForUpdates}"/>
-                        
-                        <CheckBox Content="Create backups before installing mods" 
-                                  IsChecked="{Binding CreateBackupsBeforeInstall}"/>
-                        
-                        <CheckBox Content="Show advanced options" 
-                                  IsChecked="{Binding ShowAdvancedOptions}"/>
-                        
-                        <CheckBox Content="Enable telemetry (helps us improve Lacesong)" 
-                                  IsChecked="{Binding EnableTelemetry}"/>
+                        <TextBlock Text="General" Classes="h2" Margin="0,0,0,8"/>
+                        <CheckBox Content="Automatically check for updates on startup" IsChecked="{Binding CurrentSettings.AutoCheckForUpdates}"/>
+                        <CheckBox Content="Create backups before installing mods" IsChecked="{Binding CurrentSettings.CreateBackupsBeforeInstall}"/>
+                        <CheckBox Content="Show advanced options" IsChecked="{Binding CurrentSettings.ShowAdvancedOptions}"/>
+                        <CheckBox Content="Enable telemetry (helps us improve Lacesong)" IsChecked="{Binding CurrentSettings.EnableTelemetry}"/>
                     </StackPanel>
                 </Border>
 
-                <!-- BepInEx Settings -->
-                <Border Classes="Card">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="BepInEx" Classes="SectionHeader"/>
-                        <TextBlock Text="Default BepInEx Version" Classes="BodyStrong"/>
-                        
-                        <ComboBox ItemsSource="{Binding BepInExVersions}" 
-                                  SelectedItem="{Binding BepinexVersion}"
-                                  Width="240" HorizontalAlignment="Left"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- Logging Settings -->
-                <Border Classes="Card">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="Logging" Classes="SectionHeader"/>
-                        <TextBlock Text="Log Level" Classes="BodyStrong"/>
-                        
-                        <ComboBox ItemsSource="{Binding LogLevels}" 
-                                  SelectedItem="{Binding LogLevel}"
-                                  Width="240" HorizontalAlignment="Left" 
-                                  Margin="0,0,0,12"/>
-                        
-                        <StackPanel Spacing="8">
-                            <Button Content="Open Logs Folder" Command="{Binding OpenLogsFolderCommand}"/>
-                            <Button Content="Clear Logs" Command="{Binding ClearLogsCommand}"/>
+                <!-- BepInEx & Logging Settings -->
+                <Grid ColumnDefinitions="*,16,*">
+                    <Border Grid.Column="0" Classes="card">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="BepInEx" Classes="h2" Margin="0,0,0,8"/>
+                            <TextBlock Text="Default BepInEx Version" Classes="bodyStrong"/>
+                            <ComboBox ItemsSource="{Binding BepInExVersions}" SelectedItem="{Binding CurrentSettings.BepinexVersion}"/>
                         </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Update Settings -->
-                <Border Classes="Card">
-                    <StackPanel Spacing="12">
-                        <TextBlock Text="Updates" Classes="SectionHeader"/>
-                        
-                        <Button Content="Check for Updates" Command="{Binding CheckForUpdatesCommand}" Classes="Primary"/>
-                        
-                        <TextBlock Text="Last checked: Never" Classes="SmallFaded"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- Import/Export Settings -->
-                <Border Classes="Card">
-                    <StackPanel Spacing="12">
-                        <TextBlock Text="Settings Management" Classes="SectionHeader"/>
-                        
-                        <StackPanel Spacing="8">
-                            <Button Content="Export Settings" Command="{Binding ExportSettingsCommand}"/>
-                            <Button Content="Import Settings" Command="{Binding ImportSettingsCommand}" />
+                    </Border>
+                    <Border Grid.Column="2" Classes="card">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Logging" Classes="h2" Margin="0,0,0,8"/>
+                            <TextBlock Text="Log Level" Classes="bodyStrong"/>
+                            <ComboBox ItemsSource="{Binding LogLevels}" SelectedItem="{Binding CurrentSettings.LogLevel}"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                                <Button Content="Open Logs" Command="{Binding OpenLogsFolderCommand}"/>
+                                <Button Content="Clear Logs" Command="{Binding ClearLogsCommand}"/>
+                            </StackPanel>
                         </StackPanel>
-                        
-                        <Button Content="Reset to Defaults" Command="{Binding ResetToDefaultsCommand}" />
-                    </StackPanel>
-                </Border>
+                    </Border>
+                </Grid>
+
+                <!-- Action Buttons -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,16,0,0">
+                    <Button Content="Reset to Defaults" Command="{Binding ResetToDefaultsCommand}"/>
+                    <Button Content="Save Settings" Command="{Binding SaveSettingsCommand}" Classes="primary"/>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
-
-        <!-- Action Buttons -->
-        <Border Grid.Row="2" Classes="Card" Padding="16" Margin="0,16,0,0">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                <Button Content="Reset" Command="{Binding ResetToDefaultsCommand}" MinWidth="100"/>
-                <Button Content="Save Settings" Command="{Binding SaveSettingsCommand}" Classes="Primary" MinWidth="120"/>
-            </StackPanel>
-        </Border>
     </Grid>
 </UserControl>

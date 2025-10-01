@@ -2,7 +2,64 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Lacesong.Avalonia.Views.BrowseModsView">
-  <TextBlock>BrowseModsView Placeholder</TextBlock>
+             xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Lacesong.Avalonia.Views.BrowseModsView"
+             x:DataType="vm:BrowseModsViewModel">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="Browse Mods" Classes="h1" Margin="0,0,0,8"/>
+            <TextBlock Text="Discover and install new mods from the community." Classes="h3"/>
+        </StackPanel>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="1" Classes="card" Padding="16" Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBox Text="{Binding SearchText, Mode=TwoWay}" Watermark="Search..." Width="300"/>
+                <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" Width="200"/>
+                <Button Content="Search" Command="{Binding LoadModsCommand}" Classes="primary"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Mod List -->
+        <Grid Grid.Row="2" RowDefinitions="*,Auto">
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Mods}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" ItemWidth="320"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="card" Margin="0,0,16,16" MinHeight="180">
+                                <Grid RowDefinitions="Auto,*,Auto,Auto">
+                                    <TextBlock Grid.Row="0" Text="{Binding Name}" Classes="h4" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding Description}" Classes="small" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                                    <TextBlock Grid.Row="2" Text="{Binding Author, StringFormat='by {0}'}" Classes="smallFaded" Margin="0,0,0,16"/>
+                                    <Button Grid.Row="3" Content="Install" 
+                                            Command="{Binding $parent[UserControl].DataContext.InstallModCommand}"
+                                            CommandParameter="{Binding}"
+                                            Classes="primary"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Pagination -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,12,0,0">
+                <Button Content="Previous" Command="{Binding PreviousPageCommand}" IsEnabled="{Binding CanGoToPreviousPage}"/>
+                <TextBlock VerticalAlignment="Center">
+                    <Run Text="{Binding CurrentPage}"/>
+                    <Run Text="/"/>
+                    <Run Text="{Binding TotalPages}"/>
+                </TextBlock>
+                <Button Content="Next" Command="{Binding NextPageCommand}" IsEnabled="{Binding CanGoToNextPage}"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
 </UserControl>
