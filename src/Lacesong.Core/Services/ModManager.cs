@@ -20,85 +20,50 @@ public class ModManager : IModManager
     }
 
     public async Task<OperationResult> InstallModFromZip(string source, GameInstallation gameInstall)
+        => await InstallModFromZip(source, gameInstall, progress: null, CancellationToken.None);
+
+    public async Task<OperationResult> InstallModFromZip(string source, GameInstallation gameInstall, IProgress<double>? progress, CancellationToken token = default)
     {
         try
         {
+            progress?.Report(0.05);
             // ensure mods directory exists
             EnsureModsDirectory(gameInstall);
-            // validate game installation
             if (!ValidateGameInstall(gameInstall))
-            {
                 return OperationResult.ErrorResult("Invalid game installation", "Game installation validation failed");
-            }
 
-            // check if bepinex is installed
             if (!_bepInExManager.IsBepInExInstalled(gameInstall))
-            {
                 return OperationResult.ErrorResult("BepInEx is not installed", "BepInEx required for mod installation");
-            }
 
             string tempZipPath;
-            
-            // handle url downloads
+
             if (source.StartsWith("http://") || source.StartsWith("https://"))
             {
-                var downloadResult = await DownloadMod(source);
-                if (!downloadResult.Success)
-                {
-                    return OperationResult.ErrorResult($"Failed to download mod: {downloadResult.Error}", "Download failed");
-                }
+                var downloadResult = await DownloadModWithProgress(source, progress, token);
+                if (!downloadResult.Success) return downloadResult;
                 tempZipPath = downloadResult.Data as string ?? string.Empty;
             }
             else
             {
-                // validate local file
                 if (!File.Exists(source))
-                {
                     return OperationResult.ErrorResult("Mod file not found", "File does not exist");
-                }
                 tempZipPath = source;
             }
+            progress?.Report(0.4);
 
-            // extract and analyze mod
             var extractResult = await ExtractAndAnalyzeMod(tempZipPath, gameInstall);
-            if (!extractResult.Success)
-            {
-                return OperationResult.ErrorResult($"Failed to extract mod: {extractResult.Error}", "Extraction failed");
-            }
+            if (!extractResult.Success) return extractResult;
+            progress?.Report(0.6);
 
-            var modInfo = extractResult.Data as ModInfo;
-            if (modInfo == null)
-            {
-                return OperationResult.ErrorResult("Failed to parse mod information", "Invalid mod format");
-            }
+            var modInfo = extractResult.Data as ModInfo ?? throw new("failed to parse mod info");
+            var depResult = await ResolveDependencies(modInfo, gameInstall);
+            if (!depResult.Success) return depResult;
 
-            // check for dependencies
-            var dependencyResult = await ResolveDependencies(modInfo, gameInstall);
-            if (!dependencyResult.Success)
-            {
-                return OperationResult.ErrorResult($"Dependency resolution failed: {dependencyResult.Error}", "Dependencies not met");
-            }
-
-            // install mod files
+            progress?.Report(0.8);
             var installResult = await InstallModFiles(tempZipPath, modInfo, gameInstall);
-            if (!installResult.Success)
-            {
-                return OperationResult.ErrorResult($"Failed to install mod files: {installResult.Error}", "Installation failed");
-            }
+            if (!installResult.Success) return installResult;
 
-            // cleanup temp files if downloaded
-            if (source.StartsWith("http://") || source.StartsWith("https://"))
-            {
-                try
-                {
-                    File.Delete(tempZipPath);
-                }
-                catch
-                {
-                    // ignore cleanup errors
-                }
-            }
-
+            progress?.Report(1);
             return OperationResult.SuccessResult($"Mod '{modInfo.Name}' installed successfully", modInfo);
         }
         catch (Exception ex)
@@ -696,6 +661,40 @@ public class ModManager : IModManager
         catch (Exception ex)
         {
             return OperationResult.ErrorResult(ex.Message, "Failed to create mod backup");
+        }
+    }
+
+    private async Task<OperationResult> DownloadModWithProgress(string url, IProgress<double>? progress, CancellationToken token)
+    {
+        try
+        {
+            var tempPath = Path.GetTempFileName();
+            var tempZipPath = Path.ChangeExtension(tempPath, ".zip");
+            File.Delete(tempPath);
+
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(30) };
+            using var resp = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token);
+            resp.EnsureSuccessStatusCode();
+            var total = resp.Content.Headers.ContentLength ?? -1L;
+            await using var stream = await resp.Content.ReadAsStreamAsync(token);
+            await using var fs = File.OpenWrite(tempZipPath);
+            var buffer = new byte[81920];
+            long read = 0;
+            int bytes;
+            while ((bytes = await stream.ReadAsync(buffer, token)) > 0)
+            {
+                await fs.WriteAsync(buffer.AsMemory(0, bytes), token);
+                read += bytes;
+                if (total > 0)
+                {
+                    progress?.Report(Math.Min(0.3, 0.3 * (read / (double)total)));
+                }
+            }
+            return OperationResult.SuccessResult("downloaded", tempZipPath);
+        }
+        catch (Exception ex)
+        {
+            return OperationResult.ErrorResult(ex.Message, "download failed");
         }
     }
 }

@@ -84,6 +84,11 @@ public interface IModManager
     Task<OperationResult> InstallModFromZip(string source, GameInstallation gameInstall);
 
     /// <summary>
+    /// installs a mod from a zip file or url with progress reporting
+    /// </summary>
+    Task<OperationResult> InstallModFromZip(string source, GameInstallation gameInstall, IProgress<double> progress, CancellationToken token = default);
+
+    /// <summary>
     /// uninstalls a mod by its id
     /// </summary>
     /// <param name="modId">mod id to uninstall</param>

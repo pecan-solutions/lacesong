@@ -19,6 +19,7 @@
             <StackPanel Orientation="Horizontal" Spacing="12">
                 <TextBox Text="{Binding SearchText, Mode=TwoWay}" Watermark="Search..." Width="300"/>
                 <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" Width="200"/>
+                <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption, Mode=TwoWay}" Width="150"/>
                 <Button Content="Search" Command="{Binding LoadModsCommand}" Classes="primary"/>
             </StackPanel>
         </Border>
@@ -36,13 +37,31 @@
                         <DataTemplate>
                             <Border Classes="card" Margin="0,0,16,16" MinHeight="180">
                                 <Grid RowDefinitions="Auto,*,Auto,Auto">
+                                    <!-- name -->
                                     <TextBlock Grid.Row="0" Text="{Binding Name}" Classes="h4" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                    <!-- description -->
                                     <TextBlock Grid.Row="1" Text="{Binding Description}" Classes="small" TextWrapping="Wrap" Margin="0,0,0,12"/>
-                                    <TextBlock Grid.Row="2" Text="{Binding Author, StringFormat='by {0}'}" Classes="smallFaded" Margin="0,0,0,16"/>
-                                    <Button Grid.Row="3" Content="Install" 
-                                            Command="{Binding $parent[UserControl].DataContext.InstallModCommand}"
-                                            CommandParameter="{Binding}"
-                                            Classes="primary"/>
+                                    <!-- author / updated -->
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                                        <TextBlock Text="{Binding Author, StringFormat='by {0}'}" Classes="smallFaded"/>
+                                        <TextBlock Text="•" Classes="smallFaded"/>
+                                        <TextBlock Text="{Binding LastUpdated, Converter={StaticResource RelativeTimeConverter}}" Classes="smallFaded"/>
+                                    </StackPanel>
+                                    <!-- install button & progress -->
+                                    <Grid Grid.Row="3">
+                                        <ProgressBar Minimum="0" Maximum="1" Height="4" VerticalAlignment="Top" Value="{Binding $parent[UserControl].DataContext.InstallProgress}" IsVisible="{Binding Path=$parent[UserControl].DataContext.InstallingModId, Converter={StaticResource BooleanConverter}}"/>
+                                        <Button Content="Install" HorizontalAlignment="Stretch"
+                                                Command="{Binding $parent[UserControl].DataContext.InstallModCommand}"
+                                                CommandParameter="{Binding}"
+                                                Classes="primary" Margin="0,4,0,0">
+                                            <Button.IsEnabled>
+                                                <MultiBinding Converter="{StaticResource IdMatchConverter}">
+                                                    <Binding Path="Id"/>
+                                                    <Binding Path="$parent[UserControl].DataContext.InstallingModId"/>
+                                                </MultiBinding>
+                                            </Button.IsEnabled>
+                                        </Button>
+                                    </Grid>
                                 </Grid>
                             </Border>
                         </DataTemplate>

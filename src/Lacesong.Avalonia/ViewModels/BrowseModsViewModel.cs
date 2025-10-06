@@ -8,6 +8,8 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
+using System.ComponentModel;
 
 namespace Lacesong.Avalonia.ViewModels;
 
@@ -35,10 +37,22 @@ public partial class BrowseModsViewModel : BaseViewModel
     private ObservableCollection<string> _categories = new();
 
     [ObservableProperty]
+    private ObservableCollection<string> _sortOptions = new() { "rating", "downloads", "date", "name" };
+
+    [ObservableProperty]
+    private string _selectedSortOption = "rating";
+
+    [ObservableProperty]
     private int _currentPage = 1;
 
     [ObservableProperty]
     private int _totalPages = 1;
+
+    [ObservableProperty]
+    private string? _installingModId;
+
+    [ObservableProperty]
+    private double _installProgress;
 
     public bool CanGoToPreviousPage => CurrentPage > 1;
     public bool CanGoToNextPage => CurrentPage < TotalPages;
@@ -90,7 +104,9 @@ public partial class BrowseModsViewModel : BaseViewModel
                 Query = string.IsNullOrEmpty(SearchText) ? null : SearchText,
                 Category = SelectedCategory == "All" ? null : SelectedCategory,
                 Page = CurrentPage,
-                PageSize = 20
+                PageSize = 20,
+                SortBy = SelectedSortOption,
+                SortOrder = "desc"
             };
 
             var results = await _modIndexService.SearchMods(criteria);
@@ -111,39 +127,22 @@ public partial class BrowseModsViewModel : BaseViewModel
     private async Task InstallModAsync(ModIndexEntry mod)
     {
         if (mod == null || _gameStateService.CurrentGame == null) return;
-        
-        var result = await _dialogService.ShowConfirmationDialogAsync(
-            "Install Mod",
-            $"Are you sure you want to install '{mod.Name}' by {mod.Author}?");
-            
-        if (!result) return;
 
-        await ExecuteAsync(async () =>
+        InstallingModId = mod.Id;
+        InstallProgress = 0;
+        var progress = new Progress<double>(p => InstallProgress = p);
+        
+        var cts = new CancellationTokenSource();
+
+        var result = await ExecuteAsync(async () =>
         {
-            var latestVersion = mod.Versions
-                .Where(v => !v.IsPrerelease)
-                .OrderByDescending(v => v.ReleaseDate)
-                .FirstOrDefault();
-                
-            if (latestVersion == null)
-            {
-                SetStatus("No stable version available", true);
-                return;
-            }
-            
-            var installResult = await _modManager.InstallModFromZip(latestVersion.DownloadUrl, _gameStateService.CurrentGame);
-            
-            if (installResult.Success)
-            {
-                SetStatus("Mod installed successfully");
-                _snackbarService.Show("Success", $"Successfully installed {mod.Name}.", "Success");
-            }
-            else
-            {
-                SetStatus($"Installation failed: {installResult.Error}", true);
-                _snackbarService.Show("Installation Failed", installResult.Error, "Error");
-            }
+            var latestVersion = mod.Versions.Where(v => !v.IsPrerelease).OrderByDescending(v => v.ReleaseDate).FirstOrDefault();
+            if (latestVersion == null) throw new("no stable version available");
+            var op = await _modManager.InstallModFromZip(latestVersion.DownloadUrl, _gameStateService.CurrentGame, progress, cts.Token);
+            return op;
         }, "Installing mod...");
+
+        InstallingModId = null;
     }
 
     [RelayCommand]
