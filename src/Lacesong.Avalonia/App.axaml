@@ -24,6 +24,9 @@
             <converters:ModStatusConverter x:Key="ModStatusConverter" />
             <converters:SelectionBorderThicknessConverter x:Key="SelectionBorderThicknessConverter" />
             <converters:BooleanToActiveClassConverter x:Key="BooleanToActiveClassConverter" />
+            <converters:RelativeTimeConverter x:Key="RelativeTimeConverter" />
+            <converters:InverseBooleanConverter x:Key="BooleanConverter" />
+            <converters:IdMatchConverter x:Key="IdMatchConverter" />
             
             <!-- 
             Modern, Glassmorphic Dark Theme by AI Assistant

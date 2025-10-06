@@ -20,19 +20,19 @@ public class ThunderstoreModIndexService : IModIndexService
     {
         const string key = "all_packages";
         if (_cache.TryGetValue(key, out List<ThunderstorePackageDto> cached))
-            return cached;
-
-        var page = 1;
-        var all = new List<ThunderstorePackageDto>();
-        while (true)
         {
-            var pageData = await _api.GetPackagesAsync(page, token);
-            if (pageData.Count == 0) break;
-            all.AddRange(pageData);
-            page++;
+            Console.WriteLine($"ThunderstoreModIndexService: GetAllPackages - Returning {cached.Count} cached packages");
+            return cached;
         }
-        _cache.Set(key, all, _ttl);
-        return all;
+
+        Console.WriteLine("ThunderstoreModIndexService: GetAllPackages - Fetching from API");
+        // only fetch the first page since all pages return the same data
+        Console.WriteLine("ThunderstoreModIndexService: GetAllPackages - Fetching page 1 only");
+        var pageData = await _api.GetPackagesAsync(1, token);
+        Console.WriteLine($"ThunderstoreModIndexService: GetAllPackages - Page 1 returned {pageData.Count} packages");
+        
+        _cache.Set(key, pageData.ToList(), _ttl);
+        return pageData.ToList();
     }
 
     private static ModIndexEntry MapPackage(ThunderstorePackageDto pkg)
@@ -47,7 +47,7 @@ public class ThunderstoreModIndexService : IModIndexService
             Category = pkg.Categories.FirstOrDefault() ?? "General",
             Tags = pkg.Categories,
             DownloadCount = latest?.Downloads ?? 0,
-            Rating = pkg.RatingScore,
+            Rating = (double)pkg.RatingScore, // convert int to double
             LastUpdated = pkg.DateUpdated,
             Versions = pkg.Versions.Select(v => new ModVersion
             {
@@ -71,6 +71,7 @@ public class ThunderstoreModIndexService : IModIndexService
     public async Task<ModSearchResults> SearchMods(ModSearchCriteria criteria)
     {
         var packages = await GetAllPackages();
+        Console.WriteLine($"ThunderstoreModIndexService: Retrieved {packages.Count} packages");
         IEnumerable<ThunderstorePackageDto> query = packages;
         if (!string.IsNullOrWhiteSpace(criteria.Query))
         {
@@ -84,7 +85,7 @@ public class ThunderstoreModIndexService : IModIndexService
         // sorting
         query = criteria.SortBy switch
         {
-            "downloads" => criteria.SortOrder == "desc" ? query.OrderByDescending(p => p.Versions.First().Downloads) : query.OrderBy(p => p.Versions.First().Downloads),
+            "downloads" => criteria.SortOrder == "desc" ? query.OrderByDescending(p => p.Versions.FirstOrDefault()?.Downloads ?? 0) : query.OrderBy(p => p.Versions.FirstOrDefault()?.Downloads ?? 0),
             "rating" => criteria.SortOrder == "desc" ? query.OrderByDescending(p => p.RatingScore) : query.OrderBy(p => p.RatingScore),
             "date" => criteria.SortOrder == "desc" ? query.OrderByDescending(p => p.DateUpdated) : query.OrderBy(p => p.DateUpdated),
             _ => criteria.SortOrder == "desc" ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name)
@@ -96,9 +97,12 @@ public class ThunderstoreModIndexService : IModIndexService
         var totalPages = (int)Math.Ceiling(total / (double)pageSize);
         var paged = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
+        var mappedMods = paged.Select(MapPackage).ToList();
+        Console.WriteLine($"ThunderstoreModIndexService: Mapped {mappedMods.Count} mods");
+        
         var results = new ModSearchResults
         {
-            Mods = paged.Select(MapPackage).ToList(),
+            Mods = mappedMods,
             TotalCount = total,
             Page = page,
             PageSize = pageSize,
@@ -117,8 +121,12 @@ public class ThunderstoreModIndexService : IModIndexService
 
     public async Task<List<string>> GetCategories()
     {
+        Console.WriteLine("ThunderstoreModIndexService: GetCategories called");
         var packages = await GetAllPackages();
-        return packages.SelectMany(p => p.Categories).Distinct().OrderBy(c => c).ToList();
+        Console.WriteLine($"ThunderstoreModIndexService: GetCategories - Retrieved {packages.Count} packages");
+        var categories = packages.SelectMany(p => p.Categories).Distinct().OrderBy(c => c).ToList();
+        Console.WriteLine($"ThunderstoreModIndexService: GetCategories - Found {categories.Count} unique categories");
+        return categories;
     }
 
     public Task<OperationResult> RefreshIndex()

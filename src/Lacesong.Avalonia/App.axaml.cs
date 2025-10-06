@@ -45,7 +45,8 @@ public partial class App : Application
         services.AddSingleton<IBepInExManager, BepInExManager>();
         services.AddSingleton<IModManager, ModManager>();
         services.AddSingleton<IBackupManager, BackupManager>();
-        services.AddSingleton<IModIndexService, ModIndexService>();
+        services.AddSingleton<IModIndexService, ThunderstoreModIndexService>();
+        services.AddSingleton<ThunderstoreService>();
         services.AddSingleton<IVerificationService, VerificationService>();
         services.AddSingleton<IDependencyResolver, DependencyResolver>();
         services.AddSingleton<IModUpdateService, ModUpdateService>();
@@ -63,6 +64,9 @@ public partial class App : Application
         services.AddSingleton<INavigationService, Services.NavigationService>();
         services.AddSingleton<ISnackbarService, Services.SnackbarService>(); // parameterless now
         services.AddSingleton<IGameStateService, Services.GameStateService>();
+
+        // memory cache for thunderstore api caching
+        services.AddMemoryCache();
 
         // logging
         services.AddLogging(builder =>

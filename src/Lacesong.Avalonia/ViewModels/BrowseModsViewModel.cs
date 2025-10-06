@@ -71,26 +71,55 @@ public partial class BrowseModsViewModel : BaseViewModel
         _snackbarService = snackbarService;
         _gameStateService = gameStateService;
         
-        _ = InitializeAsync();
+        Console.WriteLine("BrowseModsViewModel: Constructor called");
+        
+        // use Task.Run to avoid blocking the constructor, but ensure UI updates work
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await InitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"BrowseModsViewModel: Constructor async initialization failed: {ex.Message}");
+                Console.WriteLine($"BrowseModsViewModel: Stack trace: {ex.StackTrace}");
+            }
+        });
     }
 
     private async Task InitializeAsync()
     {
-        await LoadCategoriesAsync();
-        await LoadModsAsync();
+        Console.WriteLine("BrowseModsViewModel: InitializeAsync started");
+        try
+        {
+            await LoadCategoriesAsync();
+            await LoadModsAsync();
+            Console.WriteLine("BrowseModsViewModel: InitializeAsync completed successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"BrowseModsViewModel: InitializeAsync failed with exception: {ex.Message}");
+            Console.WriteLine($"BrowseModsViewModel: Stack trace: {ex.StackTrace}");
+        }
     }
 
     private async Task LoadCategoriesAsync()
     {
+        Console.WriteLine("BrowseModsViewModel: LoadCategoriesAsync started");
         await ExecuteAsync(async () =>
         {
+            Console.WriteLine("BrowseModsViewModel: Calling _modIndexService.GetCategories()");
             var cats = await _modIndexService.GetCategories();
+            Console.WriteLine($"BrowseModsViewModel: Received {cats.Count} categories");
             Categories.Clear();
             Categories.Add("All");
             foreach (var cat in cats.OrderBy(c => c))
             {
+                Console.WriteLine($"BrowseModsViewModel: Adding category: {cat}");
                 Categories.Add(cat);
             }
+            Console.WriteLine($"BrowseModsViewModel: Total categories in collection: {Categories.Count}");
         }, "Loading categories...");
     }
 
@@ -109,13 +138,19 @@ public partial class BrowseModsViewModel : BaseViewModel
                 SortOrder = "desc"
             };
 
+            Console.WriteLine($"BrowseModsViewModel: Searching with criteria - Query: {criteria.Query}, Category: {criteria.Category}, Page: {criteria.Page}");
+            
             var results = await _modIndexService.SearchMods(criteria);
+            Console.WriteLine($"BrowseModsViewModel: Received {results.Mods.Count} mods from service (Total: {results.TotalCount})");
             
             Mods.Clear();
             foreach (var mod in results.Mods)
             {
+                Console.WriteLine($"BrowseModsViewModel: Adding mod - {mod.Name} by {mod.Author}");
                 Mods.Add(mod);
             }
+            
+            Console.WriteLine($"BrowseModsViewModel: Added {Mods.Count} mods to collection");
             
             TotalPages = results.TotalPages;
             OnPropertyChanged(nameof(CanGoToPreviousPage));

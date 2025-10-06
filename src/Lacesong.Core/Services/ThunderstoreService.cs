@@ -24,21 +24,36 @@ public class ThunderstoreService
     {
         var cacheKey = $"packages_page_{page}";
         if (_cache.TryGetValue(cacheKey, out IReadOnlyList<ThunderstorePackageDto> cached))
+        {
+            Console.WriteLine($"ThunderstoreService: GetPackagesAsync - Returning {cached.Count} cached packages for page {page}");
             return cached;
+        }
 
+        Console.WriteLine($"ThunderstoreService: GetPackagesAsync - Fetching page {page} from API");
         await _throttle.WaitAsync(token);
         try
         {
             // double check after waiting
             if (_cache.TryGetValue(cacheKey, out cached))
+            {
+                Console.WriteLine($"ThunderstoreService: GetPackagesAsync - Found cached data after waiting for page {page}");
                 return cached;
+            }
 
             var url = $"{_baseUrl}/c/hollow-knight-silksong/api/v1/package/?page={page}";
+            Console.WriteLine($"ThunderstoreService: GetPackagesAsync - Making request to: {url}");
             var response = await _http.GetAsync(url, token);
+            Console.WriteLine($"ThunderstoreService: GetPackagesAsync - Response status: {response.StatusCode}");
             response.EnsureSuccessStatusCode();
             var packages = await response.Content.ReadFromJsonAsync<List<ThunderstorePackageDto>>(cancellationToken: token) ?? new();
+            Console.WriteLine($"ThunderstoreService: GetPackagesAsync - Deserialized {packages.Count} packages for page {page}");
             _cache.Set(cacheKey, packages, _cacheTtl);
             return packages;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ThunderstoreService: GetPackagesAsync - Exception for page {page}: {ex.Message}");
+            throw;
         }
         finally
         {
