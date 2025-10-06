@@ -125,4 +125,5 @@ Lacesong is a community-driven tool, not affiliated with Team Cherry or Hollow K
 ---
 
 **Documentation**: See [USAGE.md](USAGE.md) for detailed usage instructions.
+
 **Contact**: wwdarrenwei@gmail.com (email) or stitchsages (discord)
