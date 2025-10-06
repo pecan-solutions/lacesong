@@ -34,14 +34,7 @@ Lacesong provides a simple, safe, and consistent way to install, manage, and upd
 
 ### Desktop Application
 
-**Windows / macOS / Linux**
-
-Download the latest release for your platform from [GitHub Releases](https://github.com/YourOrg/Lacesong/releases):
-- Windows: `.exe` installer or portable `.zip`
-- macOS: `.dmg` installer (ARM64 and Intel)
-- Linux: `.AppImage` or `.deb` package
-
-Launch the application - it will auto-detect your Silksong installation or prompt for manual selection.
+WIP
 
 ### Command Line Interface
 
