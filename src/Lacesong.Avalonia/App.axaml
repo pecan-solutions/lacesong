@@ -27,6 +27,7 @@
             <converters:RelativeTimeConverter x:Key="RelativeTimeConverter" />
             <converters:InverseBooleanConverter x:Key="BooleanConverter" />
             <converters:IdMatchConverter x:Key="IdMatchConverter" />
+            <converters:InverseIdMatchConverter x:Key="InverseIdMatchConverter" />
             <converters:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter" />
             <converters:ObjectToBooleanConverter x:Key="ObjectToBooleanConverter" />
             <converters:UrlToImageConverter x:Key="UrlToImageConverter" />
