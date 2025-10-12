@@ -15,5 +15,10 @@ public class InverseIdMatchConverter : IMultiValueConverter
         // return true (enabled) when NOT installing this mod
         return string.IsNullOrEmpty(installingId) || installingId != modId;
     }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object? parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException("one-way conversion only");
+    }
 }
 
