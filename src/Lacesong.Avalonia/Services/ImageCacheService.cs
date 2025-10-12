@@ -66,7 +66,7 @@ public class ImageCacheService
             }
 
             // download from URL
-            var response = await _httpClient.GetAsync(url);
+            using var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode)
                 return null;
 

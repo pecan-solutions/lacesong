@@ -114,7 +114,14 @@
 
                         <!-- Install Button -->
                         <Grid>
-                            <ProgressBar Minimum="0" Maximum="1" Height="4" VerticalAlignment="Top" Value="{Binding InstallProgress}" IsVisible="{Binding InstallingModId, Converter={StaticResource StringNotNullOrEmptyConverter}}"/>
+                            <ProgressBar Minimum="0" Maximum="1" Height="4" VerticalAlignment="Top" Value="{Binding InstallProgress}">
+                                <ProgressBar.IsVisible>
+                                    <MultiBinding Converter="{StaticResource IdMatchConverter}">
+                                        <Binding Path="SelectedMod.Id"/>
+                                        <Binding Path="InstallingModId"/>
+                                    </MultiBinding>
+                                </ProgressBar.IsVisible>
+                            </ProgressBar>
                             <Button Content="Install Mod" HorizontalAlignment="Stretch"
                                     Command="{Binding InstallModCommand}"
                                     CommandParameter="{Binding SelectedMod}"

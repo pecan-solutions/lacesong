@@ -14,7 +14,7 @@ public class UrlToImageConverter : IValueConverter
         if (value is not string url || string.IsNullOrWhiteSpace(url))
             return null;
 
-        // for local file paths or avalonia resource paths
+        // only http/https URLs are supported; reject local paths
         if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && 
             !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
         {
