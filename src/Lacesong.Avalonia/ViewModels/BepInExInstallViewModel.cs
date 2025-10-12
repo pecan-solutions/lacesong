@@ -6,16 +6,20 @@ using Lacesong.Avalonia.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Lacesong.Avalonia.ViewModels;
 
-public partial class BepInExInstallViewModel : BaseViewModel
+public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
 {
     private readonly IBepInExManager _bepinexManager;
     private readonly IDialogService _dialogService;
     private readonly ISnackbarService _snackbarService;
     private readonly IGameStateService _gameStateService;
+    private readonly HttpClient _httpClient;
+    private bool _disposed;
 
     [ObservableProperty]
     private GameInstallation? _gameInstallation;
@@ -30,6 +34,9 @@ public partial class BepInExInstallViewModel : BaseViewModel
 
     [ObservableProperty]
     private string _selectedVersion = "5.4.22";
+
+    [ObservableProperty]
+    private string _latestVersion = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(InstallBepInExCommand))]
@@ -62,10 +69,14 @@ public partial class BepInExInstallViewModel : BaseViewModel
         _snackbarService = snackbarService;
         _gameStateService = gameStateService;
         
+        _httpClient = new HttpClient();
+        _httpClient.DefaultRequestHeaders.Add("User-Agent", "Lacesong-ModManager/1.0.0");
+        
         _gameInstallation = _gameStateService.CurrentGame;
         _gameStateService.GameStateChanged += OnGameStateChanged;
 
         CheckBepInExStatus();
+        _ = FetchLatestBepInExVersion();
     }
 
     private void OnGameStateChanged()
@@ -180,5 +191,58 @@ public partial class BepInExInstallViewModel : BaseViewModel
     private bool CanUninstallBepInEx()
     {
         return GameInstallation != null && IsBepInExInstalled;
+    }
+
+    private async Task FetchLatestBepInExVersion()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("https://api.github.com/repos/BepInEx/BepInEx/releases/latest");
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                Logger.LogWarning("Failed to fetch latest BepInEx version from GitHub API");
+                return;
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var document = JsonDocument.Parse(json);
+            
+            if (document.RootElement.TryGetProperty("tag_name", out var tagNameElement))
+            {
+                var tagName = tagNameElement.GetString();
+                if (!string.IsNullOrEmpty(tagName))
+                {
+                    // remove 'v' prefix if present (e.g., "v5.4.23.4" -> "5.4.23.4")
+                    LatestVersion = tagName.TrimStart('v');
+                    
+                    // update available versions list to include latest version
+                    if (!AvailableVersions.Contains(LatestVersion))
+                    {
+                        var updatedVersions = new List<string> { LatestVersion };
+                        updatedVersions.AddRange(AvailableVersions);
+                        AvailableVersions = updatedVersions;
+                        
+                        // set selected version to latest
+                        SelectedVersion = LatestVersion;
+                    }
+                    
+                    Logger.LogInformation($"Latest BepInEx version: {LatestVersion}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error fetching latest BepInEx version");
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        
+        _gameStateService.GameStateChanged -= OnGameStateChanged;
+        _httpClient?.Dispose();
+        _disposed = true;
     }
 }
