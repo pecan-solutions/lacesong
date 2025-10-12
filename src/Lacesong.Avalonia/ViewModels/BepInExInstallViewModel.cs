@@ -197,7 +197,7 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
     {
         try
         {
-            var response = await _httpClient.GetAsync("https://api.github.com/repos/BepInEx/BepInEx/releases/latest");
+            using var response = await _httpClient.GetAsync("https://api.github.com/repos/BepInEx/BepInEx/releases/latest");
             
             if (!response.IsSuccessStatusCode)
             {
