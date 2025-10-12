@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Lacesong.Core.Interfaces;
 using Lacesong.Core.Models;
 using Lacesong.Avalonia.Services;
+using Lacesong.Avalonia.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.ObjectModel;
@@ -22,10 +23,10 @@ public partial class BrowseModsViewModel : BaseViewModel
     private readonly IGameStateService _gameStateService;
 
     [ObservableProperty]
-    private ObservableCollection<ModIndexEntry> _mods = new();
+    private ObservableCollection<ModDisplayItem> _mods = new();
 
     [ObservableProperty]
-    private ModIndexEntry? _selectedMod;
+    private ModDisplayItem? _selectedMod;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -56,6 +57,17 @@ public partial class BrowseModsViewModel : BaseViewModel
 
     public bool CanGoToPreviousPage => CurrentPage > 1;
     public bool CanGoToNextPage => CurrentPage < TotalPages;
+
+    partial void OnSelectedSortOptionChanged(string value)
+    {
+        _ = LoadModsAsync();
+    }
+
+    partial void OnSelectedCategoryChanged(string value)
+    {
+        CurrentPage = 1; // reset to first page when changing category
+        _ = LoadModsAsync();
+    }
 
     public BrowseModsViewModel(
         ILogger<BrowseModsViewModel> logger,
@@ -147,7 +159,7 @@ public partial class BrowseModsViewModel : BaseViewModel
             foreach (var mod in results.Mods)
             {
                 Console.WriteLine($"BrowseModsViewModel: Adding mod - {mod.Name} by {mod.Author}");
-                Mods.Add(mod);
+                Mods.Add(new ModDisplayItem(mod));
             }
             
             Console.WriteLine($"BrowseModsViewModel: Added {Mods.Count} mods to collection");
@@ -159,10 +171,11 @@ public partial class BrowseModsViewModel : BaseViewModel
     }
     
     [RelayCommand]
-    private async Task InstallModAsync(ModIndexEntry mod)
+    private async Task InstallModAsync(ModDisplayItem modDisplay)
     {
-        if (mod == null || _gameStateService.CurrentGame == null) return;
+        if (modDisplay == null || _gameStateService.CurrentGame == null) return;
 
+        var mod = modDisplay.ModEntry;
         InstallingModId = mod.Id;
         InstallProgress = 0;
         var progress = new Progress<double>(p => InstallProgress = p);

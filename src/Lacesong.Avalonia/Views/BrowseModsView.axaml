@@ -24,53 +24,122 @@
             </StackPanel>
         </Border>
 
-        <!-- Mod List -->
-        <Grid Grid.Row="2" RowDefinitions="*,Auto">
-            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding Mods}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" ItemWidth="320"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
+        <!-- Mod List and Detail Panel -->
+        <Grid Grid.Row="2" ColumnDefinitions="5*,3*" RowDefinitions="*,Auto">
+            <!-- Left: Mod List -->
+            <Border Grid.Column="0" Grid.Row="0" Classes="card" Padding="0" Margin="0,0,12,0">
+                <ListBox ItemsSource="{Binding Mods}" SelectedItem="{Binding SelectedMod, Mode=TwoWay}" Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Border Classes="card" Margin="0,0,16,16" MinHeight="180">
-                                <Grid RowDefinitions="Auto,*,Auto,Auto">
-                                    <!-- name -->
-                                    <TextBlock Grid.Row="0" Text="{Binding Name}" Classes="h4" TextWrapping="Wrap" Margin="0,0,0,8"/>
-                                    <!-- description -->
-                                    <TextBlock Grid.Row="1" Text="{Binding Description}" Classes="small" TextWrapping="Wrap" Margin="0,0,0,12"/>
-                                    <!-- author / updated -->
-                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
-                                        <TextBlock Text="{Binding Author, StringFormat='by {0}'}" Classes="smallFaded"/>
-                                        <TextBlock Text="•" Classes="smallFaded"/>
-                                        <TextBlock Text="{Binding LastUpdated, Converter={StaticResource RelativeTimeConverter}}" Classes="smallFaded"/>
+                            <Grid ColumnDefinitions="48,*" Margin="8" RowDefinitions="Auto,Auto,Auto">
+                                <!-- Icon -->
+                                <Border Grid.Column="0" Grid.RowSpan="3" Width="48" Height="48" CornerRadius="4" ClipToBounds="True" Margin="0,0,12,0" VerticalAlignment="Top">
+                                    <Image Source="{Binding Icon}" Stretch="UniformToFill" IsVisible="{Binding Icon, Converter={StaticResource ObjectToBooleanConverter}}"/>
+                                </Border>
+                                
+                                <!-- Name -->
+                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding Name}" Classes="h4" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                                
+                                <!-- Author and Date -->
+                                <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+                                    <TextBlock Text="{Binding Author, StringFormat='by {0}'}" Classes="smallFaded"/>
+                                    <TextBlock Text="•" Classes="smallFaded"/>
+                                    <TextBlock Text="{Binding LastUpdated, Converter={StaticResource RelativeTimeConverter}}" Classes="smallFaded"/>
+                                </StackPanel>
+                                
+                                <!-- Stats -->
+                                <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="12">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="★" Classes="smallFaded"/>
+                                        <TextBlock Text="{Binding Rating, StringFormat='{}{0:F1}'}" Classes="smallFaded"/>
                                     </StackPanel>
-                                    <!-- install button & progress -->
-                                    <Grid Grid.Row="3">
-                                        <ProgressBar Minimum="0" Maximum="1" Height="4" VerticalAlignment="Top" Value="{Binding $parent[UserControl].DataContext.InstallProgress}" IsVisible="{Binding Path=$parent[UserControl].DataContext.InstallingModId, Converter={StaticResource BooleanConverter}}"/>
-                                        <Button Content="Install" HorizontalAlignment="Stretch"
-                                                Command="{Binding $parent[UserControl].DataContext.InstallModCommand}"
-                                                CommandParameter="{Binding}"
-                                                Classes="primary" Margin="0,4,0,0">
-                                            <Button.IsEnabled>
-                                                <MultiBinding Converter="{StaticResource IdMatchConverter}">
-                                                    <Binding Path="Id"/>
-                                                    <Binding Path="$parent[UserControl].DataContext.InstallingModId"/>
-                                                </MultiBinding>
-                                            </Button.IsEnabled>
-                                        </Button>
-                                    </Grid>
-                                </Grid>
-                            </Border>
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="↓" Classes="smallFaded"/>
+                                        <TextBlock Text="{Binding DownloadCount}" Classes="smallFaded"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <!-- Right: Detail Panel -->
+            <Border Grid.Column="1" Grid.Row="0" Classes="card" Padding="24" IsVisible="{Binding SelectedMod, Converter={StaticResource ObjectToBooleanConverter}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="16">
+                        <!-- Large Icon -->
+                        <Border Width="128" Height="128" CornerRadius="8" ClipToBounds="True" HorizontalAlignment="Left">
+                            <Image Source="{Binding SelectedMod.Icon}" Stretch="UniformToFill" IsVisible="{Binding SelectedMod.Icon, Converter={StaticResource ObjectToBooleanConverter}}"/>
+                        </Border>
+
+                        <!-- Name -->
+                        <TextBlock Text="{Binding SelectedMod.Name}" Classes="h2"/>
+
+                        <!-- Author -->
+                        <TextBlock Classes="h4">
+                            <Run Text="by"/>
+                            <Run Text="{Binding SelectedMod.Author}"/>
+                        </TextBlock>
+
+                        <!-- Stats -->
+                        <Grid ColumnDefinitions="Auto,*,Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Rating:" Classes="small" FontWeight="Bold"/>
+                            <TextBlock Grid.Column="1" Grid.Row="0" Classes="small">
+                                <Run Text="★"/>
+                                <Run Text="{Binding SelectedMod.Rating, StringFormat='{}{0:F1}'}"/>
+                            </TextBlock>
+
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Downloads:" Classes="small" FontWeight="Bold"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding SelectedMod.DownloadCount}" Classes="small"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row="2" Text="Last Updated:" Classes="small" FontWeight="Bold"/>
+                            <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding SelectedMod.LastUpdated, Converter={StaticResource RelativeTimeConverter}}" Classes="small"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row="3" Text="Category:" Classes="small" FontWeight="Bold"/>
+                            <TextBlock Grid.Column="1" Grid.Row="3" Text="{Binding SelectedMod.Category}" Classes="small"/>
+                        </Grid>
+
+                        <!-- Version -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Latest Version:" Classes="small" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedMod.LatestVersion}" Classes="small"/>
+                        </StackPanel>
+
+                        <!-- Description -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Description:" Classes="h4"/>
+                            <TextBlock Text="{Binding SelectedMod.Description}" TextWrapping="Wrap" Classes="small"/>
+                        </StackPanel>
+
+                        <!-- Install Button -->
+                        <Grid>
+                            <ProgressBar Minimum="0" Maximum="1" Height="4" VerticalAlignment="Top" Value="{Binding InstallProgress}">
+                                <ProgressBar.IsVisible>
+                                    <MultiBinding Converter="{StaticResource IdMatchConverter}">
+                                        <Binding Path="SelectedMod.Id"/>
+                                        <Binding Path="InstallingModId"/>
+                                    </MultiBinding>
+                                </ProgressBar.IsVisible>
+                            </ProgressBar>
+                            <Button Content="Install Mod" HorizontalAlignment="Stretch"
+                                    Command="{Binding InstallModCommand}"
+                                    CommandParameter="{Binding SelectedMod}"
+                                    Classes="primary" Padding="16,12" Margin="0,4,0,0">
+                                <Button.IsEnabled>
+                                    <MultiBinding Converter="{StaticResource InverseIdMatchConverter}">
+                                        <Binding Path="SelectedMod.Id"/>
+                                        <Binding Path="InstallingModId"/>
+                                    </MultiBinding>
+                                </Button.IsEnabled>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
 
             <!-- Pagination -->
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,12,0,0">
                 <Button Content="Previous" Command="{Binding PreviousPageCommand}" IsEnabled="{Binding CanGoToPreviousPage}"/>
                 <TextBlock VerticalAlignment="Center">
                     <Run Text="{Binding CurrentPage}"/>

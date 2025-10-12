@@ -226,6 +226,9 @@ public class ModIndexEntry
 
     [JsonPropertyName("ratingCount")]
     public int RatingCount { get; set; } = 0;
+
+    [JsonPropertyName("icon")]
+    public string? Icon { get; set; }
 }
 
 /// <summary>

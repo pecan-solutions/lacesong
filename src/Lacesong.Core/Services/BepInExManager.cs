@@ -9,7 +9,7 @@ namespace Lacesong.Core.Services;
 /// </summary>
 public class BepInExManager : IBepInExManager
 {
-    private const string BepInExDownloadUrl = "https://github.com/BepInEx/BepInEx/releases/download/v{0}/BepInEx_x64_{0}.zip";
+    private const string BepInExDownloadUrlTemplate = "https://github.com/BepInEx/BepInEx/releases/download/v{0}/BepInEx_{1}_x64_{0}.zip";
     private const string BepInExCoreDll = "BepInEx/core/BepInEx.Core.dll";
     private const string BepInExLoaderDll = "BepInEx/core/BepInEx.dll";
 
@@ -260,7 +260,9 @@ public class BepInExManager : IBepInExManager
     {
         try
         {
-            var downloadUrl = string.Format(BepInExDownloadUrl, version);
+            // determine platform for download url
+            var platform = GetPlatformName();
+            var downloadUrl = string.Format(BepInExDownloadUrlTemplate, version, platform);
             var tempPath = Path.GetTempFileName();
             var tempZipPath = Path.ChangeExtension(tempPath, ".zip");
             File.Delete(tempPath);
@@ -280,6 +282,19 @@ public class BepInExManager : IBepInExManager
         {
             return OperationResult.ErrorResult(ex.Message, "Failed to download BepInEx");
         }
+    }
+
+    private string GetPlatformName()
+    {
+        if (OperatingSystem.IsWindows())
+            return "win";
+        if (OperatingSystem.IsLinux())
+            return "linux";
+        if (OperatingSystem.IsMacOS())
+            return "macos";
+        
+        // default to windows if platform detection fails
+        return "win";
     }
 
     private async Task<OperationResult> ExtractBepInEx(string zipPath, string gamePath)

@@ -49,6 +49,7 @@ public class ThunderstoreModIndexService : IModIndexService
             DownloadCount = latest?.Downloads ?? 0,
             Rating = (double)pkg.RatingScore, // convert int to double
             LastUpdated = pkg.DateUpdated,
+            Icon = latest?.Icon,
             Versions = pkg.Versions.Select(v => new ModVersion
             {
                 Version = v.VersionNumber,
