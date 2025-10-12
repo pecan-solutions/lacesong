@@ -33,6 +33,15 @@ public class ImageCacheService
         if (string.IsNullOrWhiteSpace(url))
             return null;
 
+        // validate url is http or https only
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || 
+            !uri.IsAbsoluteUri ||
+            (!string.Equals(uri.Scheme, "http", StringComparison.OrdinalIgnoreCase) &&
+             !string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase)))
+        {
+            return null;
+        }
+
         // return cached task if already loading/loaded
         var task = _cache.GetOrAdd(url, _ => LoadImageInternalAsync(url));
         var result = await task;
