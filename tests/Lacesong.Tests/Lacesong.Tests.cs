@@ -27,9 +27,38 @@ public class GameDetectorTests
         
         try
         {
-            // create a mock game executable
-            var executablePath = Path.Combine(tempDir, "Hollow Knight Silksong.exe");
-            File.WriteAllText(executablePath, "mock executable");
+            // create a mock game executable for the current platform
+            string executablePath;
+            
+            if (PlatformDetector.IsWindows)
+            {
+                executablePath = Path.Combine(tempDir, "Hollow Knight Silksong.exe");
+                File.WriteAllText(executablePath, "mock executable");
+            }
+            else if (PlatformDetector.IsMacOS)
+            {
+                // create .app bundle structure
+                var appBundlePath = Path.Combine(tempDir, "Hollow Knight Silksong.app");
+                var contentsPath = Path.Combine(appBundlePath, "Contents");
+                var macOSPath = Path.Combine(contentsPath, "MacOS");
+                Directory.CreateDirectory(macOSPath);
+                
+                executablePath = Path.Combine(macOSPath, "Hollow Knight Silksong");
+                File.WriteAllText(executablePath, "#!/bin/bash\necho 'mock executable'\n");
+                
+                // set executable permission on macos
+                var chmod = System.Diagnostics.Process.Start("chmod", $"+x \"{executablePath}\"");
+                chmod?.WaitForExit();
+            }
+            else // linux
+            {
+                executablePath = Path.Combine(tempDir, "Hollow Knight Silksong");
+                File.WriteAllText(executablePath, "#!/bin/bash\necho 'mock executable'\n");
+                
+                // set executable permission on linux
+                var chmod = System.Diagnostics.Process.Start("chmod", $"+x \"{executablePath}\"");
+                chmod?.WaitForExit();
+            }
 
             // act
             var result = await _gameDetector.DetectGameInstall(tempDir);

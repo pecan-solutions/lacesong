@@ -64,6 +64,17 @@ public class GameDetector : IGameDetector
         ModManager.EnsureModsDirectory(gameInstall);
 
         var executablePath = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
+        
+        // on macos, also check for .app bundles
+        if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
+        {
+            var appBundlePath = Path.Combine(gameInstall.InstallPath, $"{Path.GetFileNameWithoutExtension(gameInstall.Executable)}.app");
+            if (Directory.Exists(appBundlePath))
+            {
+                executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(gameInstall.Executable));
+            }
+        }
+        
         return File.Exists(executablePath);
     }
 
