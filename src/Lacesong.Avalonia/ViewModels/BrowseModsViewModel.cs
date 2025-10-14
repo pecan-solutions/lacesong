@@ -21,6 +21,8 @@ public partial class BrowseModsViewModel : BaseViewModel
     private readonly IDialogService _dialogService;
     private readonly ISnackbarService _snackbarService;
     private readonly IGameStateService _gameStateService;
+    private CancellationTokenSource? _searchDebounceTokenSource;
+    private const int SearchDebounceDelayMs = 500;
 
     [ObservableProperty]
     private ObservableCollection<ModDisplayItem> _mods = new();
@@ -75,6 +77,32 @@ public partial class BrowseModsViewModel : BaseViewModel
 
     public bool CanGoToPreviousPage => CurrentPage > 1;
     public bool CanGoToNextPage => CurrentPage < TotalPages;
+
+    partial void OnSearchTextChanged(string value)
+    {
+        // cancel any pending search
+        _searchDebounceTokenSource?.Cancel();
+        _searchDebounceTokenSource = new CancellationTokenSource();
+        var token = _searchDebounceTokenSource.Token;
+
+        // debounce search to avoid excessive api calls while typing
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(SearchDebounceDelayMs, token);
+                if (!token.IsCancellationRequested)
+                {
+                    CurrentPage = 1; // reset to first page when searching
+                    await LoadModsAsync();
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // expected when user continues typing
+            }
+        });
+    }
 
     partial void OnSelectedSortOptionChanged(string value)
     {

@@ -77,7 +77,11 @@ public class ThunderstoreModIndexService : IModIndexService
         if (!string.IsNullOrWhiteSpace(criteria.Query))
         {
             var q = criteria.Query.ToLowerInvariant();
-            query = query.Where(p => p.Name.ToLowerInvariant().Contains(q) || p.Owner.ToLowerInvariant().Contains(q));
+            query = query.Where(p => 
+                p.Name.ToLowerInvariant().Contains(q) || 
+                p.Owner.ToLowerInvariant().Contains(q) ||
+                (p.Versions.FirstOrDefault()?.Description ?? string.Empty).ToLowerInvariant().Contains(q) ||
+                p.Categories.Any(c => c.ToLowerInvariant().Contains(q)));
         }
         if (!string.IsNullOrWhiteSpace(criteria.Category))
         {
