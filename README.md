@@ -22,6 +22,11 @@ Lacesong provides a simple, safe, and consistent way to install, manage, and upd
 - **Update Management** - Built-in updater with GitHub release integration
 - **CLI Interface** - Full-featured command-line tool for advanced users and automation
 
+## Images
+
+![Application Screenshot of the Mod Catalog](docs/screenshotlacesong.png)
+Mod catalog screenshot showing Thunderstore integration and "The Marrow" theme.
+
 ## Tech Stack
 
 **Core**: .NET 9, C#, BepInEx integration, JSON-based manifests  
