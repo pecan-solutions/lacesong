@@ -42,13 +42,15 @@ Mod catalog screenshot showing Thunderstore integration and "The Marrow" theme.
 WIP
 
 ### Command Line Interface
-(CLI outdated
+
+(CLI outdated)
 
 Download the CLI package for your platform and extract it. Run `modman` (or `modman.exe` on Windows) from the command line.
 
 See [USAGE.md](USAGE.md) for detailed commands and options
 
 ### CLI Examples
+
 (CLI outdated)
 
 ```bash
@@ -103,11 +105,18 @@ MIT License - See [LICENSE](LICENSE) for details.
 Lacesong is a community-driven tool, not affiliated with Team Cherry or Hollow Knight: Silksong. Use at your own risk.
 
 ## Credits
-wwdarrenwei (Darren Wei) - Creator of Lacesong, Lead Developer, Planner/PM
-lavenderpres (Presley) - Assistant Planning/PM, Senior Developer, Avalonia Translation,
-Iris - Senior Developer, Avalonia and WPF UI Development, Avalonia Translation
-Leonardo - Developer, Planning, WPF development
-Joseph - Developer, Avalonia UI assisting
+
+- wwdarrenwei (Darren Wei) - Creator of Lacesong, Lead Developer, Planner/PM
+
+- lavenderpres (Presley) - Assistant Planning/PM, Senior Developer, Avalonia Translation
+
+- Iris - Senior Developer, Avalonia and WPF UI Development, Avalonia Translation
+
+- Leonardo - Developer, Planning, WPF development
+
+- Joseph - Developer, Avalonia UI assisting
+
+Thanks in advance to all contributors!
 
 ---
 
