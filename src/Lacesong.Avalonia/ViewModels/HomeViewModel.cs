@@ -49,10 +49,25 @@ public partial class HomeViewModel : BaseViewModel
 
     private async Task InitialGameDetectionAsync()
     {
+        if (IsGameDetected)
+        {
+            // game already detected from previous session, just update the display
+            UpdateGameStatusText();
+            return;
+        }
+        
+        // attempt auto-detection with a timeout
         GameStatusText = "Attempting to automatically detect game...";
+        
+        var detectionTask = DetectGameCommand.ExecuteAsync(null);
+        var timeoutTask = Task.Delay(2000);
+        
+        await Task.WhenAny(detectionTask, timeoutTask);
+        
+        // after timeout, if still not detected, show "Game not detected"
         if (!IsGameDetected)
         {
-            await DetectGameCommand.ExecuteAsync(null);
+            GameStatusText = "Game not detected";
         }
     }
     
@@ -73,7 +88,7 @@ public partial class HomeViewModel : BaseViewModel
         }
         else
         {
-            GameStatusText = "Game path not detected. Please select manually.";
+            GameStatusText = "Game not detected";
         }
     }
 

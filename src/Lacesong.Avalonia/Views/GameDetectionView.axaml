@@ -9,11 +9,10 @@
     <Grid RowDefinitions="Auto,Auto,*">
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
-            <TextBlock Text="Game Detection" Classes="Title" Margin="0,0,0,8"/>
-            <TextBlock Text="Let's find your Silksong installation. You can detect automatically or browse for the game folder." 
-                       Classes="Subtitle"/>
+            <TextBlock Text="Game Detection" Classes="h1" Margin="0,0,0,8"/>
+            <TextBlock Text="Let's find your Silksong installation. You can detect automatically or browse for the game folder." Classes="h3"/>
         </StackPanel>
-
+        
         <!-- Main Content -->
         <Grid Grid.Row="1" ColumnDefinitions="*,20,*">
             <!-- Detection Panel -->

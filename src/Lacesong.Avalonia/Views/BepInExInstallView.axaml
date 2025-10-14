@@ -9,7 +9,7 @@
     <Grid RowDefinitions="Auto,*">
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
-            <TextBlock Text="Mod Loader Installation" Classes="h1" Margin="0,0,0,8"/>
+            <TextBlock Text="BepInEx Installation" Classes="h1" Margin="0,0,0,8"/>
             <TextBlock Text="Install and manage the BepInEx mod loader for Silksong." Classes="h3"/>
         </StackPanel>
 

@@ -10,7 +10,7 @@ public class GameStatusConverter : IValueConverter
     {
         if (value is bool isDetected)
         {
-            return isDetected ? "Game path detected" : "Game path not detected. Please select manually.";
+            return isDetected ? "Game path detected" : "Game not detected";
         }
         return "Unknown";
     }
