@@ -39,36 +39,7 @@ Mod catalog screenshot showing Thunderstore integration and "The Marrow" theme.
 
 ### Desktop Application
 
-WIP
-
-### Command Line Interface
-
-(CLI outdated)
-
-Download the CLI package for your platform and extract it. Run `modman` (or `modman.exe` on Windows) from the command line.
-
-See [USAGE.md](USAGE.md) for detailed commands and options
-
-### CLI Examples
-
-(CLI outdated)
-
-```bash
-# Basic operations
-modman detect-game
-modman install-bepinex --version 5.4.22 --backup
-modman install-mod "path/to/mod.zip"
-modman list-mods
-modman enable-mod "mod-id"
-
-# Advanced features
-modman search-mods --category UI --verified
-modman check-updates
-modman detect-conflicts
-modman create-restore-point "before-update"
-```
-
-For comprehensive documentation, see [USAGE.md](USAGE.md)
+Desktop application is work in progress and needs to be tested on Linux first.
 
 ## Development
 
