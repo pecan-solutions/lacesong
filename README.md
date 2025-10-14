@@ -22,7 +22,7 @@ Lacesong provides a simple, safe, and consistent way to install, manage, and upd
 - **Update Management** - Built-in updater with GitHub release integration
 - **CLI Interface** - Full-featured command-line tool for advanced users and automation
 
-## Images
+## Screenshots
 
 ![Application Screenshot of the Mod Catalog](docs/screenshotlacesong.png)
 Mod catalog screenshot showing Thunderstore integration and "The Marrow" theme.
@@ -42,22 +42,14 @@ Mod catalog screenshot showing Thunderstore integration and "The Marrow" theme.
 WIP
 
 ### Command Line Interface
+(CLI outdated
 
 Download the CLI package for your platform and extract it. Run `modman` (or `modman.exe` on Windows) from the command line.
 
 See [USAGE.md](USAGE.md) for detailed commands and options
 
-## Quick Start
-
-### Desktop Application
-
-1. Launch Lacesong - automatic game detection runs on startup
-2. If needed, manually browse for your game installation
-3. Install BepInEx with one click
-4. Browse and install mods from the catalog or local files
-5. Manage mods: enable, disable, update, or uninstall
-
 ### CLI Examples
+(CLI outdated)
 
 ```bash
 # Basic operations
@@ -75,23 +67,6 @@ modman create-restore-point "before-update"
 ```
 
 For comprehensive documentation, see [USAGE.md](USAGE.md)
-
-## Architecture
-
-Built with service-oriented design principles:
-- Clean interfaces for all core services (game detection, BepInEx management, mod operations)
-- Dependency injection with testable, mockable components
-- Comprehensive data models for installations, mods, and configurations
-- Safe atomic file operations with cross-platform path handling
-
-## Safety Features
-
-- **Dependency Resolution** - Automatic validation and installation with version constraint support
-- **Signature Verification** - Cryptographic validation (SHA256/SHA512/MD5) of mod files
-- **Safe Installation** - Staged installs with validation pipeline and atomic rollback
-- **Backup System** - Automatic restore points with metadata before critical operations
-- **Conflict Detection** - File, dependency, and load order conflict resolution
-- **Permission Handling** - Cross-platform elevation with protected location detection
 
 ## Development
 
@@ -126,6 +101,13 @@ MIT License - See [LICENSE](LICENSE) for details.
 ## Disclaimer
 
 Lacesong is a community-driven tool, not affiliated with Team Cherry or Hollow Knight: Silksong. Use at your own risk.
+
+## Credits
+wwdarrenwei (Darren Wei) - Creator of Lacesong, Lead Developer, Planner/PM
+lavenderpres (Presley) - Assistant Planning/PM, Senior Developer, Avalonia Translation,
+Iris - Senior Developer, Avalonia and WPF UI Development, Avalonia Translation
+Leonardo - Developer, Planning, WPF development
+Joseph - Developer, Avalonia UI assisting
 
 ---
 
