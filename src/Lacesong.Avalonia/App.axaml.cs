@@ -35,6 +35,11 @@ public partial class App : Application
             desktop.MainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         }
 
+        // Apply saved theme
+        var themeService = _serviceProvider.GetRequiredService<IThemeService>();
+        var settingsService = _serviceProvider.GetRequiredService<ISettingsService>();
+        themeService.SetTheme(settingsService.CurrentSettings.Theme);
+
         base.OnFrameworkInitializationCompleted();
     }
 
@@ -55,6 +60,7 @@ public partial class App : Application
         services.AddSingleton<IModConfigService, ModConfigService>();
         services.AddSingleton<IGameLauncher, GameLauncher>();
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<IThemeService, ThemeService>();
 
         // avalonia services
         services.AddSingleton<ILoggingService, Services.LoggingService>();

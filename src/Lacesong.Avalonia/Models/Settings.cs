@@ -1,11 +1,27 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace Lacesong.Avalonia.Models;
 
-public class Settings
+public partial class Settings : ObservableObject
 {
-    public bool AutoCheckForUpdates { get; set; } = true;
-    public bool CreateBackupsBeforeInstall { get; set; } = true;
-    public bool ShowAdvancedOptions { get; set; } = false;
-    public string LogLevel { get; set; } = "Information";
-    public string BepinexVersion { get; set; } = "5.4.22";
-    public bool EnableTelemetry { get; set; } = false;
+    [ObservableProperty]
+    private bool _autoCheckForUpdates = true;
+
+    [ObservableProperty]
+    private bool _createBackupsBeforeInstall = true;
+
+    [ObservableProperty]
+    private bool _showAdvancedOptions = false;
+
+    [ObservableProperty]
+    private string _logLevel = "Information";
+
+    [ObservableProperty]
+    private string _bepinexVersion = "5.4.22";
+
+    [ObservableProperty]
+    private bool _enableTelemetry = false;
+
+    [ObservableProperty]
+    private string _theme = "The Marrow";
 }

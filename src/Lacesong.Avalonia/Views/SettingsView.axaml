@@ -27,6 +27,15 @@
                         <CheckBox Content="Enable telemetry (helps us improve Lacesong)" IsChecked="{Binding CurrentSettings.EnableTelemetry}"/>
                     </StackPanel>
                 </Border>
+                
+                <!-- Theme Settings -->
+                <Border Classes="card">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Theme" Classes="h2" Margin="0,0,0,8"/>
+                        <TextBlock Text="Select Theme" Classes="bodyStrong"/>
+                        <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding CurrentSettings.Theme}"/>
+                    </StackPanel>
+                </Border>
 
                 <!-- BepInEx & Logging Settings -->
                 <Grid ColumnDefinitions="*,16,*">

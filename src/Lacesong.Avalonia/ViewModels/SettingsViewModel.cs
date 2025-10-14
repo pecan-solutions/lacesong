@@ -4,7 +4,9 @@ using Lacesong.Avalonia.Models;
 using Lacesong.Avalonia.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Lacesong.Avalonia.ViewModels;
 
@@ -13,6 +15,7 @@ public partial class SettingsViewModel : BaseViewModel
     private readonly ISettingsService _settingsService;
     private readonly ILoggingService _loggingService;
     private readonly IUpdateService _updateService;
+    private readonly IThemeService _themeService;
 
     [ObservableProperty]
     private Settings _currentSettings;
@@ -35,18 +38,32 @@ public partial class SettingsViewModel : BaseViewModel
         "5.4.19"
     };
 
+    public List<string> Themes { get; }
+
     public SettingsViewModel(
         ILogger<SettingsViewModel> logger,
         ISettingsService settingsService,
         ILoggingService loggingService,
-        IUpdateService updateService) : base(logger)
+        IUpdateService updateService,
+        IThemeService themeService) : base(logger)
     {
         _settingsService = settingsService;
         _loggingService = loggingService;
         _updateService = updateService;
+        _themeService = themeService;
 
         _currentSettings = _settingsService.CurrentSettings;
+        _currentSettings.PropertyChanged += OnThemeChanged;
+        Themes = _themeService.GetAvailableThemes().ToList();
         SetStatus("Settings loaded successfully");
+    }
+
+    private void OnThemeChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Settings.Theme))
+        {
+            _themeService.SetTheme(CurrentSettings.Theme);
+        }
     }
 
     [RelayCommand]

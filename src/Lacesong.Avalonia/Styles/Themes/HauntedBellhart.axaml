@@ -1,0 +1,10 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Haunted Bellhart Theme -->
+    <Color x:Key="PrimaryColor">#c1966b</Color>
+    <Color x:Key="AccentColor">#e89863</Color>
+    <Color x:Key="TertiaryColor">#a17c59</Color>
+    <Color x:Key="HoverColor">#d3a87f</Color>
+    <Color x:Key="BackgroundColor">#1a1612</Color>
+    <Color x:Key="SurfaceColor">#2c2520</Color>
+</ResourceDictionary>

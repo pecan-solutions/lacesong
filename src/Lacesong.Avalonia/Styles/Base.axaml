@@ -1,0 +1,62 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary>
+            <!-- This will be replaced at runtime with the selected theme -->
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/Themes/TheMarrow.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- Text Colors -->
+    <Color x:Key="PrimaryTextColor">#F5EFED</Color>
+    <Color x:Key="SecondaryTextColor">#C4C4CC</Color>
+    <Color x:Key="MutedTextColor">#8D8D99</Color>
+    <Color x:Key="DisabledTextColor">#7C7C8A</Color>
+
+    <!-- Status Colors -->
+    <Color x:Key="SuccessColor">#00B37E</Color>
+    <Color x:Key="WarningColor">#F79F1B</Color>
+    <Color x:Key="ErrorColor">#F75A68</Color>
+
+    <!-- Glass Effect Colors (Alpha Channel is Key) -->
+    <Color x:Key="GlassFillColor">#1AFFFFFF</Color>
+    <Color x:Key="GlassStrokeColor">#33FFFFFF</Color>
+    <Color x:Key="GlassHoverFillColor">#26FFFFFF</Color>
+
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="PrimaryAccentBrush" Color="{DynamicResource PrimaryColor}" />
+    <SolidColorBrush x:Key="SecondaryAccentBrush" Color="{DynamicResource AccentColor}" />
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="{StaticResource PrimaryTextColor}" />
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="{StaticResource SecondaryTextColor}" />
+    <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}" />
+    <SolidColorBrush x:Key="DisabledTextBrush" Color="{StaticResource DisabledTextColor}" />
+
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
+
+    <!-- Component Brushes -->
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{DynamicResource BackgroundColor}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{DynamicResource SurfaceColor}" />
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="{DynamicResource TertiaryColor}" />
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{DynamicResource TertiaryColor}" />
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{DynamicResource SurfaceColor}" />
+    <SolidColorBrush x:Key="StatusBackgroundBrush" Color="{DynamicResource TertiaryColor}" />
+
+    <SolidColorBrush x:Key="GlassBorderBrush" Color="{StaticResource GlassStrokeColor}" />
+
+    <!-- Button Brushes -->
+    <LinearGradientBrush x:Key="ButtonPrimaryBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0.0" />
+        <GradientStop Color="{DynamicResource AccentColor}" Offset="1.0" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="ButtonPrimaryHoverBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{DynamicResource HoverColor}" Offset="0.0" />
+        <GradientStop Color="{DynamicResource AccentColor}" Offset="1.0" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="ButtonSecondaryBrush" Color="{DynamicResource SurfaceColor}"/>
+    <SolidColorBrush x:Key="ButtonSecondaryHoverBrush" Color="{DynamicResource SurfaceColor}"/>
+</ResourceDictionary>

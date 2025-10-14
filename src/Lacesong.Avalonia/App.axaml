@@ -9,6 +9,10 @@
 
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/Base.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            
             <!-- converters -->
             <converters:ActiveViewConverter x:Key="ActiveViewConverter" />
             <converters:BusyStatusConverter x:Key="BusyStatusConverter" />
@@ -31,73 +35,6 @@
             <converters:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter" />
             <converters:ObjectToBooleanConverter x:Key="ObjectToBooleanConverter" />
             <converters:UrlToImageConverter x:Key="UrlToImageConverter" />
-            
-            <!-- 
-            Modern, Glassmorphic Dark Theme by AI Assistant
-            Palette: Muted dark backgrounds, cool blues/purples for accents.
-            -->
-
-            <!-- Base Colors -->
-            <Color x:Key="PrimaryAccentColor">#8257E5</Color> <!-- Vibrant Purple -->
-            <Color x:Key="PrimaryAccentHoverColor">#9466FF</Color>
-            <Color x:Key="SecondaryAccentColor">#00C7E5</Color> <!-- Bright Cyan -->
-            <Color x:Key="SecondaryAccentHoverColor">#10D7F5</Color>
-            
-            <!-- Text Colors -->
-            <Color x:Key="PrimaryTextColor">#E1E1E6</Color>
-            <Color x:Key="SecondaryTextColor">#C4C4CC</Color>
-            <Color x:Key="MutedTextColor">#8D8D99</Color>
-            <Color x:Key="DisabledTextColor">#7C7C8A</Color>
-
-            <!-- Background Colors -->
-            <Color x:Key="BackgroundColor">#121214</Color>
-            <Color x:Key="SurfaceColor">#202024</Color>
-            <Color x:Key="HeaderColor">#1A1A1D</Color>
-            <Color x:Key="CardColor">#252529</Color>
-
-            <!-- Status Colors -->
-            <Color x:Key="SuccessColor">#00B37E</Color>
-            <Color x:Key="WarningColor">#F79F1B</Color>
-            <Color x:Key="ErrorColor">#F75A68</Color>
-
-            <!-- Glass Effect Colors (Alpha Channel is Key) -->
-            <Color x:Key="GlassFillColor">#1AFFFFFF</Color> <!-- 10% White -->
-            <Color x:Key="GlassStrokeColor">#33FFFFFF</Color> <!-- 20% White -->
-            <Color x:Key="GlassHoverFillColor">#26FFFFFF</Color> <!-- 15% White -->
-
-            <!-- Brushes -->
-            <SolidColorBrush x:Key="PrimaryAccentBrush" Color="{StaticResource PrimaryAccentColor}" />
-            <SolidColorBrush x:Key="SecondaryAccentBrush" Color="{StaticResource SecondaryAccentColor}" />
-            <SolidColorBrush x:Key="PrimaryTextBrush" Color="{StaticResource PrimaryTextColor}" />
-            <SolidColorBrush x:Key="SecondaryTextBrush" Color="{StaticResource SecondaryTextColor}" />
-            <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}" />
-            <SolidColorBrush x:Key="DisabledTextBrush" Color="{StaticResource DisabledTextColor}" />
-
-            <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
-            <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
-            <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
-
-            <!-- Component Brushes -->
-            <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
-            <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
-            <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="{StaticResource HeaderColor}" />
-            <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{StaticResource HeaderColor}" />
-            <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardColor}" />
-            <SolidColorBrush x:Key="StatusBackgroundBrush" Color="{StaticResource HeaderColor}" />
-            
-            <SolidColorBrush x:Key="GlassBorderBrush" Color="{StaticResource GlassStrokeColor}" />
-
-            <!-- Button Brushes -->
-            <LinearGradientBrush x:Key="ButtonPrimaryBrush" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="{StaticResource PrimaryAccentColor}" Offset="0.0" />
-                <GradientStop Color="{StaticResource SecondaryAccentColor}" Offset="1.0" />
-            </LinearGradientBrush>
-            <LinearGradientBrush x:Key="ButtonPrimaryHoverBrush" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="{StaticResource PrimaryAccentHoverColor}" Offset="0.0" />
-                <GradientStop Color="{StaticResource SecondaryAccentHoverColor}" Offset="1.0" />
-            </LinearGradientBrush>
-            <SolidColorBrush x:Key="ButtonSecondaryBrush" Color="{StaticResource SurfaceColor}"/>
-            <SolidColorBrush x:Key="ButtonSecondaryHoverBrush" Color="{StaticResource CardColor}"/>
         </ResourceDictionary>
     </Application.Resources>
 

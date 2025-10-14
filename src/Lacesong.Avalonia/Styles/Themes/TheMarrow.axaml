@@ -1,0 +1,10 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- The Marrow Theme -->
+    <Color x:Key="PrimaryColor">#6B1B28</Color>
+    <Color x:Key="AccentColor">#D59878</Color>
+    <Color x:Key="TertiaryColor">#50141F</Color>
+    <Color x:Key="HoverColor">#7E2E3E</Color>
+    <Color x:Key="BackgroundColor">#1a1214</Color>
+    <Color x:Key="SurfaceColor">#2c2022</Color>
+</ResourceDictionary>

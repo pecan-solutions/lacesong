@@ -1,0 +1,10 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Moss Grotto Theme -->
+    <Color x:Key="PrimaryColor">#254d2b</Color>
+    <Color x:Key="AccentColor">#5D9B6C</Color>
+    <Color x:Key="TertiaryColor">#19331d</Color>
+    <Color x:Key="HoverColor">#36693d</Color>
+    <Color x:Key="BackgroundColor">#121a14</Color>
+    <Color x:Key="SurfaceColor">#202c22</Color>
+</ResourceDictionary>
