@@ -33,31 +33,26 @@
                     <StackPanel Spacing="12">
                         <TextBlock Text="Theme" Classes="h2" Margin="0,0,0,8"/>
                         <TextBlock Text="Select Theme" Classes="bodyStrong"/>
-                        <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding CurrentSettings.Theme}"/>
+                        <ComboBox x:Name="ThemeComboBox"
+                                 ItemsSource="{Binding Themes}"
+                                 SelectedItem="{Binding CurrentSettings.Theme}"
+                                 HorizontalAlignment="Left" 
+                                 Width="200"/>
                     </StackPanel>
                 </Border>
 
-                <!-- BepInEx & Logging Settings -->
-                <Grid ColumnDefinitions="*,16,*">
-                    <Border Grid.Column="0" Classes="card">
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="BepInEx" Classes="h2" Margin="0,0,0,8"/>
-                            <TextBlock Text="Default BepInEx Version" Classes="bodyStrong"/>
-                            <ComboBox ItemsSource="{Binding BepInExVersions}" SelectedItem="{Binding CurrentSettings.BepinexVersion}"/>
+                <!-- Logging Settings -->
+                <Border Classes="card">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Logging" Classes="h2" Margin="0,0,0,8"/>
+                        <TextBlock Text="Log Level" Classes="bodyStrong"/>
+                        <ComboBox ItemsSource="{Binding LogLevels}" SelectedItem="{Binding CurrentSettings.LogLevel}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                            <Button Content="Open Logs" Command="{Binding OpenLogsFolderCommand}"/>
+                            <Button Content="Clear Logs" Command="{Binding ClearLogsCommand}"/>
                         </StackPanel>
-                    </Border>
-                    <Border Grid.Column="2" Classes="card">
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="Logging" Classes="h2" Margin="0,0,0,8"/>
-                            <TextBlock Text="Log Level" Classes="bodyStrong"/>
-                            <ComboBox ItemsSource="{Binding LogLevels}" SelectedItem="{Binding CurrentSettings.LogLevel}"/>
-                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-                                <Button Content="Open Logs" Command="{Binding OpenLogsFolderCommand}"/>
-                                <Button Content="Clear Logs" Command="{Binding ClearLogsCommand}"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-                </Grid>
+                    </StackPanel>
+                </Border>
 
                 <!-- Action Buttons -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,16,0,0">

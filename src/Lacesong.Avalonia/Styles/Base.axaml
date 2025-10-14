@@ -1,13 +1,9 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
+    <!-- This ResourceInclude acts as a default theme and is replaced at runtime by ThemeService -->
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary>
-            <!-- This will be replaced at runtime with the selected theme -->
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/Themes/TheMarrow.axaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
+        <ResourceInclude Source="avares://Lacesong.Avalonia/Styles/Themes/TheMarrow.axaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!-- Text Colors -->

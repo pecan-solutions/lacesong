@@ -25,8 +25,26 @@ public partial class BrowseModsViewModel : BaseViewModel
     [ObservableProperty]
     private ObservableCollection<ModDisplayItem> _mods = new();
 
-    [ObservableProperty]
     private ModDisplayItem? _selectedMod;
+    private bool _isLoadingMods = false;
+
+    public ModDisplayItem? SelectedMod
+    {
+        get => _selectedMod;
+        set
+        {
+            // prevent listbox from clearing selection during page load
+            if (value == null && _isLoadingMods && _selectedMod != null)
+            {
+                return;
+            }
+            
+            if (SetProperty(ref _selectedMod, value))
+            {
+                // property changed successfully
+            }
+        }
+    }
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -140,33 +158,61 @@ public partial class BrowseModsViewModel : BaseViewModel
     {
         await ExecuteAsync(async () =>
         {
-            var criteria = new ModSearchCriteria
+            _isLoadingMods = true;
+            try
             {
-                Query = string.IsNullOrEmpty(SearchText) ? null : SearchText,
-                Category = SelectedCategory == "All" ? null : SelectedCategory,
-                Page = CurrentPage,
-                PageSize = 20,
-                SortBy = SelectedSortOption,
-                SortOrder = "desc"
-            };
+                // preserve the currently selected mod completely
+                var previouslySelectedMod = SelectedMod;
 
-            Console.WriteLine($"BrowseModsViewModel: Searching with criteria - Query: {criteria.Query}, Category: {criteria.Category}, Page: {criteria.Page}");
-            
-            var results = await _modIndexService.SearchMods(criteria);
-            Console.WriteLine($"BrowseModsViewModel: Received {results.Mods.Count} mods from service (Total: {results.TotalCount})");
-            
-            Mods.Clear();
-            foreach (var mod in results.Mods)
-            {
-                Console.WriteLine($"BrowseModsViewModel: Adding mod - {mod.Name} by {mod.Author}");
-                Mods.Add(new ModDisplayItem(mod));
+                var criteria = new ModSearchCriteria
+                {
+                    Query = string.IsNullOrEmpty(SearchText) ? null : SearchText,
+                    Category = SelectedCategory == "All" ? null : SelectedCategory,
+                    Page = CurrentPage,
+                    PageSize = 20,
+                    SortBy = SelectedSortOption,
+                    SortOrder = "desc"
+                };
+
+                Console.WriteLine($"BrowseModsViewModel: Searching with criteria - Query: {criteria.Query}, Category: {criteria.Category}, Page: {criteria.Page}");
+                
+                var results = await _modIndexService.SearchMods(criteria);
+                Console.WriteLine($"BrowseModsViewModel: Received {results.Mods.Count} mods from service (Total: {results.TotalCount})");
+                
+                Mods.Clear();
+                foreach (var mod in results.Mods)
+                {
+                    Console.WriteLine($"BrowseModsViewModel: Adding mod - {mod.Name} by {mod.Author}");
+                    Mods.Add(new ModDisplayItem(mod));
+                }
+                
+                Console.WriteLine($"BrowseModsViewModel: Added {Mods.Count} mods to collection");
+                
+                TotalPages = results.TotalPages;
+                OnPropertyChanged(nameof(CanGoToPreviousPage));
+                OnPropertyChanged(nameof(CanGoToNextPage));
+
+                // restore the selected mod if it exists in the new collection, otherwise keep the previous selection
+                if (previouslySelectedMod != null)
+                {
+                    var restoredSelection = Mods.FirstOrDefault(m => m.Id == previouslySelectedMod.Id);
+                    if (restoredSelection != null)
+                    {
+                        SelectedMod = restoredSelection;
+                        Console.WriteLine($"BrowseModsViewModel: Restored selection for mod on current page: {restoredSelection.Name}");
+                    }
+                    else
+                    {
+                        // keep the previously selected mod even though it's not on this page
+                        SelectedMod = previouslySelectedMod;
+                        Console.WriteLine($"BrowseModsViewModel: Keeping previous selection (not on current page): {previouslySelectedMod.Name}");
+                    }
+                }
             }
-            
-            Console.WriteLine($"BrowseModsViewModel: Added {Mods.Count} mods to collection");
-            
-            TotalPages = results.TotalPages;
-            OnPropertyChanged(nameof(CanGoToPreviousPage));
-            OnPropertyChanged(nameof(CanGoToNextPage));
+            finally
+            {
+                _isLoadingMods = false;
+            }
         }, "Loading mods...");
     }
     

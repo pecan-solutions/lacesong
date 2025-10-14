@@ -53,23 +53,15 @@ public partial class SettingsViewModel : BaseViewModel
         _themeService = themeService;
 
         _currentSettings = _settingsService.CurrentSettings;
-        _currentSettings.PropertyChanged += OnThemeChanged;
         Themes = _themeService.GetAvailableThemes().ToList();
         SetStatus("Settings loaded successfully");
-    }
-
-    private void OnThemeChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(Settings.Theme))
-        {
-            _themeService.SetTheme(CurrentSettings.Theme);
-        }
     }
 
     [RelayCommand]
     private void SaveSettings()
     {
         _settingsService.SaveSettings();
+        _themeService.SetTheme(CurrentSettings.Theme);
         SetStatus("Settings saved successfully");
     }
 

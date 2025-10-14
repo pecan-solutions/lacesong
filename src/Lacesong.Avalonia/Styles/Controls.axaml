@@ -78,7 +78,6 @@
         <Setter Property="CornerRadius" Value="12"/>
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.2"/>
                 <BrushTransition Property="Foreground" Duration="0:0:0.2"/>
                 <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
             </Transitions>
@@ -167,6 +166,44 @@
 
     <Style Selector="DataGridRow:hover">
         <Setter Property="Background" Value="{DynamicResource GlassHoverFillColor}"/>
+    </Style>
+
+    <!-- ListBox Selection Style -->
+    <Style Selector="ListBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style Selector="ListBoxItem">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource GlassHoverFillColor}"/>
+    </Style>
+
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
+    </Style>
+
+    <Style Selector="ListBoxItem:selected:focus /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
+    </Style>
+
+    <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
+    </Style>
+
+    <Style Selector="ListBoxItem:selected:focus:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
     </Style>
     
 </Styles>

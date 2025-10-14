@@ -38,25 +38,25 @@ public class ThemeService : IThemeService
             _ => new Uri("avares://Lacesong.Avalonia/Styles/Themes/TheMarrow.axaml")
         };
         
-        var theme = new ResourceInclude(themeUri)
+        var themeInclude = new ResourceInclude(themeUri)
         {
             Source = themeUri
         };
 
-        if (Application.Current.Resources.MergedDictionaries
-                .OfType<ResourceInclude>()
-                .FirstOrDefault(x => x.Source?.ToString().Contains("Base.axaml") ?? false)
-            is { } baseResource)
-        {
-            if (baseResource.Loaded is ResourceDictionary themeDictionary)
-            {
-                var currentTheme = (ResourceDictionary)themeDictionary.MergedDictionaries[0];
-                currentTheme.MergedDictionaries.Clear();
-                currentTheme.MergedDictionaries.Add(theme);
+        // find any previously applied theme resource include (located in /Themes/)
+        var existingTheme = Application.Current.Resources.MergedDictionaries
+            .OfType<ResourceInclude>()
+            .FirstOrDefault(x => x.Source?.ToString().Contains("/Themes/") ?? false);
 
-                _settingsService.CurrentSettings.Theme = themeName;
-                _settingsService.SaveSettings();
-            }
+        if (existingTheme is not null)
+        {
+            Application.Current.Resources.MergedDictionaries.Remove(existingTheme);
         }
+
+        Application.Current.Resources.MergedDictionaries.Add(themeInclude);
+
+        // persist selection
+        _settingsService.CurrentSettings.Theme = themeName;
+        _settingsService.SaveSettings();
     }
 }
