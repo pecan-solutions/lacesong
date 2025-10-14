@@ -25,7 +25,8 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:NavigationItem">
                                 <Button Command="{Binding NavigateCommand}"
-                                        Classes="navButton {Binding IsActive, Converter={StaticResource BooleanToActiveClassConverter}}">
+                                        Classes="navButton"
+                                        Classes.active="{Binding IsActive}">
                                     <StackPanel Orientation="Horizontal" Spacing="16">
                                         <PathIcon Data="{Binding Icon}" Width="20" Height="20" />
                                         <TextBlock Text="{Binding Label}" 

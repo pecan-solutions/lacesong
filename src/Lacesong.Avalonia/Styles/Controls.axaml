@@ -85,24 +85,15 @@
         </Setter>
     </Style>
     
-    <!-- Hover state for navigation items -->
-    <Style Selector="Button.navButton:hover /template/ ContentPresenter">
+    <!-- Hover (pointerover) state for navigation items -->
+    <Style Selector="Button.navButton:pointerover">
         <Setter Property="Background" Value="{DynamicResource GlassHoverFillColor}"/>
-        <Setter Property="CornerRadius" Value="12"/>
     </Style>
 
     <!-- Active state - always visible, takes precedence over hover -->
-    <Style Selector="Button.navButton.active /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
-        <Setter Property="CornerRadius" Value="12"/>
-    </Style>
-
-    <!-- Add left border indicator for active navigation items -->
     <Style Selector="Button.navButton.active">
-        <Setter Property="BorderThickness" Value="3,0,0,0"/>
-        <Setter Property="BorderBrush" Value="#FFFFFF"/>
-        <Setter Property="Margin" Value="-3,2,0,2"/>
-        <Setter Property="Padding" Value="19,14,16,14"/>
+        <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Button.navButton.active TextBlock">
@@ -114,10 +105,18 @@
         <Setter Property="Foreground" Value="#FFFFFF"/>
     </Style>
 
-    <!-- Enhanced hover state for active navigation items -->
-    <Style Selector="Button.navButton.active:hover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource PrimaryAccentHoverColor}"/>
-        <Setter Property="CornerRadius" Value="12"/>
+    <!-- Enhanced pointerover state for active navigation items -->
+    <Style Selector="Button.navButton.active:pointerover">
+        <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
+    </Style>
+
+    <!-- ensure content presenter inside active nav button retains accent color -->
+    <Style Selector="Button.navButton.active /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
+    </Style>
+
+    <Style Selector="Button.navButton.active:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
     </Style>
 
     <Style Selector="Border.card">
