@@ -90,7 +90,7 @@ public class ModManager : IModManager
             }
 
             // remove mod files
-            var modPath = Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory, modId);
+            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modId);
             if (Directory.Exists(modPath))
             {
                 Directory.Delete(modPath, true);
@@ -130,7 +130,7 @@ public class ModManager : IModManager
             }
 
             // create plugin mirror using symbolic links instead of copying or renaming originals
-            var modPath = Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory, modId);
+            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modId);
             if (Directory.Exists(modPath))
             {
                 MirrorPluginDlls(modId, modPath, gameInstall);
@@ -206,7 +206,7 @@ public class ModManager : IModManager
             else
             {
                 // scan mod directory for installed mods
-                var modDirectory = Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory);
+                var modDirectory = GetModsDirectoryPath(gameInstall);
                 if (Directory.Exists(modDirectory))
                 {
                     var modDirs = Directory.GetDirectories(modDirectory);
@@ -235,7 +235,7 @@ public class ModManager : IModManager
     {
         try
         {
-            var modPath = Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory, modId);
+            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modId);
             if (!Directory.Exists(modPath))
                 return null;
 
@@ -348,9 +348,29 @@ public class ModManager : IModManager
         return File.Exists(executablePath);
     }
 
+    /// <summary>
+    /// gets the correct mods directory path accounting for platform differences
+    /// </summary>
+    public static string GetModsDirectoryPath(GameInstallation gameInstall)
+    {
+        // on macos, unity games use .app bundles with data stored at Contents/Resources/Data/
+        if (PlatformDetector.IsMacOS)
+        {
+            var appBundlePath = Path.Combine(gameInstall.InstallPath, $"{Path.GetFileNameWithoutExtension(gameInstall.Executable)}.app");
+            if (Directory.Exists(appBundlePath))
+            {
+                // macos unity games store data in Contents/Resources/Data/
+                return Path.Combine(appBundlePath, "Contents", "Resources", "Data", "Managed", "Mods");
+            }
+        }
+        
+        // fallback to standard path for windows, linux, or if .app bundle not found
+        return Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory);
+    }
+
     public static void EnsureModsDirectory(GameInstallation gameInstall)
     {
-        var modsRoot = Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory);
+        var modsRoot = GetModsDirectoryPath(gameInstall);
         if (!Directory.Exists(modsRoot))
         {
             Directory.CreateDirectory(modsRoot);
@@ -523,7 +543,7 @@ public class ModManager : IModManager
     {
         try
         {
-            var modPath = Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory, modInfo.Id);
+            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modInfo.Id);
             
             // create mod directory
             Directory.CreateDirectory(modPath);
@@ -650,7 +670,7 @@ public class ModManager : IModManager
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             var backupPath = Path.Combine(backupDir, $"{modInfo.Id}_backup_{timestamp}.zip");
 
-            var modPath = Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory, modInfo.Id);
+            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modInfo.Id);
             if (Directory.Exists(modPath))
             {
                 ZipFile.CreateFromDirectory(modPath, backupPath);

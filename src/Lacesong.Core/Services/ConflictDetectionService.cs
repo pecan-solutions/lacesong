@@ -177,7 +177,7 @@ public class ConflictDetectionService : IConflictDetectionService
         {
             foreach (var mod in mods)
             {
-                var modPath = Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory, mod.Id);
+                var modPath = Path.Combine(ModManager.GetModsDirectoryPath(gameInstall), mod.Id);
                 if (!Directory.Exists(modPath))
                     continue;
 

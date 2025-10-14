@@ -277,7 +277,7 @@ public class BackupManager : IBackupManager
     {
         try
         {
-            var modsDir = Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory);
+            var modsDir = ModManager.GetModsDirectoryPath(gameInstall);
             if (Directory.Exists(modsDir))
             {
                 var backupModsDir = Path.Combine(tempBackupDir, "mods");
@@ -372,7 +372,7 @@ public class BackupManager : IBackupManager
             var backupModsDir = Path.Combine(tempRestoreDir, "mods");
             if (Directory.Exists(backupModsDir))
             {
-                var modsDir = Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory);
+                var modsDir = ModManager.GetModsDirectoryPath(gameInstall);
                 Directory.CreateDirectory(modsDir);
 
                 // clear existing mods
