@@ -6,7 +6,9 @@ using Lacesong.Avalonia.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Lacesong.Avalonia.ViewModels;
@@ -28,7 +30,7 @@ public partial class GameDetectionViewModel : BaseViewModel
 
     // explicitly define commands to ensure they're always available
     public IAsyncRelayCommand DetectGamesAsyncCommand { get; }
-    public IAsyncRelayCommand BrowseForGameAsyncCommand { get; }
+    public IAsyncRelayCommand BrowseForGameFileAsyncCommand { get; }
     public IRelayCommand SetSelectedGameCommand { get; }
 
     public GameDetectionViewModel(
@@ -43,8 +45,22 @@ public partial class GameDetectionViewModel : BaseViewModel
 
         // initialize commands
         DetectGamesAsyncCommand = new AsyncRelayCommand(DetectGamesAsync);
-        BrowseForGameAsyncCommand = new AsyncRelayCommand(BrowseForGameAsync);
+        BrowseForGameFileAsyncCommand = new AsyncRelayCommand(BrowseForGameFileAsync);
         SetSelectedGameCommand = new RelayCommand(SetSelectedGame);
+        
+        // load existing game from state if present
+        InitializeFromGameState();
+    }
+    
+    private void InitializeFromGameState()
+    {
+        if (_gameStateService.IsGameDetected && _gameStateService.CurrentGame != null)
+        {
+            var currentGame = _gameStateService.CurrentGame;
+            DetectedGames = new List<GameInstallation> { currentGame };
+            SelectedGame = currentGame;
+            DetectionStatus = $"{currentGame.Name} is currently set";
+        }
     }
 
     private async Task DetectGamesAsync()
@@ -54,23 +70,37 @@ public partial class GameDetectionViewModel : BaseViewModel
             DetectionStatus = "Scanning for game installations...";
             
             var games = await _gameDetector.GetSupportedGames();
-            var currentDetectedGames = new List<GameInstallation>();
+            var newlyDetectedGames = new List<GameInstallation>();
 
             foreach (var game in games)
             {
                 var detectedGame = await _gameDetector.DetectGameInstall();
                 if (detectedGame != null && detectedGame.Name == game.Name)
                 {
-                    currentDetectedGames.Add(detectedGame);
+                    // only add if not already in the list
+                    if (!DetectedGames.Any(g => g.InstallPath == detectedGame.InstallPath))
+                    {
+                        newlyDetectedGames.Add(detectedGame);
+                    }
                 }
             }
             
-            DetectedGames = currentDetectedGames;
-
-            if (DetectedGames.Any())
+            // merge newly detected games with existing ones
+            if (newlyDetectedGames.Any())
             {
-                DetectionStatus = $"Found {DetectedGames.Count} game installation(s)";
-                SelectedGame = DetectedGames.First();
+                var mergedGames = new List<GameInstallation>(DetectedGames);
+                mergedGames.AddRange(newlyDetectedGames);
+                DetectedGames = mergedGames;
+                
+                DetectionStatus = $"Found {newlyDetectedGames.Count} new game installation(s). Total: {DetectedGames.Count}";
+                if (SelectedGame == null)
+                {
+                    SelectedGame = DetectedGames.First();
+                }
+            }
+            else if (DetectedGames.Any())
+            {
+                DetectionStatus = $"No new games found. {DetectedGames.Count} game(s) already detected";
             }
             else
             {
@@ -79,16 +109,27 @@ public partial class GameDetectionViewModel : BaseViewModel
         }, "Detecting games...");
     }
 
-    private async Task BrowseForGameAsync()
+    private async Task BrowseForGameFileAsync()
     {
-        var selectedPath = await _dialogService.ShowFolderDialogAsync("Select Game Directory");
-        if (!string.IsNullOrEmpty(selectedPath))
+        // get platform-specific file filter
+        var filter = GetPlatformFileFilter();
+        
+        var selectedFile = await _dialogService.ShowOpenFileDialogAsync("Select Game Executable", filter);
+        if (!string.IsNullOrEmpty(selectedFile))
         {
             await ExecuteAsync(async () =>
             {
-                DetectionStatus = "Validating selected directory...";
+                DetectionStatus = "Validating selected executable...";
                 
-                var game = await _gameDetector.DetectGameInstall(selectedPath);
+                // get the directory containing the executable
+                var directory = Path.GetDirectoryName(selectedFile);
+                if (string.IsNullOrEmpty(directory))
+                {
+                    DetectionStatus = "Invalid executable path";
+                    return;
+                }
+                
+                var game = await _gameDetector.DetectGameInstall(directory);
                 if (game != null)
                 {
                     if (!DetectedGames.Any(g => g.InstallPath == game.InstallPath))
@@ -102,9 +143,25 @@ public partial class GameDetectionViewModel : BaseViewModel
                 }
                 else
                 {
-                    DetectionStatus = "Invalid game directory selected";
+                    DetectionStatus = "Invalid game executable selected";
                 }
-            }, "Validating game directory...");
+            }, "Validating game executable...");
+        }
+    }
+    
+    private string GetPlatformFileFilter()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return "Executable Files|*.exe";
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            return "Application Bundles|*.app";
+        }
+        else // Linux and others
+        {
+            return "All Files|*";
         }
     }
 

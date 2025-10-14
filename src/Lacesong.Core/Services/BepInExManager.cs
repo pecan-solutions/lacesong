@@ -13,6 +13,20 @@ public class BepInExManager : IBepInExManager
     private const string BepInExCoreDll = "BepInEx/core/BepInEx.Core.dll";
     private const string BepInExLoaderDll = "BepInEx/core/BepInEx.dll";
 
+    /// <summary>
+    /// gets the base directory where bepinex should be installed for the given game installation
+    /// on windows: directly in the game folder (e.g., "Hollow Knight Silksong/")
+    /// on macos: in the folder containing the .app bundle (e.g., "Hollow Knight Silksong/" when app is "Hollow Knight Silksong/Hollow Knight Silksong.app")
+    /// </summary>
+    private string GetBepInExBaseDirectory(GameInstallation gameInstall)
+    {
+        // on all platforms, bepinex is installed in the InstallPath directory
+        // for windows: this is the folder containing the .exe
+        // for macos: this is the folder containing the .app bundle
+        // for linux: this is the folder containing the executable
+        return gameInstall.InstallPath;
+    }
+
     public async Task<OperationResult> InstallBepInEx(GameInstallation gameInstall, BepInExInstallOptions options)
     {
         try
@@ -52,8 +66,9 @@ public class BepInExManager : IBepInExManager
                 return OperationResult.ErrorResult("Download result did not contain zip path", "Invalid download result");
             }
 
-            // extract bepinex
-            var extractResult = await ExtractBepInEx(tempZipPath, gameInstall.InstallPath);
+            // extract bepinex to the correct base directory
+            var baseDir = GetBepInExBaseDirectory(gameInstall);
+            var extractResult = await ExtractBepInEx(tempZipPath, baseDir);
             if (!extractResult.Success)
             {
                 return OperationResult.ErrorResult($"Failed to extract BepInEx: {extractResult.Error}", "Extraction failed");
@@ -94,27 +109,35 @@ public class BepInExManager : IBepInExManager
     {
         try
         {
-            var bepinexPath = Path.Combine(gameInstall.InstallPath, "BepInEx");
+            var baseDir = GetBepInExBaseDirectory(gameInstall);
+            var bepinexPath = Path.Combine(baseDir, "BepInEx");
             
             // check if bepinex directory exists
             if (!Directory.Exists(bepinexPath))
                 return false;
             
-            // check for core bepinex files - these are the essential files for bepinex to work
-            var coreDllPath = Path.Combine(gameInstall.InstallPath, BepInExCoreDll);
-            var loaderDllPath = Path.Combine(gameInstall.InstallPath, BepInExLoaderDll);
+            // check for the loader dll - this is the essential file
+            var loaderDllPath = Path.Combine(baseDir, BepInExLoaderDll);
+            if (File.Exists(loaderDllPath))
+                return true;
             
-            // bepinex is installed if we have the core dll files
-            var hasCoreFiles = File.Exists(coreDllPath) && File.Exists(loaderDllPath);
+            // also check for BepInEx.Core.dll as fallback (some versions may have this instead)
+            var coreDllPath = Path.Combine(baseDir, BepInExCoreDll);
+            if (File.Exists(coreDllPath))
+                return true;
             
-            // also check for alternative doorstop files that might be present
-            var winhttpPath = Path.Combine(gameInstall.InstallPath, "winhttp.dll");
-            var doorstopConfigPath = Path.Combine(gameInstall.InstallPath, "doorstop_config.ini");
+            // check for alternative doorstop files that might be present (windows)
+            var winhttpPath = Path.Combine(baseDir, "winhttp.dll");
+            var doorstopConfigPath = Path.Combine(baseDir, "doorstop_config.ini");
+            if (File.Exists(winhttpPath) && File.Exists(doorstopConfigPath))
+                return true;
             
-            // bepinex is considered installed if we have either:
-            // 1. the core dll files (most reliable indicator)
-            // 2. or the doorstop files (legacy/alternative setup)
-            return hasCoreFiles || (File.Exists(winhttpPath) && File.Exists(doorstopConfigPath));
+            // check for macos-specific doorstop files
+            var doorstopDylibPath = Path.Combine(baseDir, "libdoorstop.dylib");
+            if (File.Exists(doorstopDylibPath))
+                return true;
+            
+            return false;
         }
         catch
         {
@@ -126,8 +149,10 @@ public class BepInExManager : IBepInExManager
     {
         try
         {
+            var baseDir = GetBepInExBaseDirectory(gameInstall);
+            
             // try to get version from the main BepInEx.dll loader first
-            var loaderDllPath = Path.Combine(gameInstall.InstallPath, BepInExLoaderDll);
+            var loaderDllPath = Path.Combine(baseDir, BepInExLoaderDll);
             if (File.Exists(loaderDllPath))
             {
                 var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(loaderDllPath);
@@ -138,7 +163,7 @@ public class BepInExManager : IBepInExManager
             }
 
             // fallback to BepInEx.Core.dll if main loader doesn't have version info
-            var coreDllPath = Path.Combine(gameInstall.InstallPath, BepInExCoreDll);
+            var coreDllPath = Path.Combine(baseDir, BepInExCoreDll);
             if (File.Exists(coreDllPath))
             {
                 var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(coreDllPath);
@@ -160,8 +185,9 @@ public class BepInExManager : IBepInExManager
     {
         try
         {
-            var loaderDllPath = Path.Combine(gameInstall.InstallPath, BepInExLoaderDll);
-            var coreDllPath = Path.Combine(gameInstall.InstallPath, BepInExCoreDll);
+            var baseDir = GetBepInExBaseDirectory(gameInstall);
+            var loaderDllPath = Path.Combine(baseDir, BepInExLoaderDll);
+            var coreDllPath = Path.Combine(baseDir, BepInExCoreDll);
 
             System.Diagnostics.FileVersionInfo? loaderVersionInfo = null;
             System.Diagnostics.FileVersionInfo? coreVersionInfo = null;
@@ -218,22 +244,24 @@ public class BepInExManager : IBepInExManager
                 return OperationResult.ErrorResult($"Failed to create backup: {backupResult.Error}", "Backup creation failed");
             }
 
+            var baseDir = GetBepInExBaseDirectory(gameInstall);
+
             // remove bepinex directory
-            var bepinexPath = Path.Combine(gameInstall.InstallPath, "BepInEx");
+            var bepinexPath = Path.Combine(baseDir, "BepInEx");
             if (Directory.Exists(bepinexPath))
             {
                 Directory.Delete(bepinexPath, true);
             }
 
             // remove winhttp.dll if present
-            var winhttpPath = Path.Combine(gameInstall.InstallPath, "winhttp.dll");
+            var winhttpPath = Path.Combine(baseDir, "winhttp.dll");
             if (File.Exists(winhttpPath))
             {
                 File.Delete(winhttpPath);
             }
 
             // remove doorstop config if present
-            var doorstopConfigPath = Path.Combine(gameInstall.InstallPath, "doorstop_config.ini");
+            var doorstopConfigPath = Path.Combine(baseDir, "doorstop_config.ini");
             if (File.Exists(doorstopConfigPath))
             {
                 File.Delete(doorstopConfigPath);
@@ -350,7 +378,8 @@ public class BepInExManager : IBepInExManager
     {
         try
         {
-            var configPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "config", "BepInEx.cfg");
+            var baseDir = GetBepInExBaseDirectory(gameInstall);
+            var configPath = Path.Combine(baseDir, "BepInEx", "config", "BepInEx.cfg");
             var configDir = Path.GetDirectoryName(configPath);
             
             if (!string.IsNullOrEmpty(configDir))
@@ -390,13 +419,14 @@ SkipAssemblyScan = false
     {
         try
         {
-            var backupDir = Path.Combine(gameInstall.InstallPath, "BepInEx", "backups");
+            var baseDir = GetBepInExBaseDirectory(gameInstall);
+            var backupDir = Path.Combine(baseDir, "BepInEx", "backups");
             Directory.CreateDirectory(backupDir);
 
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             var backupPath = Path.Combine(backupDir, $"bepinex_backup_{timestamp}.zip");
 
-            var bepinexPath = Path.Combine(gameInstall.InstallPath, "BepInEx");
+            var bepinexPath = Path.Combine(baseDir, "BepInEx");
             if (Directory.Exists(bepinexPath))
             {
                 ZipFile.CreateFromDirectory(bepinexPath, backupPath);

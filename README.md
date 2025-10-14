@@ -8,20 +8,6 @@ A cross-platform mod management tool for Unity/Mono games, starting with Hollow 
 
 Lacesong provides a simple, safe, and consistent way to install, manage, and update community mods. Inspired by tools like Lumafly and Scarab, it focuses on automation, safety, and cross-platform compatibility. Looking for contributors or developers.
 
-## Features
-
-- **Cross-Platform UI** - Modern Avalonia interface with MVVM architecture running on Windows, macOS, and Linux
-- **Automatic Game Detection** - Finds installations via Steam, Epic Games, GOG, Xbox Game Pass, or manual selection
-- **BepInEx Management** - One-click installation with version selection and configuration
-- **Comprehensive Mod Management** - Install from files or URLs with automatic dependency resolution
-- **Conflict Detection** - Advanced detection and resolution for mod conflicts
-- **Configuration Preservation** - Smart config merging during updates
-- **Enhanced Backup System** - Restore points with metadata tracking before critical operations
-- **Mod Index Integration** - Browse and install from centralized repositories
-- **Signature Verification** - Cryptographic validation of mod files and downloads
-- **Update Management** - Built-in updater with GitHub release integration
-- **CLI Interface** - Full-featured command-line tool for advanced users and automation
-
 ## Screenshots
 
 ![Application Screenshot of the Mod Catalog](docs/screenshotlacesong.png)
@@ -56,16 +42,18 @@ build.bat
 
 Produces self-contained executables with all dependencies included.
 
-### Testing
-
-Comprehensive test coverage with xUnit and UI automation:
-```bash
-dotnet test
-```
-
 ## Contributing
 
-Contributions welcome! Open issues for bugs or features, submit PRs for improvements. Please follow existing code style and include tests for new features.
+We welcome contributions! Whether you're fixing bugs, adding features, or improving documentation, your help is appreciated.
+
+Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Development environment setup
+- Code style guidelines and conventions
+- Testing requirements
+- Pull request process
+- Commit message guidelines
+
+Quick start: Open issues for bugs or features, submit PRs for improvements. All contributions should include tests and follow existing code style.
 
 ## License
 
@@ -87,7 +75,7 @@ Lacesong is a community-driven tool, not affiliated with Team Cherry or Hollow K
 
 - Joseph - Developer, Avalonia UI assisting
 
-Thanks in advance to all contributors!
+Thanks in advance to all future contributors!
 
 ---
 
