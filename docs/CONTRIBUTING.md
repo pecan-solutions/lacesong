@@ -132,8 +132,6 @@ private const string BepInExDownloadUrlTemplate = "...";
 ### Code Comments
 
 - Use comments sparingly, only where necessary
-- All code comments should be in lowercase
-- Comment style reflects an experienced senior developer teaching a junior
 - Only comment:
   - Complex or convoluted logic
   - Important architectural decisions
@@ -141,7 +139,7 @@ private const string BepInExDownloadUrlTemplate = "...";
   - TODOs or areas for improvement
   
 ```csharp
-// good: explains non-obvious platform-specific behavior
+// Good: explains non-obvious platform-specific behavior
 // on macos, bepinex must be installed in the folder containing the .app bundle
 return Path.GetDirectoryName(gameInstall.InstallPath);
 
