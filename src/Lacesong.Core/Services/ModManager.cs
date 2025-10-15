@@ -93,7 +93,7 @@ public class ModManager : IModManager
             // allow reinstall even if already present in mods_list.json; if present on disk, clear existing before reinstall
             Console.WriteLine("ModManager: Checking for existing installation on disk to allow reinstall");
             var modsBasePath = GetModsDirectoryPath(gameInstall);
-            var existingModPath = Path.Combine(modsBasePath, CleanModNameForFolder(modInfo.Name));
+            var existingModPath = Path.Combine(modsBasePath, GetFolderName(modInfo));
             if (Directory.Exists(existingModPath))
             {
                 Console.WriteLine($"ModManager: Existing mod directory found at {existingModPath}, deleting for reinstall");
@@ -630,19 +630,60 @@ public class ModManager : IModManager
         }
     }
 
+    /// <summary>
+    /// safely extracts a zip archive to the specified destination, validating paths to mitigate zip-slip.
+    /// </summary>
+    /// <param name="zipPath">path to the zip archive</param>
+    /// <param name="destinationDirectory">directory to extract to</param>
+    private static void ExtractZipSafely(string zipPath, string destinationDirectory)
+    {
+        using var archive = ZipFile.OpenRead(zipPath);
+        var fullDestRoot = Path.GetFullPath(destinationDirectory) + Path.DirectorySeparatorChar;
+
+        foreach (var entry in archive.Entries)
+        {
+            if (string.IsNullOrEmpty(entry.FullName))
+                continue;
+
+            var destPath = Path.Combine(destinationDirectory, entry.FullName);
+            var fullDestPath = Path.GetFullPath(destPath);
+
+            // skip entries that would escape the destination directory (zip-slip)
+            if (!fullDestPath.StartsWith(fullDestRoot, StringComparison.Ordinal))
+                continue;
+
+            if (entry.FullName.EndsWith('/') || entry.FullName.EndsWith('\\'))
+            {
+                Directory.CreateDirectory(fullDestPath);
+                continue;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(fullDestPath)!);
+            entry.ExtractToFile(fullDestPath, true);
+        }
+    }
+
+    /// <summary>
+    /// returns a sanitized folder name for the mod, preferring its canonical id when available.
+    /// </summary>
+    private static string GetFolderName(ModInfo modInfo)
+    {
+        var basis = !string.IsNullOrEmpty(modInfo.Id) ? modInfo.Id : modInfo.Name;
+        return CleanModNameForFolder(basis);
+    }
+
     private async Task<OperationResult> ExtractAndAnalyzeMod(string zipPath, GameInstallation gameInstall)
     {
         Console.WriteLine($"ModManager: ExtractAndAnalyzeMod called with zipPath: {zipPath}");
-        
+
+        string tempExtractPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         try
         {
-            var tempExtractPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Console.WriteLine($"ModManager: Creating temp extract path: {tempExtractPath}");
             Directory.CreateDirectory(tempExtractPath);
 
-            Console.WriteLine("ModManager: Extracting zip file to temp directory");
-            // extract mod to temp directory
-            ZipFile.ExtractToDirectory(zipPath, tempExtractPath);
+            Console.WriteLine("ModManager: Extracting zip file to temp directory (safe extraction)");
+            ExtractZipSafely(zipPath, tempExtractPath);
 
             // list all extracted files for debugging
             var allFiles = Directory.GetFiles(tempExtractPath, "*", SearchOption.AllDirectories);
@@ -701,15 +742,10 @@ public class ModManager : IModManager
             if (modInfo == null)
             {
                 Console.WriteLine("ModManager: Could not determine mod information, cleaning up and returning error");
-                Directory.Delete(tempExtractPath, true);
                 return OperationResult.ErrorResult("Could not determine mod information", "Invalid mod format");
             }
 
             Console.WriteLine($"ModManager: Final mod info - Name: '{modInfo.Name}', ID: '{modInfo.Id}', Author: '{modInfo.Author}', Version: '{modInfo.Version}'");
-
-            // cleanup temp directory
-            Console.WriteLine("ModManager: Cleaning up temp directory");
-            Directory.Delete(tempExtractPath, true);
 
             return OperationResult.SuccessResult("Mod analyzed successfully", modInfo);
         }
@@ -718,6 +754,17 @@ public class ModManager : IModManager
             Console.WriteLine($"ModManager: ExtractAndAnalyzeMod exception: {ex.Message}");
             Console.WriteLine($"ModManager: ExtractAndAnalyzeMod stack trace: {ex.StackTrace}");
             return OperationResult.ErrorResult(ex.Message, "Failed to analyze mod");
+        }
+        finally
+        {
+            try
+            {
+                if (Directory.Exists(tempExtractPath))
+                {
+                    Directory.Delete(tempExtractPath, true);
+                }
+            }
+            catch { /* ignore cleanup errors */ }
         }
     }
 
@@ -835,13 +882,12 @@ public class ModManager : IModManager
         
         try
         {
-            // use cleaned mod name for folder naming (remove whitespace and underscores)
-            var folderName = CleanModNameForFolder(modInfo.Name);
-            Console.WriteLine($"ModManager: Original mod name: '{modInfo.Name}' -> Cleaned folder name: '{folderName}'");
+            // derive a sanitized folder name from mod id (preferred) or name
+            var folderName = GetFolderName(modInfo);
+            Console.WriteLine($"ModManager: Original mod name: '{modInfo.Name}' -> Folder name: '{folderName}'");
             
-            // update mod ID to match the folder name for consistency
-            modInfo.Id = folderName;
-            Console.WriteLine($"ModManager: Updated mod ID to match folder name: '{modInfo.Id}'");
+            // persist directory name separately so we don't mutate the canonical id
+            modInfo.DirectoryName = folderName;
             
             var modsBasePath = GetModsDirectoryPath(gameInstall);
             var modPath = Path.Combine(modsBasePath, folderName);
@@ -851,9 +897,9 @@ public class ModManager : IModManager
             Console.WriteLine("ModManager: Creating mod directory");
             Directory.CreateDirectory(modPath);
 
-            // extract mod files
-            Console.WriteLine($"ModManager: Extracting zip file from {zipPath} to {modPath}");
-            ZipFile.ExtractToDirectory(zipPath, modPath);
+            // extract mod files using safe extraction
+            Console.WriteLine($"ModManager: Extracting zip file from {zipPath} to {modPath} (safe extraction)");
+            ExtractZipSafely(zipPath, modPath);
 
             // list extracted files for debugging
             var extractedFiles = Directory.GetFiles(modPath, "*", SearchOption.AllDirectories);

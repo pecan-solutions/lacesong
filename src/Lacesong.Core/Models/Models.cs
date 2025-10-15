@@ -99,6 +99,9 @@ public class ModInfo
 
     [JsonPropertyName("installDate")]
     public DateTime? InstallDate { get; set; }
+
+    [JsonPropertyName("directoryName")]
+    public string? DirectoryName { get; set; }
 }
 
 /// <summary>

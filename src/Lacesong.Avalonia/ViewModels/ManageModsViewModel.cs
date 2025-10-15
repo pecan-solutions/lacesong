@@ -216,9 +216,20 @@ public partial class ManageModsViewModel : BaseViewModel
         
         try
         {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                SetStatus("invalid url scheme; only http/https allowed", true);
+                _snackbarService.Show(
+                    "Error",
+                    "Invalid URL. Only http and https schemes are supported.",
+                    "Error");
+                return;
+            }
+
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
-                FileName = url,
+                FileName = uri.ToString(),
                 UseShellExecute = true
             });
         }
