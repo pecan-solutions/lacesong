@@ -208,5 +208,39 @@ public partial class ManageModsViewModel : BaseViewModel
                 "Error");
         }
     }
+
+    [RelayCommand]
+    private void OpenWebsite(string? url)
+    {
+        if (string.IsNullOrEmpty(url)) return;
+        
+        try
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                SetStatus("invalid url scheme; only http/https allowed", true);
+                _snackbarService.Show(
+                    "Error",
+                    "Invalid URL. Only http and https schemes are supported.",
+                    "Error");
+                return;
+            }
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = uri.ToString(),
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"failed to open website: {ex.Message}", true);
+            _snackbarService.Show(
+                "Error", 
+                $"Failed to open website: {ex.Message}", 
+                "Error");
+        }
+    }
 }
 

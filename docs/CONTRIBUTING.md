@@ -31,7 +31,7 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 ### Ways to Contribute
 
-- Report bugs or suggest features via [GitHub Issues](https://github.com/pecansolutions/lacesong/issues)
+- Report bugs or suggest features via [GitHub Issues](https://github.com/pecan-solutions/lacesong/issues)
 - Improve documentation
 - Fix bugs or implement new features
 - Write or improve tests
@@ -132,6 +132,8 @@ private const string BepInExDownloadUrlTemplate = "...";
 ### Code Comments
 
 - Use comments sparingly, only where necessary
+- All code comments should be in lowercase
+- Comment style reflects an experienced senior developer teaching a junior
 - Only comment:
   - Complex or convoluted logic
   - Important architectural decisions
@@ -139,7 +141,7 @@ private const string BepInExDownloadUrlTemplate = "...";
   - TODOs or areas for improvement
   
 ```csharp
-// Good: explains non-obvious platform-specific behavior
+// good: explains non-obvious platform-specific behavior
 // on macos, bepinex must be installed in the folder containing the .app bundle
 return Path.GetDirectoryName(gameInstall.InstallPath);
 
@@ -458,7 +460,7 @@ Added code style section and testing requirements.
 
 ### Submitting the PR
 
-1. Go to the [Lacesong repository](https://github.com/pecansolutions/lacesong)
+1. Go to the [Lacesong repository](https://github.com/pecan-solutions/lacesong)
 2. Click "New Pull Request"
 3. Select your fork and branch
 4. Fill out the PR template:

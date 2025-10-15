@@ -75,16 +75,21 @@
                         </TextBlock>
 
                         <!-- Details -->
-                        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+                        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto" ColumnSpacing="12" RowSpacing="8">
                             <TextBlock Grid.Column="0" Grid.Row="0" Text="Version:" Classes="small" FontWeight="Bold"/>
                             <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding SelectedMod.Version}" Classes="small"/>
-
-                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Status:" Classes="small" FontWeight="Bold"/>
-                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding SelectedMod.IsEnabled, Converter={StaticResource ModStatusConverter}}" Classes="small"/>
-
-                            <TextBlock Grid.Column="0" Grid.Row="2" Text="File Path:" Classes="small" FontWeight="Bold"/>
-                            <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding SelectedMod.FilePath}" TextTrimming="CharacterEllipsis" Classes="small"/>
                         </Grid>
+
+                        <!-- Website URL -->
+                        <StackPanel Spacing="8" IsVisible="{Binding SelectedMod.WebsiteUrl, Converter={StaticResource StringNotNullOrEmptyConverter}}">
+                            <TextBlock Text="Website:" Classes="h4"/>
+                            <Button Content="{Binding SelectedMod.WebsiteUrl}" 
+                                    Command="{Binding OpenWebsiteCommand}"
+                                    CommandParameter="{Binding SelectedMod.WebsiteUrl}"
+                                    Classes="link" 
+                                    HorizontalAlignment="Left" 
+                                    Padding="0"/>
+                        </StackPanel>
 
                         <!-- Description -->
                         <StackPanel Spacing="8" IsVisible="{Binding SelectedMod.Description, Converter={StaticResource StringNotNullOrEmptyConverter}}">
