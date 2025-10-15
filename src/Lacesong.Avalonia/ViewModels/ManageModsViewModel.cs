@@ -2,11 +2,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Lacesong.Core.Interfaces;
 using Lacesong.Core.Models;
+using Lacesong.Core.Services;
 using Lacesong.Avalonia.Services;
 using Lacesong.Avalonia.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
@@ -176,6 +178,35 @@ public partial class ManageModsViewModel : BaseViewModel
                     "Error");
             }
         }, "Uninstalling mod...");
+    }
+
+    [RelayCommand]
+    private void OpenModsFolder()
+    {
+        if (_gameStateService.CurrentGame == null) return;
+        
+        try
+        {
+            var modsPath = ModManager.GetModsDirectoryPath(_gameStateService.CurrentGame);
+            if (!Directory.Exists(modsPath))
+            {
+                Directory.CreateDirectory(modsPath);
+            }
+            
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = modsPath,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"failed to open mods folder: {ex.Message}", true);
+            _snackbarService.Show(
+                "Error", 
+                $"Failed to open mods folder: {ex.Message}", 
+                "Error");
+        }
     }
 }
 

@@ -45,9 +45,7 @@
       "gogAppId": "hollow_knight_silksong",
       "xboxAppId": "9NQZQZQZQZQZ",
       "bepInExVersion": "5.4.22",
-      "modDirectory": "BepInEx/plugins",
-      "modDirectoryMacOS": "BepInEx/plugins",
-      "modDirectoryLinux": "BepInEx/plugins"
+      "modDirectory": "Hollow Knight Silksong_Data/Managed/Mods"
     }
   ],
   "modRegistry": {

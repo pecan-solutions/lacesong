@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace Lacesong.Avalonia.ViewModels;
 
@@ -206,9 +207,20 @@ public partial class BrowseModsViewModel : BaseViewModel
                 
                 var results = await _modIndexService.SearchMods(criteria);
                 Console.WriteLine($"BrowseModsViewModel: Received {results.Mods.Count} mods from service (Total: {results.TotalCount})");
-                
+
+                // filter out mods that are already installed to avoid duplicate installation option
+                List<ModInfo>? installed = null;
+                if (_gameStateService.CurrentGame != null)
+                {
+                    installed = await _modManager.GetInstalledMods(_gameStateService.CurrentGame);
+                }
+
+                var filtered = installed == null ? results.Mods : results.Mods.Where(m => !installed.Any(i => i.Id.Equals(m.Id, StringComparison.OrdinalIgnoreCase))).ToList();
+
+                Console.WriteLine($"BrowseModsViewModel: {filtered.Count} mods after filtering installed");
+
                 Mods.Clear();
-                foreach (var mod in results.Mods)
+                foreach (var mod in filtered)
                 {
                     Console.WriteLine($"BrowseModsViewModel: Adding mod - {mod.Name} by {mod.Author}");
                     Mods.Add(new ModDisplayItem(mod));
@@ -216,7 +228,9 @@ public partial class BrowseModsViewModel : BaseViewModel
                 
                 Console.WriteLine($"BrowseModsViewModel: Added {Mods.Count} mods to collection");
                 
-                TotalPages = results.TotalPages;
+                // recalculate total pages based on filtered count
+                var totalFiltered = installed == null ? results.TotalCount : results.TotalCount - installed.Count;
+                TotalPages = (int)Math.Ceiling(totalFiltered / 20.0);
                 OnPropertyChanged(nameof(CanGoToPreviousPage));
                 OnPropertyChanged(nameof(CanGoToNextPage));
 
@@ -247,24 +261,51 @@ public partial class BrowseModsViewModel : BaseViewModel
     [RelayCommand]
     private async Task InstallModAsync(ModDisplayItem modDisplay)
     {
-        if (modDisplay == null || _gameStateService.CurrentGame == null) return;
-
-        var mod = modDisplay.ModEntry;
-        InstallingModId = mod.Id;
-        InstallProgress = 0;
-        var progress = new Progress<double>(p => InstallProgress = p);
-        
-        var cts = new CancellationTokenSource();
-
-        var result = await ExecuteAsync(async () =>
+        if (modDisplay == null) return;
+        if (_gameStateService.CurrentGame == null || string.IsNullOrEmpty(_gameStateService.CurrentGame.InstallPath))
         {
-            var latestVersion = mod.Versions.Where(v => !v.IsPrerelease).OrderByDescending(v => v.ReleaseDate).FirstOrDefault();
-            if (latestVersion == null) throw new("no stable version available");
-            var op = await _modManager.InstallModFromZip(latestVersion.DownloadUrl, _gameStateService.CurrentGame, progress, cts.Token);
-            return op;
-        }, "Installing mod...");
+            await _dialogService.ShowMessageDialogAsync("Game Not Detected", "Please select a valid game installation before installing mods.");
+            return;
+        }
 
-        InstallingModId = null;
+        try
+        {
+            var mod = modDisplay.ModEntry;
+            InstallingModId = mod.Id;
+            InstallProgress = 0;
+            var progress = new Progress<double>(p => InstallProgress = p);
+            var cts = new CancellationTokenSource();
+
+            var result = await ExecuteAsync(async () =>
+            {
+                var latestVersion = mod.Versions.Where(v => !v.IsPrerelease).OrderByDescending(v => v.ReleaseDate).FirstOrDefault();
+                if (latestVersion == null)
+                {
+                    _snackbarService.Show("Error", "No stable version of the mod is available for download.", "Error");
+                    return OperationResult.ErrorResult("No stable version available");
+                }
+                var op = await _modManager.InstallModFromZip(latestVersion.DownloadUrl, _gameStateService.CurrentGame, progress, cts.Token);
+                return op;
+            }, "Installing mod...");
+
+            if (result.Success)
+            {
+                _snackbarService.Show("Success", $"Mod '{mod.Name}' installed successfully.", "Success");
+                await LoadModsAsync(); // Refresh the list to remove the installed mod
+            }
+            else
+            {
+                _snackbarService.Show("Installation Failed", result.Error, "Error");
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Show("Error", $"An unexpected error occurred: {ex.Message}", "Error");
+        }
+        finally
+        {
+            InstallingModId = null;
+        }
     }
 
     [RelayCommand]

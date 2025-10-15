@@ -19,6 +19,7 @@
             <StackPanel Orientation="Horizontal" Spacing="12">
                 <TextBox Text="{Binding SearchText, Mode=TwoWay}" Watermark="Search mods..." Width="400"/>
                 <Button Content="Refresh" Command="{Binding LoadModsCommand}"/>
+                <Button Content="Open Mods Folder" Command="{Binding OpenModsFolderCommand}"/>
             </StackPanel>
         </Border>
 

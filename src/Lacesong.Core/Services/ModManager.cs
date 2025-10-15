@@ -56,6 +56,14 @@ public class ModManager : IModManager
             progress?.Report(0.6);
 
             var modInfo = extractResult.Data as ModInfo ?? throw new("failed to parse mod info");
+
+            // check if mod is already installed to prevent duplicate installations
+            var installedMods = await GetInstalledMods(gameInstall);
+            if (installedMods.Any(m => m.Id.Equals(modInfo.Id, StringComparison.OrdinalIgnoreCase)))
+            {
+                return OperationResult.SuccessResult($"Mod '{modInfo.Name}' is already installed", modInfo);
+            }
+
             var depResult = await ResolveDependencies(modInfo, gameInstall);
             if (!depResult.Success) return depResult;
 
@@ -345,6 +353,17 @@ public class ModManager : IModManager
             return false;
 
         var executablePath = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
+
+        if (PlatformDetector.IsMacOS)
+        {
+            var appBundleName = $"{Path.GetFileNameWithoutExtension(gameInstall.Executable)}.app";
+            var appBundlePath = Path.Combine(gameInstall.InstallPath, appBundleName);
+            if (Directory.Exists(appBundlePath))
+            {
+                executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", gameInstall.Executable);
+            }
+        }
+        
         return File.Exists(executablePath);
     }
 
@@ -455,6 +474,16 @@ public class ModManager : IModManager
                 var manifestJson = await File.ReadAllTextAsync(manifestPath);
                 modInfo = JsonSerializer.Deserialize<ModInfo>(manifestJson);
             }
+            else
+            {
+                // search recursively for manifest.json (handles archives with nested folders)
+                var nestedManifest = Directory.GetFiles(tempExtractPath, ModManifestFileName, SearchOption.AllDirectories).FirstOrDefault();
+                if (nestedManifest != null)
+                {
+                    var manifestJson = await File.ReadAllTextAsync(nestedManifest);
+                    modInfo = JsonSerializer.Deserialize<ModInfo>(manifestJson);
+                }
+            }
 
             // if no manifest, try to infer from directory structure
             if (modInfo == null)
@@ -520,9 +549,32 @@ public class ModManager : IModManager
 
             foreach (var dependency in modInfo.Dependencies)
             {
+                // skip bepinex packs – these are handled by the manager separately
+                if (IsBepInExDependency(dependency))
+                    continue;
+
                 if (!installedMods.Any(m => m.Id.Equals(dependency, StringComparison.OrdinalIgnoreCase)))
                 {
                     missingDependencies.Add(dependency);
+                }
+            }
+
+            // attempt to download and install each missing dependency
+            foreach (var dep in missingDependencies.ToList())
+            {
+                if (!TryParseThunderstoreDependency(dep, out var author, out var package, out var version))
+                    continue; // malformed dependency string – ignore
+
+                var url = $"https://thunderstore.io/package/download/{author}/{package}/{version}/";
+                var installResult = await InstallModFromZip(url, gameInstall);
+                if (installResult.Success)
+                {
+                    missingDependencies.Remove(dep);
+                    installedMods.Add((ModInfo)installResult.Data!);
+                }
+                else
+                {
+                    return OperationResult.ErrorResult($"Failed to install dependency '{dep}': {installResult.Error}", "Dependency installation failed");
                 }
             }
 
@@ -539,17 +591,86 @@ public class ModManager : IModManager
         }
     }
 
+    /// <summary>
+    /// returns true when the dependency string refers to a BepInEx pack, which the mod manager handles separately.
+    /// </summary>
+    private static bool IsBepInExDependency(string dependency)
+    {
+        return dependency.StartsWith("BepInEx-", StringComparison.OrdinalIgnoreCase) ||
+               dependency.Contains("BepInExPack", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// parses a thunderstore dependency string (Author-Package-Version) into its constituent parts.
+    /// returns false when the string cannot be parsed.
+    /// </summary>
+    private static bool TryParseThunderstoreDependency(string dependency, out string author, out string package, out string version)
+    {
+        author = package = version = string.Empty;
+        var parts = dependency.Split('-');
+        if (parts.Length < 3) return false;
+
+        author = parts[0];
+        version = parts[^1];
+        package = string.Join('-', parts.Skip(1).Take(parts.Length - 2));
+        return true;
+    }
+
     private async Task<OperationResult> InstallModFiles(string zipPath, ModInfo modInfo, GameInstallation gameInstall)
     {
         try
         {
-            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modInfo.Id);
+            // extract to temp directory first to read manifest.json
+            var tempExtractPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempExtractPath);
+            ZipFile.ExtractToDirectory(zipPath, tempExtractPath);
+
+            // find manifest.json (may be nested in thunderstore packages)
+            var manifestPath = Path.Combine(tempExtractPath, ModManifestFileName);
+            string? sourceRoot = tempExtractPath;
+            
+            if (!File.Exists(manifestPath))
+            {
+                // search recursively for manifest.json (handles thunderstore archives with nested folders)
+                var nestedManifest = Directory.GetFiles(tempExtractPath, ModManifestFileName, SearchOption.AllDirectories).FirstOrDefault();
+                if (nestedManifest != null)
+                {
+                    manifestPath = nestedManifest;
+                    sourceRoot = Path.GetDirectoryName(nestedManifest);
+                }
+            }
+
+            // read manifest.json to get the proper name
+            string folderName = modInfo.Id;
+
+            if (File.Exists(manifestPath))
+            {
+                var manifestJson = await File.ReadAllTextAsync(manifestPath);
+                var manifest = JsonSerializer.Deserialize<JsonElement>(manifestJson);
+                
+                if (manifest.TryGetProperty("name", out var nameEl) && nameEl.GetString() is string name)
+                {
+                    // clean the name by removing whitespace and underscores
+                    folderName = name.Replace(" ", "").Replace("_", "");
+                }
+            }
+
+            // update modInfo.Id to match the cleaned folder name
+            modInfo.Id = folderName;
+
+            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), folderName);
             
             // create mod directory
             Directory.CreateDirectory(modPath);
 
-            // extract mod files
-            ZipFile.ExtractToDirectory(zipPath, modPath);
+            // copy files from source root (where manifest.json is located) to final mod directory
+            if (sourceRoot != null && Directory.Exists(sourceRoot))
+            {
+                CopyDirectory(sourceRoot, modPath);
+            }
+
+            // cleanup temp directory
+            Directory.Delete(tempExtractPath, true);
 
             // save mod info
             var modInfoPath = Path.Combine(modPath, ModInfoFileName);
@@ -567,6 +688,31 @@ public class ModManager : IModManager
         catch (Exception ex)
         {
             return OperationResult.ErrorResult(ex.Message, "Failed to install mod files");
+        }
+    }
+
+    /// <summary>
+    /// recursively copies a directory and all its contents
+    /// </summary>
+    private static void CopyDirectory(string sourceDir, string targetDir)
+    {
+        // create target directory if it doesn't exist
+        Directory.CreateDirectory(targetDir);
+
+        // copy all files
+        foreach (var file in Directory.GetFiles(sourceDir))
+        {
+            var fileName = Path.GetFileName(file);
+            var targetPath = Path.Combine(targetDir, fileName);
+            File.Copy(file, targetPath, true);
+        }
+
+        // recursively copy subdirectories
+        foreach (var directory in Directory.GetDirectories(sourceDir))
+        {
+            var dirName = Path.GetFileName(directory);
+            var targetPath = Path.Combine(targetDir, dirName);
+            CopyDirectory(directory, targetPath);
         }
     }
 
@@ -718,3 +864,4 @@ public class ModManager : IModManager
         }
     }
 }
+

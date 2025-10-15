@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Lacesong.Core.Interfaces;
 using Lacesong.Core.Models;
+using Lacesong.Core.Services;
 using Lacesong.Avalonia.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
@@ -212,12 +213,12 @@ public partial class InstalledModsViewModel : BaseViewModel
         if (GameInstallation == null) return;
         try
         {
-            var modsPath = Path.Combine(GameInstallation.InstallPath, "mods");
+            var modsPath = ModManager.GetModsDirectoryPath(GameInstallation);
             if (!Directory.Exists(modsPath))
             {
                 Directory.CreateDirectory(modsPath);
             }
-            // This is platform specific and might need a cross-platform solution
+            
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
                 FileName = modsPath,
@@ -227,6 +228,10 @@ public partial class InstalledModsViewModel : BaseViewModel
         catch (Exception ex)
         {
             SetStatus($"failed to open mods folder: {ex.Message}", true);
+            _snackbarService.Show(
+                "Error", 
+                $"Failed to open mods folder: {ex.Message}", 
+                "Error");
         }
     }
 }
