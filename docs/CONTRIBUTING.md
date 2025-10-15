@@ -56,23 +56,8 @@ cd lacesong
 
 ### 2. Build the Project
 
-**Windows:**
 ```bash
-build.bat
-```
-
-**macOS/Linux:**
-```bash
-./build.sh
-```
-
-For development builds (faster):
-```bash
-# windows
-dev-build.bat
-
-# macos/linux
-./dev-build.sh
+dotnet build
 ```
 
 ### 3. Run Tests
@@ -132,8 +117,6 @@ private const string BepInExDownloadUrlTemplate = "...";
 ### Code Comments
 
 - Use comments sparingly, only where necessary
-- All code comments should be in lowercase
-- Comment style reflects an experienced senior developer teaching a junior
 - Only comment:
   - Complex or convoluted logic
   - Important architectural decisions
