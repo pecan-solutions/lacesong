@@ -28,6 +28,17 @@ public partial class GameDetectionViewModel : BaseViewModel
     [ObservableProperty]
     private string _detectionStatus = "Ready to scan for games";
 
+    // called when SelectedGame property changes (by CommunityToolkit.Mvvm)
+    partial void OnSelectedGameChanged(GameInstallation? value)
+    {
+        // when the user selects a game from the list, update the game state
+        if (value != null)
+        {
+            _gameStateService.SetCurrentGame(value);
+            DetectionStatus = $"{value.Name} is now active";
+        }
+    }
+
     // explicitly define commands to ensure they're always available
     public IAsyncRelayCommand DetectGamesAsyncCommand { get; }
     public IAsyncRelayCommand BrowseForGameFileAsyncCommand { get; }
@@ -69,23 +80,13 @@ public partial class GameDetectionViewModel : BaseViewModel
         {
             DetectionStatus = "Scanning for game installations...";
             
-            var games = await _gameDetector.GetSupportedGames();
-            var newlyDetectedGames = new List<GameInstallation>();
-
-            foreach (var game in games)
-            {
-                var detectedGame = await _gameDetector.DetectGameInstall();
-                if (detectedGame != null && detectedGame.Name == game.Name)
-                {
-                    // only add if not already in the list
-                    if (!DetectedGames.Any(g => g.InstallPath == detectedGame.InstallPath))
-                    {
-                        newlyDetectedGames.Add(detectedGame);
-                    }
-                }
-            }
+            // use the new method to detect all game installations at once
+            var allDetectedGames = await _gameDetector.DetectAllGameInstalls();
             
-            // merge newly detected games with existing ones
+            // merge with existing games (avoid duplicates)
+            var existingPaths = DetectedGames.Select(g => g.InstallPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var newlyDetectedGames = allDetectedGames.Where(g => !existingPaths.Contains(g.InstallPath)).ToList();
+            
             if (newlyDetectedGames.Any())
             {
                 var mergedGames = new List<GameInstallation>(DetectedGames);
@@ -93,9 +94,13 @@ public partial class GameDetectionViewModel : BaseViewModel
                 DetectedGames = mergedGames;
                 
                 DetectionStatus = $"Found {newlyDetectedGames.Count} new game installation(s). Total: {DetectedGames.Count}";
-                if (SelectedGame == null)
+                
+                // auto-select the first game if none selected, and set it in game state
+                if (SelectedGame == null && DetectedGames.Any())
                 {
                     SelectedGame = DetectedGames.First();
+                    _gameStateService.SetCurrentGame(SelectedGame);
+                    DetectionStatus = $"{SelectedGame.Name} selected and ready to use";
                 }
             }
             else if (DetectedGames.Any())
@@ -104,7 +109,7 @@ public partial class GameDetectionViewModel : BaseViewModel
             }
             else
             {
-                DetectionStatus = "No game installations found";
+                DetectionStatus = "No game installations found. Try manual selection.";
             }
         }, "Detecting games...");
     }
@@ -139,7 +144,8 @@ public partial class GameDetectionViewModel : BaseViewModel
                     }
                     
                     SelectedGame = game;
-                    DetectionStatus = $"Validated {game.Name} installation";
+                    _gameStateService.SetCurrentGame(game);
+                    DetectionStatus = $"{game.Name} selected and ready to use";
                 }
                 else
                 {
@@ -167,10 +173,12 @@ public partial class GameDetectionViewModel : BaseViewModel
 
     private void SetSelectedGame()
     {
+        // this method is kept for explicit button clicks, but selection now also happens automatically
+        // via OnSelectedGameChanged when the user clicks on a list item
         if (SelectedGame != null)
         {
             _gameStateService.SetCurrentGame(SelectedGame);
-            DetectionStatus = $"{SelectedGame.Name} has been set as the active game.";
+            DetectionStatus = $"{SelectedGame.Name} is now active and ready to use";
         }
     }
 }

@@ -28,7 +28,13 @@ public class GameDetector : IGameDetector
                 return manualInstall;
         }
 
-        // try automatic detection from various sources
+        // use the new method that returns all games, then return the first one
+        var allGames = await DetectAllGameInstalls();
+        return allGames.FirstOrDefault();
+    }
+
+    public async Task<List<GameInstallation>> DetectAllGameInstalls()
+    {
         var detectedGames = new List<GameInstallation>();
 
         // detect from steam
@@ -51,8 +57,16 @@ public class GameDetector : IGameDetector
         var commonPathGames = await DetectFromCommonPaths();
         detectedGames.AddRange(commonPathGames);
 
-        // return the first valid installation found
-        return detectedGames.FirstOrDefault(g => ValidateGameInstall(g));
+        // validate and filter to only valid installations
+        var validGames = detectedGames.Where(g => ValidateGameInstall(g)).ToList();
+        
+        // remove duplicates based on install path (same game detected from multiple sources)
+        var uniqueGames = validGames
+            .GroupBy(g => g.InstallPath, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToList();
+
+        return uniqueGames;
     }
 
     public bool ValidateGameInstall(GameInstallation gameInstall)

@@ -1,0 +1,106 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Lacesong.Avalonia.Views.ManageModsView"
+             x:DataType="vm:ManageModsViewModel">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="Manage Mods" Classes="h1" Margin="0,0,0,8"/>
+            <TextBlock Text="Manage your currently installed mods." Classes="h3"/>
+        </StackPanel>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="1" Classes="card" Padding="16" Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBox Text="{Binding SearchText, Mode=TwoWay}" Watermark="Search mods..." Width="400"/>
+                <Button Content="Refresh" Command="{Binding LoadModsCommand}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Mod List and Detail Panel -->
+        <Grid Grid.Row="2" ColumnDefinitions="5*,3*">
+            <!-- Left: Mod List -->
+            <Border Grid.Column="0" Classes="card" Padding="0" Margin="0,0,12,0">
+                <ListBox ItemsSource="{Binding Mods}" SelectedItem="{Binding SelectedMod, Mode=TwoWay}" Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="48,*" Margin="8" RowDefinitions="Auto,Auto,Auto">
+                                <!-- Icon -->
+                                <Border Grid.Column="0" Grid.RowSpan="3" Width="48" Height="48" CornerRadius="6" ClipToBounds="True" Margin="0,0,12,0" VerticalAlignment="Top" Background="{DynamicResource PlaceholderIconBrush}">
+                                    <Image Source="{Binding IconPath, Converter={StaticResource LocalImageConverter}}" Stretch="UniformToFill"/>
+                                </Border>
+                                
+                                <!-- Name -->
+                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding Name}" Classes="h4" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                                
+                                <!-- Author and Version -->
+                                <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+                                    <TextBlock Text="{Binding Author, StringFormat='by {0}'}" Classes="smallFaded"/>
+                                    <TextBlock Text="•" Classes="smallFaded"/>
+                                    <TextBlock Text="{Binding Version}" Classes="smallFaded"/>
+                                </StackPanel>
+                                
+                                <!-- Status -->
+                                <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="{Binding IsEnabled, Converter={StaticResource ModStatusConverter}}" Classes="smallFaded"/>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <!-- Right: Detail Panel -->
+            <Border Grid.Column="1" Classes="card" Padding="24" IsVisible="{Binding SelectedMod, Converter={StaticResource ObjectToBooleanConverter}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="16">
+                        <!-- Large Icon -->
+                        <Border Width="128" Height="128" CornerRadius="12" ClipToBounds="True" HorizontalAlignment="Left" Background="{DynamicResource PlaceholderIconBrush}">
+                            <Image Source="{Binding SelectedMod.IconPath, Converter={StaticResource LocalImageConverter}}" Stretch="UniformToFill"/>
+                        </Border>
+
+                        <!-- Name -->
+                        <TextBlock Text="{Binding SelectedMod.Name}" Classes="h2"/>
+
+                        <!-- Author -->
+                        <TextBlock Classes="h4">
+                            <Run Text="by"/>
+                            <Run Text="{Binding SelectedMod.Author}"/>
+                        </TextBlock>
+
+                        <!-- Details -->
+                        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Version:" Classes="small" FontWeight="Bold"/>
+                            <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding SelectedMod.Version}" Classes="small"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Status:" Classes="small" FontWeight="Bold"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding SelectedMod.IsEnabled, Converter={StaticResource ModStatusConverter}}" Classes="small"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row="2" Text="File Path:" Classes="small" FontWeight="Bold"/>
+                            <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding SelectedMod.FilePath}" TextTrimming="CharacterEllipsis" Classes="small"/>
+                        </Grid>
+
+                        <!-- Description -->
+                        <StackPanel Spacing="8" IsVisible="{Binding SelectedMod.Description, Converter={StaticResource StringNotNullOrEmptyConverter}}">
+                            <TextBlock Text="Description:" Classes="h4"/>
+                            <TextBlock Text="{Binding SelectedMod.Description}" TextWrapping="Wrap" Classes="small"/>
+                        </StackPanel>
+
+                        <!-- Action Buttons -->
+                        <Button Content="Uninstall Mod" 
+                                HorizontalAlignment="Stretch"
+                                Command="{Binding UninstallModCommand}"
+                                CommandParameter="{Binding SelectedMod}"
+                                Classes="danger" Padding="16,12"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
+

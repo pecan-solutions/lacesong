@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Lacesong.Core.Models;
+using Lacesong.Core.Services;
 using System;
 
 namespace Lacesong.Avalonia.Services;
@@ -16,6 +17,14 @@ public partial class GameStateService : ObservableObject, IGameStateService
     public void SetCurrentGame(GameInstallation game)
     {
         CurrentGame = game;
+        
+        // ensure mods directory exists for this installation
+        // this is critical for all downstream operations (mod installation, BepInEx, etc.)
+        if (!string.IsNullOrEmpty(game.InstallPath))
+        {
+            ModManager.EnsureModsDirectory(game);
+        }
+        
         GameStateChanged?.Invoke();
         OnPropertyChanged(nameof(IsGameDetected));
     }

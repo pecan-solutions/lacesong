@@ -26,6 +26,12 @@ public interface IGameDetector
     /// </summary>
     /// <returns>list of supported game configurations</returns>
     Task<List<GameInstallation>> GetSupportedGames();
+
+    /// <summary>
+    /// detects all game installations across all sources
+    /// </summary>
+    /// <returns>list of all detected game installations</returns>
+    Task<List<GameInstallation>> DetectAllGameInstalls();
 }
 
 /// <summary>

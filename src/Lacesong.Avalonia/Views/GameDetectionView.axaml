@@ -51,25 +51,21 @@
                 <!-- Detected Games -->
                 <Border Classes="card">
                     <StackPanel>
-                        <TextBlock Text="Detected Games" Classes="h2" Margin="0,0,0,16"/>
+                        <TextBlock Text="Detected Games" Classes="h2" Margin="0,0,0,8"/>
+                        <TextBlock Text="Click on a game to select it. The selected game will be used for all mod operations." 
+                                   Classes="smallFaded" Margin="0,0,0,16"/>
                         <ListBox ItemsSource="{Binding DetectedGames}" SelectedItem="{Binding SelectedGame}"
                                  Background="Transparent" BorderThickness="0"
                                  MinHeight="100">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="{Binding Name}" Classes="bodyStrong"/>
-                                            <TextBlock Text="{Binding InstallPath}" Classes="smallFaded"
-                                                       TextWrapping="Wrap" Margin="0,4,0,4"/>
-                                            <TextBlock Text="{Binding DetectedBy, StringFormat='Detected via: {0}'}" 
-                                                       Classes="smallFaded"/>
-                                        </StackPanel>
-                                        <Button Grid.Column="1" Content="Select" 
-                                                Command="{Binding $parent[UserControl].DataContext.SetSelectedGameCommand}"
-                                                Classes="primary"
-                                                VerticalAlignment="Center"/>
-                                    </Grid>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" Classes="bodyStrong"/>
+                                        <TextBlock Text="{Binding InstallPath}" Classes="smallFaded"
+                                                   TextWrapping="Wrap" Margin="0,4,0,4"/>
+                                        <TextBlock Text="{Binding DetectedBy, StringFormat='Detected via: {0}'}" 
+                                                   Classes="smallFaded"/>
+                                    </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>

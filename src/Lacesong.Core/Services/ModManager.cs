@@ -284,7 +284,7 @@ public class ModManager : IModManager
                     var modInfo = new ModInfo
                     {
                         Id = manifest.TryGetProperty("id", out var idEl) ? idEl.GetString() ?? Path.GetFileName(modPath) : Path.GetFileName(modPath),
-                        Name = manifest.TryGetProperty("name", out var nameEl) ? nameEl.GetString() ?? Path.GetFileName(modPath) : Path.GetFileName(modPath),
+                        Name = manifest.TryGetProperty("name", out var nameEl) ? (nameEl.GetString() ?? Path.GetFileName(modPath)).Replace("_", " ") : Path.GetFileName(modPath).Replace("_", " "),
                         Description = manifest.TryGetProperty("description", out var descEl) ? descEl.GetString() ?? string.Empty : string.Empty,
                         Version = manifest.TryGetProperty("version", out var verEl) ? verEl.GetString() ?? "1.0.0" : 
                                  (manifest.TryGetProperty("version_number", out var verAlt) ? verAlt.GetString() ?? "1.0.0" : "1.0.0"),
@@ -324,7 +324,7 @@ public class ModManager : IModManager
             return new ModInfo
             {
                 Id = modId,
-                Name = modId,
+                Name = modId.Replace("_", " "),
                 Version = "Unknown",
                 Description = "No mod information available",
                 Author = "Unknown",

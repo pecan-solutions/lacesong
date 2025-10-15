@@ -7,4 +7,5 @@
     <Color x:Key="HoverColor">#36693d</Color>
     <Color x:Key="BackgroundColor">#121a14</Color>
     <Color x:Key="SurfaceColor">#202c22</Color>
+    <Color x:Key="PlaceholderIconColor">#3a6642</Color>
 </ResourceDictionary>

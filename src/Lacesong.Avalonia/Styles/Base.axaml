@@ -55,4 +55,7 @@
     </LinearGradientBrush>
     <SolidColorBrush x:Key="ButtonSecondaryBrush" Color="{DynamicResource SurfaceColor}"/>
     <SolidColorBrush x:Key="ButtonSecondaryHoverBrush" Color="{DynamicResource SurfaceColor}"/>
+    
+    <!-- Placeholder Icon Brush -->
+    <SolidColorBrush x:Key="PlaceholderIconBrush" Color="{DynamicResource PlaceholderIconColor}"/>
 </ResourceDictionary>

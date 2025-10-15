@@ -89,6 +89,7 @@ public partial class App : Application
         services.AddSingleton<ViewModels.MainViewModel>();
         services.AddTransient<ViewModels.HomeViewModel>();
         services.AddTransient<ViewModels.GameDetectionViewModel>();
+        services.AddTransient<ViewModels.ManageModsViewModel>();
         services.AddTransient<ViewModels.BepInExInstallViewModel>();
         services.AddTransient<ViewModels.InstalledModsViewModel>();
         services.AddTransient<ViewModels.SettingsViewModel>();
@@ -98,6 +99,7 @@ public partial class App : Application
         services.AddSingleton<MainWindow>();
         services.AddTransient<Views.HomeView>();
         services.AddTransient<Views.GameDetectionView>();
+        services.AddTransient<Views.ManageModsView>();
         services.AddTransient<Views.BepInExInstallView>();
         services.AddTransient<Views.InstalledModsView>();
         services.AddTransient<Views.SettingsView>();

@@ -58,13 +58,14 @@
     </Style>
 
     <Style Selector="Button.danger">
-        <Setter Property="Background" Value="{DynamicResource ErrorBrush}"/>
-        <Setter Property="Foreground" Value="#FFFFFF"/>
-        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="#A84848"/>
+        <Setter Property="Foreground" Value="#FFE8E8"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#C85858"/>
     </Style>
     
     <Style Selector="Button.danger:hover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource ErrorColor}"/>
+        <Setter Property="Background" Value="#C85858"/>
     </Style>
 
     <!-- Navigation Button Style -->

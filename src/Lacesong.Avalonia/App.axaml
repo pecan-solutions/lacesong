@@ -35,6 +35,7 @@
             <converters:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter" />
             <converters:ObjectToBooleanConverter x:Key="ObjectToBooleanConverter" />
             <converters:UrlToImageConverter x:Key="UrlToImageConverter" />
+            <converters:LocalImageConverter x:Key="LocalImageConverter" />
         </ResourceDictionary>
     </Application.Resources>
 
@@ -45,6 +46,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:GameDetectionViewModel}">
             <views:GameDetectionView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ManageModsViewModel}">
+            <views:ManageModsView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:BepInExInstallViewModel}">
             <views:BepInExInstallView />
