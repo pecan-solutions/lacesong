@@ -153,14 +153,15 @@ public class ModManager : IModManager
             }
 
             // remove mod files
-            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modId);
+            var folder = modInfo.DirectoryName ?? CleanModNameForFolder(modInfo.Name);
+            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), folder);
             if (Directory.Exists(modPath))
             {
                 Directory.Delete(modPath, true);
             }
 
             // remove plugin mirror
-            var pluginMirror = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", modId);
+            var pluginMirror = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", folder);
             if (Directory.Exists(pluginMirror))
             {
                 Directory.Delete(pluginMirror, true);
@@ -381,7 +382,8 @@ public class ModManager : IModManager
                         Tags = manifest.TryGetProperty("tags", out var tagsEl) && tagsEl.ValueKind == JsonValueKind.Array ?
                             tagsEl.EnumerateArray().Select(x => x.GetString() ?? string.Empty).Where(x => !string.IsNullOrEmpty(x)).ToList() : new List<string>(),
                         IsInstalled = true,
-                        IsEnabled = isEnabled
+                        IsEnabled = isEnabled,
+                        DirectoryName = Path.GetFileName(modPath)
                     };
 
                     // icon detection
@@ -462,7 +464,8 @@ public class ModManager : IModManager
                 Description = "No mod information available",
                 Author = "Unknown",
                 IsInstalled = true,
-                IsEnabled = isEnabled
+                IsEnabled = isEnabled,
+                DirectoryName = Path.GetFileName(modPath)
             };
         }
         catch (Exception ex)
@@ -942,8 +945,8 @@ public class ModManager : IModManager
             modInfo.DirectoryName = folderName;
             
             var modsBasePath = GetModsDirectoryPath(gameInstall);
-            var folder = modInfo.DirectoryName ?? CleanModNameForFolder(modInfo.Name);
-            var modPath = Path.Combine(modsBasePath, folder);
+            var dir = modInfo.DirectoryName ?? CleanModNameForFolder(modInfo.Name);
+            var modPath = Path.Combine(modsBasePath, dir);
             Console.WriteLine($"ModManager: Full mod installation path: {modPath}");
             
             // create mod directory
@@ -1111,7 +1114,7 @@ public class ModManager : IModManager
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             var backupPath = Path.Combine(backupDir, $"{modInfo.Id}_backup_{timestamp}.zip");
 
-            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modInfo.Id);
+            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modInfo.DirectoryName ?? CleanModNameForFolder(modInfo.Name));
             if (Directory.Exists(modPath))
             {
                 ZipFile.CreateFromDirectory(modPath, backupPath);
