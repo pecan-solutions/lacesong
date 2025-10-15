@@ -29,105 +29,110 @@ public class ModManager : IModManager
         
         try
         {
-            progress?.Report(0.05);
-            Console.WriteLine("ModManager: Ensuring mods directory exists");
-            // ensure mods directory exists
-            EnsureModsDirectory(gameInstall);
-            var modsDir = GetModsDirectoryPath(gameInstall);
-            Console.WriteLine($"ModManager: Mods directory: {modsDir}");
-            
-            if (!ValidateGameInstall(gameInstall))
+            string tempZipPath = string.Empty;
+            bool deleteTemp = false;
+            try
             {
-                Console.WriteLine("ModManager: Game installation validation failed");
-                return OperationResult.ErrorResult("Invalid game installation", "Game installation validation failed");
-            }
-            Console.WriteLine("ModManager: Game installation validation passed");
-
-            if (!_bepInExManager.IsBepInExInstalled(gameInstall))
-            {
-                Console.WriteLine("ModManager: BepInEx is not installed");
-                return OperationResult.ErrorResult("BepInEx is not installed", "BepInEx required for mod installation");
-            }
-            Console.WriteLine("ModManager: BepInEx validation passed");
-
-            string tempZipPath;
-
-            if (source.StartsWith("http://") || source.StartsWith("https://"))
-            {
-                Console.WriteLine("ModManager: Downloading mod from URL");
-                var downloadResult = await DownloadModWithProgress(source, progress, token);
-                if (!downloadResult.Success) 
+                // ---------------- download or reference source zip ----------------
+                if (source.StartsWith("http://") || source.StartsWith("https://"))
                 {
-                    Console.WriteLine($"ModManager: Download failed: {downloadResult.Error}");
-                    return downloadResult;
+                    Console.WriteLine("ModManager: Downloading mod from URL");
+                    var downloadResult = await DownloadModWithProgress(source, progress, token);
+                    if (!downloadResult.Success)
+                    {
+                        Console.WriteLine($"ModManager: Download failed: {downloadResult.Error}");
+                        return downloadResult;
+                    }
+                    tempZipPath = downloadResult.Data as string ?? string.Empty;
+                    deleteTemp = true;
+                    Console.WriteLine($"ModManager: Download successful, temp path: {tempZipPath}");
                 }
-                tempZipPath = downloadResult.Data as string ?? string.Empty;
-                Console.WriteLine($"ModManager: Download successful, temp path: {tempZipPath}");
-            }
-            else
-            {
-                Console.WriteLine($"ModManager: Using local file: {source}");
-                if (!File.Exists(source))
+                else
                 {
-                    Console.WriteLine("ModManager: Local file does not exist");
-                    return OperationResult.ErrorResult("Mod file not found", "File does not exist");
+                    Console.WriteLine($"ModManager: Using local file: {source}");
+                    if (!File.Exists(source))
+                    {
+                        Console.WriteLine("ModManager: Local file does not exist");
+                        return OperationResult.ErrorResult("Mod file not found", "File does not exist");
+                    }
+                    tempZipPath = source;
                 }
-                tempZipPath = source;
+
+                progress?.Report(0.4);
+                Console.WriteLine("ModManager: Progress at 40% - starting extraction");
+
+                // ---------------- extract and analyze ----------------
+                Console.WriteLine("ModManager: Extracting and analyzing mod");
+                var extractResult = await ExtractAndAnalyzeMod(tempZipPath, gameInstall);
+                if (!extractResult.Success)
+                {
+                    Console.WriteLine($"ModManager: Extract and analyze failed: {extractResult.Error}");
+                    return extractResult;
+                }
+                progress?.Report(0.6);
+                Console.WriteLine("ModManager: Progress at 60% - extraction complete");
+
+                var modInfo = extractResult.Data as ModInfo ?? throw new("failed to parse mod info");
+                Console.WriteLine($"ModManager: Mod info parsed - Name: {modInfo.Name}, ID: {modInfo.Id}, Author: {modInfo.Author}");
+
+                // ---------------- handle reinstall ----------------
+                Console.WriteLine("ModManager: Checking for existing installation on disk to allow reinstall");
+                var modsBasePath = GetModsDirectoryPath(gameInstall);
+                var existingModPath = Path.Combine(modsBasePath, GetFolderName(modInfo));
+                if (Directory.Exists(existingModPath))
+                {
+                    Console.WriteLine($"ModManager: Existing mod directory found at {existingModPath}, deleting for reinstall");
+                    try
+                    {
+                        Directory.Delete(existingModPath, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"ModManager: Failed to delete existing mod directory: {ex.Message}");
+                        return OperationResult.ErrorResult("Failed to remove existing installation before reinstall", ex.Message);
+                    }
+                }
+
+                // ---------------- dependencies ----------------
+                Console.WriteLine("ModManager: Resolving dependencies");
+                var depResult = await ResolveDependencies(modInfo, gameInstall);
+                if (!depResult.Success)
+                {
+                    Console.WriteLine($"ModManager: Dependency resolution failed: {depResult.Error}");
+                    return depResult;
+                }
+                Console.WriteLine("ModManager: Dependencies resolved successfully");
+
+                // ---------------- install files ----------------
+                progress?.Report(0.8);
+                Console.WriteLine("ModManager: Progress at 80% - installing mod files");
+                var installResult = await InstallModFiles(tempZipPath, modInfo, gameInstall);
+                if (!installResult.Success)
+                {
+                    Console.WriteLine($"ModManager: Install mod files failed: {installResult.Error}");
+                    return installResult;
+                }
+
+                progress?.Report(1);
+                return OperationResult.SuccessResult($"Mod '{modInfo.Name}' installed successfully", modInfo);
             }
-            progress?.Report(0.4);
-            Console.WriteLine("ModManager: Progress at 40% - starting extraction");
-
-            Console.WriteLine("ModManager: Extracting and analyzing mod");
-            var extractResult = await ExtractAndAnalyzeMod(tempZipPath, gameInstall);
-            if (!extractResult.Success) 
+            finally
             {
-                Console.WriteLine($"ModManager: Extract and analyze failed: {extractResult.Error}");
-                return extractResult;
-            }
-            progress?.Report(0.6);
-            Console.WriteLine("ModManager: Progress at 60% - extraction complete");
-
-            var modInfo = extractResult.Data as ModInfo ?? throw new("failed to parse mod info");
-            Console.WriteLine($"ModManager: Mod info parsed - Name: {modInfo.Name}, ID: {modInfo.Id}, Author: {modInfo.Author}");
-
-            // allow reinstall even if already present in mods_list.json; if present on disk, clear existing before reinstall
-            Console.WriteLine("ModManager: Checking for existing installation on disk to allow reinstall");
-            var modsBasePath = GetModsDirectoryPath(gameInstall);
-            var existingModPath = Path.Combine(modsBasePath, GetFolderName(modInfo));
-            if (Directory.Exists(existingModPath))
-            {
-                Console.WriteLine($"ModManager: Existing mod directory found at {existingModPath}, deleting for reinstall");
+                // ensure the temporary zip is cleaned up to prevent disk bloat
                 try
                 {
-                    Directory.Delete(existingModPath, true);
+                    if (deleteTemp && !string.IsNullOrEmpty(tempZipPath) && File.Exists(tempZipPath))
+                    {
+                        File.Delete(tempZipPath);
+                        Console.WriteLine($"ModManager: Deleted temporary zip at {tempZipPath}");
+                    }
                 }
-                catch (Exception ex)
+                catch (Exception delEx)
                 {
-                    Console.WriteLine($"ModManager: Failed to delete existing mod directory: {ex.Message}");
-                    return OperationResult.ErrorResult("Failed to remove existing installation before reinstall", ex.Message);
+                    // log but do not propagate cleanup errors
+                    Console.WriteLine($"ModManager: Failed to delete temp zip '{tempZipPath}': {delEx.Message}");
                 }
             }
-
-            Console.WriteLine("ModManager: Resolving dependencies");
-            var depResult = await ResolveDependencies(modInfo, gameInstall);
-            if (!depResult.Success) 
-            {
-                Console.WriteLine($"ModManager: Dependency resolution failed: {depResult.Error}");
-                return depResult;
-            }
-            Console.WriteLine("ModManager: Dependencies resolved successfully");
-
-            progress?.Report(0.8);
-            Console.WriteLine("ModManager: Progress at 80% - installing mod files");
-            var installResult = await InstallModFiles(tempZipPath, modInfo, gameInstall);
-            if (!installResult.Success) 
-            {
-                Console.WriteLine($"ModManager: Install mod files failed: {installResult.Error}");
-                return installResult;
-            }
-
-            progress?.Report(1);
-            return OperationResult.SuccessResult($"Mod '{modInfo.Name}' installed successfully", modInfo);
         }
         catch (Exception ex)
         {
