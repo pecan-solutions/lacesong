@@ -208,5 +208,28 @@ public partial class ManageModsViewModel : BaseViewModel
                 "Error");
         }
     }
+
+    [RelayCommand]
+    private void OpenWebsite(string? url)
+    {
+        if (string.IsNullOrEmpty(url)) return;
+        
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"failed to open website: {ex.Message}", true);
+            _snackbarService.Show(
+                "Error", 
+                $"Failed to open website: {ex.Message}", 
+                "Error");
+        }
+    }
 }
 

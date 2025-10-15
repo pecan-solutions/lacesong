@@ -24,52 +24,107 @@ public class ModManager : IModManager
 
     public async Task<OperationResult> InstallModFromZip(string source, GameInstallation gameInstall, IProgress<double>? progress, CancellationToken token = default)
     {
+        Console.WriteLine($"ModManager: InstallModFromZip called with source: {source}");
+        Console.WriteLine($"ModManager: GameInstall - Name: {gameInstall.Name}, Path: {gameInstall.InstallPath}");
+        
         try
         {
             progress?.Report(0.05);
+            Console.WriteLine("ModManager: Ensuring mods directory exists");
             // ensure mods directory exists
             EnsureModsDirectory(gameInstall);
+            var modsDir = GetModsDirectoryPath(gameInstall);
+            Console.WriteLine($"ModManager: Mods directory: {modsDir}");
+            
             if (!ValidateGameInstall(gameInstall))
+            {
+                Console.WriteLine("ModManager: Game installation validation failed");
                 return OperationResult.ErrorResult("Invalid game installation", "Game installation validation failed");
+            }
+            Console.WriteLine("ModManager: Game installation validation passed");
 
             if (!_bepInExManager.IsBepInExInstalled(gameInstall))
+            {
+                Console.WriteLine("ModManager: BepInEx is not installed");
                 return OperationResult.ErrorResult("BepInEx is not installed", "BepInEx required for mod installation");
+            }
+            Console.WriteLine("ModManager: BepInEx validation passed");
 
             string tempZipPath;
 
             if (source.StartsWith("http://") || source.StartsWith("https://"))
             {
+                Console.WriteLine("ModManager: Downloading mod from URL");
                 var downloadResult = await DownloadModWithProgress(source, progress, token);
-                if (!downloadResult.Success) return downloadResult;
+                if (!downloadResult.Success) 
+                {
+                    Console.WriteLine($"ModManager: Download failed: {downloadResult.Error}");
+                    return downloadResult;
+                }
                 tempZipPath = downloadResult.Data as string ?? string.Empty;
+                Console.WriteLine($"ModManager: Download successful, temp path: {tempZipPath}");
             }
             else
             {
+                Console.WriteLine($"ModManager: Using local file: {source}");
                 if (!File.Exists(source))
+                {
+                    Console.WriteLine("ModManager: Local file does not exist");
                     return OperationResult.ErrorResult("Mod file not found", "File does not exist");
+                }
                 tempZipPath = source;
             }
             progress?.Report(0.4);
+            Console.WriteLine("ModManager: Progress at 40% - starting extraction");
 
+            Console.WriteLine("ModManager: Extracting and analyzing mod");
             var extractResult = await ExtractAndAnalyzeMod(tempZipPath, gameInstall);
-            if (!extractResult.Success) return extractResult;
+            if (!extractResult.Success) 
+            {
+                Console.WriteLine($"ModManager: Extract and analyze failed: {extractResult.Error}");
+                return extractResult;
+            }
             progress?.Report(0.6);
+            Console.WriteLine("ModManager: Progress at 60% - extraction complete");
 
             var modInfo = extractResult.Data as ModInfo ?? throw new("failed to parse mod info");
+            Console.WriteLine($"ModManager: Mod info parsed - Name: {modInfo.Name}, ID: {modInfo.Id}, Author: {modInfo.Author}");
 
-            // check if mod is already installed to prevent duplicate installations
-            var installedMods = await GetInstalledMods(gameInstall);
-            if (installedMods.Any(m => m.Id.Equals(modInfo.Id, StringComparison.OrdinalIgnoreCase)))
+            // allow reinstall even if already present in mods_list.json; if present on disk, clear existing before reinstall
+            Console.WriteLine("ModManager: Checking for existing installation on disk to allow reinstall");
+            var modsBasePath = GetModsDirectoryPath(gameInstall);
+            var existingModPath = Path.Combine(modsBasePath, CleanModNameForFolder(modInfo.Name));
+            if (Directory.Exists(existingModPath))
             {
-                return OperationResult.SuccessResult($"Mod '{modInfo.Name}' is already installed", modInfo);
+                Console.WriteLine($"ModManager: Existing mod directory found at {existingModPath}, deleting for reinstall");
+                try
+                {
+                    Directory.Delete(existingModPath, true);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ModManager: Failed to delete existing mod directory: {ex.Message}");
+                    return OperationResult.ErrorResult("Failed to remove existing installation before reinstall", ex.Message);
+                }
             }
 
+            Console.WriteLine("ModManager: Resolving dependencies");
             var depResult = await ResolveDependencies(modInfo, gameInstall);
-            if (!depResult.Success) return depResult;
+            if (!depResult.Success) 
+            {
+                Console.WriteLine($"ModManager: Dependency resolution failed: {depResult.Error}");
+                return depResult;
+            }
+            Console.WriteLine("ModManager: Dependencies resolved successfully");
 
             progress?.Report(0.8);
+            Console.WriteLine("ModManager: Progress at 80% - installing mod files");
             var installResult = await InstallModFiles(tempZipPath, modInfo, gameInstall);
-            if (!installResult.Success) return installResult;
+            if (!installResult.Success) 
+            {
+                Console.WriteLine($"ModManager: Install mod files failed: {installResult.Error}");
+                return installResult;
+            }
 
             progress?.Report(1);
             return OperationResult.SuccessResult($"Mod '{modInfo.Name}' installed successfully", modInfo);
@@ -190,6 +245,7 @@ public class ModManager : IModManager
 
     public async Task<List<ModInfo>> GetInstalledMods(GameInstallation gameInstall)
     {
+        Console.WriteLine($"ModManager: GetInstalledMods called for game: {gameInstall.Name}");
         var mods = new List<ModInfo>();
 
         try
@@ -197,36 +253,75 @@ public class ModManager : IModManager
             // ensure mods directory exists
             EnsureModsDirectory(gameInstall);
             var modsListPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "mods_list.json");
-            if (File.Exists(modsListPath))
+            Console.WriteLine($"ModManager: Checking for mods list at: {modsListPath}");
+            
+            // always scan mod directory to ensure we have all mods
+            var modDirectory = GetModsDirectoryPath(gameInstall);
+            Console.WriteLine($"ModManager: Scanning mod directory: {modDirectory}");
+            
+            if (Directory.Exists(modDirectory))
             {
-                var json = await File.ReadAllTextAsync(modsListPath);
-                try
+                var modDirs = Directory.GetDirectories(modDirectory);
+                Console.WriteLine($"ModManager: Found {modDirs.Length} mod directories:");
+                
+                // create a set to track which mods we've processed
+                var processedModIds = new HashSet<string>();
+                
+                foreach (var modDir in modDirs)
                 {
-                    mods = JsonSerializer.Deserialize<List<ModInfo>>(json) ?? new List<ModInfo>();
+                    var modId = Path.GetFileName(modDir);
+                    Console.WriteLine($"ModManager:   - {modId}");
+
+                    var modInfo = await GetModInfo(modId, gameInstall);
+                    if (modInfo != null)
+                    {
+                        Console.WriteLine($"ModManager: Successfully loaded mod info for {modId}");
+                        mods.Add(modInfo);
+                        processedModIds.Add(modInfo.Id);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"ModManager: Failed to load mod info for {modId}");
+                    }
                 }
-                catch (JsonException ex)
+                
+                // only check mods_list.json if we didn't find any mods in directory
+                if (mods.Count == 0 && File.Exists(modsListPath))
                 {
-                    Console.WriteLine($"Error deserializing mods_list.json: {ex.Message}");
-                    Console.WriteLine($"Problematic JSON: {json}");
-                    mods = new List<ModInfo>();
+                    Console.WriteLine("ModManager: No mods found in directory, checking mods_list.json as fallback");
+                    var json = await File.ReadAllTextAsync(modsListPath);
+                    try
+                    {
+                        var listMods = JsonSerializer.Deserialize<List<ModInfo>>(json) ?? new List<ModInfo>();
+                        Console.WriteLine($"ModManager: Loaded {listMods.Count} mods from mods_list.json as fallback");
+                        mods.AddRange(listMods);
+                    }
+                    catch (JsonException ex)
+                    {
+                        Console.WriteLine($"Error deserializing mods_list.json: {ex.Message}");
+                        Console.WriteLine($"Problematic JSON: {json}");
+                    }
                 }
             }
             else
             {
-                // scan mod directory for installed mods
-                var modDirectory = GetModsDirectoryPath(gameInstall);
-                if (Directory.Exists(modDirectory))
+                Console.WriteLine("ModManager: Mod directory does not exist");
+                
+                // fallback to mods_list.json if directory doesn't exist
+                if (File.Exists(modsListPath))
                 {
-                    var modDirs = Directory.GetDirectories(modDirectory);
-                    foreach (var modDir in modDirs)
+                    Console.WriteLine("ModManager: No mod directory, loading from mods_list.json");
+                    var json = await File.ReadAllTextAsync(modsListPath);
+                    try
                     {
-                        var modId = Path.GetFileName(modDir);
-
-                        var modInfo = await GetModInfo(modId, gameInstall);
-                        if (modInfo != null)
-                        {
-                            mods.Add(modInfo);
-                        }
+                        mods = JsonSerializer.Deserialize<List<ModInfo>>(json) ?? new List<ModInfo>();
+                        Console.WriteLine($"ModManager: Loaded {mods.Count} mods from mods_list.json");
+                    }
+                    catch (JsonException ex)
+                    {
+                        Console.WriteLine($"Error deserializing mods_list.json: {ex.Message}");
+                        Console.WriteLine($"Problematic JSON: {json}");
+                        mods = new List<ModInfo>();
                     }
                 }
             }
@@ -234,8 +329,10 @@ public class ModManager : IModManager
         catch (Exception ex)
         {
             Console.WriteLine($"Error getting installed mods: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
 
+        Console.WriteLine($"ModManager: GetInstalledMods returning {mods.Count} mods");
         return mods;
     }
 
@@ -255,32 +352,11 @@ public class ModManager : IModManager
                 return null;
 
             // determine enabled status by checking if the plugin mirror exists within BepInEx/plugins/<modId>
+            // note: plugin mirror uses the same folder name as the mod directory (cleaned name)
             var pluginMirrorPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", modId);
             var isEnabled = Directory.Exists(pluginMirrorPath);
 
-            // look for mod info file
-            var modInfoPath = Path.Combine(modPath, ModInfoFileName);
-            if (File.Exists(modInfoPath))
-            {
-                var json = await File.ReadAllTextAsync(modInfoPath);
-                try
-                {
-                    var modInfo = JsonSerializer.Deserialize<ModInfo>(json);
-                    if (modInfo != null)
-                    {
-                        modInfo.IsEnabled = isEnabled;
-                        modInfo.IsInstalled = true;
-                        return modInfo;
-                    }
-                }
-                catch (JsonException ex)
-                {
-                    Console.WriteLine($"Error deserializing {ModInfoFileName} for {modId}: {ex.Message}");
-                    Console.WriteLine($"Problematic JSON: {json}");
-                }
-            }
-
-            // fallback to manifest.json (new format)
+            // look for manifest.json first (new format)
             var manifestPath = Path.Combine(modPath, "manifest.json");
             if (File.Exists(manifestPath))
             {
@@ -311,7 +387,32 @@ public class ModManager : IModManager
                     if (string.IsNullOrEmpty(iconPath))
                     {
                         var png = Path.Combine(modPath, "icon.png");
-                        if (File.Exists(png)) iconPath = png;
+                        if (File.Exists(png)) 
+                        {
+                            iconPath = png;
+                            Console.WriteLine($"ModManager: Found icon.png at: {iconPath}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"ModManager: No icon.png found at: {png}");
+                        }
+                    }
+                    else
+                    {
+                        // make sure the icon path is absolute
+                        if (!Path.IsPathRooted(iconPath))
+                        {
+                            iconPath = Path.Combine(modPath, iconPath);
+                        }
+                        if (File.Exists(iconPath))
+                        {
+                            Console.WriteLine($"ModManager: Found icon from manifest at: {iconPath}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"ModManager: Icon from manifest not found at: {iconPath}");
+                            iconPath = null;
+                        }
                     }
 
                     modInfo.IconPath = iconPath;
@@ -325,6 +426,28 @@ public class ModManager : IModManager
                 catch (Exception ex)
                 {
                     Console.WriteLine($"failed to parse manifest for {modId}: {ex.Message}");
+                }
+            }
+
+            // fallback to modinfo.json if manifest.json not found or failed to parse
+            var modInfoPath = Path.Combine(modPath, ModInfoFileName);
+            if (File.Exists(modInfoPath))
+            {
+                var json = await File.ReadAllTextAsync(modInfoPath);
+                try
+                {
+                    var modInfo = JsonSerializer.Deserialize<ModInfo>(json);
+                    if (modInfo != null)
+                    {
+                        modInfo.IsEnabled = isEnabled;
+                        modInfo.IsInstalled = true;
+                        return modInfo;
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    Console.WriteLine($"Error deserializing {ModInfoFileName} for {modId}: {ex.Message}");
+                    Console.WriteLine($"Problematic JSON: {json}");
                 }
             }
 
@@ -396,6 +519,58 @@ public class ModManager : IModManager
         }
     }
 
+    /// <summary>
+    /// cleans mod name for use as folder name by removing whitespace and underscores
+    /// </summary>
+    private static string CleanModNameForFolder(string modName)
+    {
+        if (string.IsNullOrEmpty(modName))
+            return "UnknownMod";
+            
+        // remove whitespace and underscores, keep other characters
+        return modName.Replace(" ", "").Replace("_", "");
+    }
+
+    /// <summary>
+    /// parses manifest.json content to ModInfo, handling field name differences
+    /// </summary>
+    private static ModInfo? ParseManifestToModInfo(string manifestJson, string fallbackId)
+    {
+        try
+        {
+            var manifest = JsonSerializer.Deserialize<JsonElement>(manifestJson);
+
+            var modInfo = new ModInfo
+            {
+                Id = manifest.TryGetProperty("id", out var idEl) ? idEl.GetString() ?? fallbackId : fallbackId,
+                Name = manifest.TryGetProperty("name", out var nameEl) ? (nameEl.GetString() ?? fallbackId).Replace("_", " ") : fallbackId.Replace("_", " "),
+                Description = manifest.TryGetProperty("description", out var descEl) ? descEl.GetString() ?? string.Empty : string.Empty,
+                Version = manifest.TryGetProperty("version", out var verEl) ? verEl.GetString() ?? "1.0.0" : 
+                         (manifest.TryGetProperty("version_number", out var verAlt) ? verAlt.GetString() ?? "1.0.0" : "1.0.0"),
+                Author = manifest.TryGetProperty("author", out var authorEl) ? authorEl.GetString() ?? "Unknown" : "Unknown",
+                WebsiteUrl = manifest.TryGetProperty("website_url", out var webEl) ? webEl.GetString() : null,
+                Dependencies = manifest.TryGetProperty("dependencies", out var depsEl) && depsEl.ValueKind == JsonValueKind.Array ?
+                    depsEl.EnumerateArray().Select(x => x.GetString() ?? string.Empty).Where(x => !string.IsNullOrEmpty(x)).ToList() : new List<string>(),
+                Tags = manifest.TryGetProperty("tags", out var tagsEl) && tagsEl.ValueKind == JsonValueKind.Array ?
+                    tagsEl.EnumerateArray().Select(x => x.GetString() ?? string.Empty).Where(x => !string.IsNullOrEmpty(x)).ToList() : new List<string>(),
+                IsInstalled = true,
+                IsEnabled = false // will be set properly during installation
+            };
+
+            return modInfo;
+        }
+        catch (JsonException ex)
+        {
+            Console.WriteLine($"failed to parse manifest: {ex.Message}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"failed to parse manifest: {ex.Message}");
+            return null;
+        }
+    }
+
     private static void MirrorPluginDlls(string modId, string modsPath, GameInstallation gameInstall)
     {
         var pluginsRoot = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", modId);
@@ -457,53 +632,91 @@ public class ModManager : IModManager
 
     private async Task<OperationResult> ExtractAndAnalyzeMod(string zipPath, GameInstallation gameInstall)
     {
+        Console.WriteLine($"ModManager: ExtractAndAnalyzeMod called with zipPath: {zipPath}");
+        
         try
         {
             var tempExtractPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Console.WriteLine($"ModManager: Creating temp extract path: {tempExtractPath}");
             Directory.CreateDirectory(tempExtractPath);
 
+            Console.WriteLine("ModManager: Extracting zip file to temp directory");
             // extract mod to temp directory
             ZipFile.ExtractToDirectory(zipPath, tempExtractPath);
 
+            // list all extracted files for debugging
+            var allFiles = Directory.GetFiles(tempExtractPath, "*", SearchOption.AllDirectories);
+            Console.WriteLine($"ModManager: Extracted {allFiles.Length} files:");
+            foreach (var file in allFiles.Take(10)) // limit to first 10 files
+            {
+                Console.WriteLine($"ModManager:   - {Path.GetRelativePath(tempExtractPath, file)}");
+            }
+            if (allFiles.Length > 10)
+            {
+                Console.WriteLine($"ModManager:   ... and {allFiles.Length - 10} more files");
+            }
+
             // look for mod manifest
             var manifestPath = Path.Combine(tempExtractPath, ModManifestFileName);
+            Console.WriteLine($"ModManager: Looking for manifest at: {manifestPath}");
             ModInfo? modInfo = null;
 
             if (File.Exists(manifestPath))
             {
+                Console.WriteLine("ModManager: Found manifest.json in root directory");
                 var manifestJson = await File.ReadAllTextAsync(manifestPath);
-                modInfo = JsonSerializer.Deserialize<ModInfo>(manifestJson);
+                Console.WriteLine($"ModManager: Manifest content length: {manifestJson.Length} characters");
+                Console.WriteLine($"ModManager: Manifest content preview: {manifestJson.Substring(0, Math.Min(200, manifestJson.Length))}...");
+                modInfo = ParseManifestToModInfo(manifestJson, "temp");
+                Console.WriteLine($"ModManager: Parsed mod info - Name: {modInfo?.Name}, ID: {modInfo?.Id}");
             }
             else
             {
+                Console.WriteLine("ModManager: No manifest.json in root, searching recursively");
                 // search recursively for manifest.json (handles archives with nested folders)
                 var nestedManifest = Directory.GetFiles(tempExtractPath, ModManifestFileName, SearchOption.AllDirectories).FirstOrDefault();
                 if (nestedManifest != null)
                 {
+                    Console.WriteLine($"ModManager: Found nested manifest at: {nestedManifest}");
                     var manifestJson = await File.ReadAllTextAsync(nestedManifest);
-                    modInfo = JsonSerializer.Deserialize<ModInfo>(manifestJson);
+                    Console.WriteLine($"ModManager: Nested manifest content length: {manifestJson.Length} characters");
+                    Console.WriteLine($"ModManager: Nested manifest content preview: {manifestJson.Substring(0, Math.Min(200, manifestJson.Length))}...");
+                    modInfo = ParseManifestToModInfo(manifestJson, "temp");
+                    Console.WriteLine($"ModManager: Parsed nested mod info - Name: {modInfo?.Name}, ID: {modInfo?.Id}");
+                }
+                else
+                {
+                    Console.WriteLine("ModManager: No manifest.json found anywhere in archive");
                 }
             }
 
             // if no manifest, try to infer from directory structure
             if (modInfo == null)
             {
+                Console.WriteLine("ModManager: Attempting to infer mod info from directory structure");
                 modInfo = await InferModInfo(tempExtractPath);
+                Console.WriteLine($"ModManager: Inferred mod info - Name: {modInfo?.Name}, ID: {modInfo?.Id}");
             }
 
             if (modInfo == null)
             {
+                Console.WriteLine("ModManager: Could not determine mod information, cleaning up and returning error");
                 Directory.Delete(tempExtractPath, true);
                 return OperationResult.ErrorResult("Could not determine mod information", "Invalid mod format");
             }
 
+            Console.WriteLine($"ModManager: Final mod info - Name: '{modInfo.Name}', ID: '{modInfo.Id}', Author: '{modInfo.Author}', Version: '{modInfo.Version}'");
+
             // cleanup temp directory
+            Console.WriteLine("ModManager: Cleaning up temp directory");
             Directory.Delete(tempExtractPath, true);
 
             return OperationResult.SuccessResult("Mod analyzed successfully", modInfo);
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"ModManager: ExtractAndAnalyzeMod exception: {ex.Message}");
+            Console.WriteLine($"ModManager: ExtractAndAnalyzeMod stack trace: {ex.StackTrace}");
             return OperationResult.ErrorResult(ex.Message, "Failed to analyze mod");
         }
     }
@@ -618,117 +831,88 @@ public class ModManager : IModManager
 
     private async Task<OperationResult> InstallModFiles(string zipPath, ModInfo modInfo, GameInstallation gameInstall)
     {
+        Console.WriteLine($"ModManager: InstallModFiles called for mod: {modInfo.Name}");
+        
         try
         {
-            // extract to temp directory first to read manifest.json
-            var tempExtractPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            Directory.CreateDirectory(tempExtractPath);
-            ZipFile.ExtractToDirectory(zipPath, tempExtractPath);
-
-            // find manifest.json (may be nested in thunderstore packages)
-            var manifestPath = Path.Combine(tempExtractPath, ModManifestFileName);
-            string? sourceRoot = tempExtractPath;
+            // use cleaned mod name for folder naming (remove whitespace and underscores)
+            var folderName = CleanModNameForFolder(modInfo.Name);
+            Console.WriteLine($"ModManager: Original mod name: '{modInfo.Name}' -> Cleaned folder name: '{folderName}'");
             
-            if (!File.Exists(manifestPath))
-            {
-                // search recursively for manifest.json (handles thunderstore archives with nested folders)
-                var nestedManifest = Directory.GetFiles(tempExtractPath, ModManifestFileName, SearchOption.AllDirectories).FirstOrDefault();
-                if (nestedManifest != null)
-                {
-                    manifestPath = nestedManifest;
-                    sourceRoot = Path.GetDirectoryName(nestedManifest);
-                }
-            }
-
-            // read manifest.json to get the proper name
-            string folderName = modInfo.Id;
-
-            if (File.Exists(manifestPath))
-            {
-                var manifestJson = await File.ReadAllTextAsync(manifestPath);
-                var manifest = JsonSerializer.Deserialize<JsonElement>(manifestJson);
-                
-                if (manifest.TryGetProperty("name", out var nameEl) && nameEl.GetString() is string name)
-                {
-                    // clean the name by removing whitespace and underscores
-                    folderName = name.Replace(" ", "").Replace("_", "");
-                }
-            }
-
-            // update modInfo.Id to match the cleaned folder name
+            // update mod ID to match the folder name for consistency
             modInfo.Id = folderName;
-
-            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), folderName);
+            Console.WriteLine($"ModManager: Updated mod ID to match folder name: '{modInfo.Id}'");
+            
+            var modsBasePath = GetModsDirectoryPath(gameInstall);
+            var modPath = Path.Combine(modsBasePath, folderName);
+            Console.WriteLine($"ModManager: Full mod installation path: {modPath}");
             
             // create mod directory
+            Console.WriteLine("ModManager: Creating mod directory");
             Directory.CreateDirectory(modPath);
 
-            // copy files from source root (where manifest.json is located) to final mod directory
-            if (sourceRoot != null && Directory.Exists(sourceRoot))
-            {
-                CopyDirectory(sourceRoot, modPath);
-            }
+            // extract mod files
+            Console.WriteLine($"ModManager: Extracting zip file from {zipPath} to {modPath}");
+            ZipFile.ExtractToDirectory(zipPath, modPath);
 
-            // cleanup temp directory
-            Directory.Delete(tempExtractPath, true);
+            // list extracted files for debugging
+            var extractedFiles = Directory.GetFiles(modPath, "*", SearchOption.AllDirectories);
+            Console.WriteLine($"ModManager: Extracted {extractedFiles.Length} files to mod directory:");
+            foreach (var file in extractedFiles.Take(10)) // limit to first 10 files
+            {
+                Console.WriteLine($"ModManager:   - {Path.GetRelativePath(modPath, file)}");
+            }
+            if (extractedFiles.Length > 10)
+            {
+                Console.WriteLine($"ModManager:   ... and {extractedFiles.Length - 10} more files");
+            }
 
             // save mod info
             var modInfoPath = Path.Combine(modPath, ModInfoFileName);
+            Console.WriteLine($"ModManager: Saving mod info to: {modInfoPath}");
             var modInfoJson = JsonSerializer.Serialize(modInfo, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(modInfoPath, modInfoJson);
+            Console.WriteLine("ModManager: Mod info saved successfully");
 
             // add to mods list
+            Console.WriteLine("ModManager: Adding mod to installed mods list");
             await AddModToList(modInfo, gameInstall);
+            Console.WriteLine("ModManager: Mod added to list successfully");
 
             // mirror dlls into BepInEx/plugins so chainloader picks them up
-            MirrorPluginDlls(modInfo.Id, modPath, gameInstall);
+            Console.WriteLine($"ModManager: Mirroring DLLs using folder name: {folderName}");
+            MirrorPluginDlls(folderName, modPath, gameInstall);
+            Console.WriteLine("ModManager: DLL mirroring completed");
 
+            Console.WriteLine("ModManager: Mod files installation completed successfully");
             return OperationResult.SuccessResult("Mod files installed successfully");
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"ModManager: InstallModFiles exception: {ex.Message}");
+            Console.WriteLine($"ModManager: InstallModFiles stack trace: {ex.StackTrace}");
             return OperationResult.ErrorResult(ex.Message, "Failed to install mod files");
-        }
-    }
-
-    /// <summary>
-    /// recursively copies a directory and all its contents
-    /// </summary>
-    private static void CopyDirectory(string sourceDir, string targetDir)
-    {
-        // create target directory if it doesn't exist
-        Directory.CreateDirectory(targetDir);
-
-        // copy all files
-        foreach (var file in Directory.GetFiles(sourceDir))
-        {
-            var fileName = Path.GetFileName(file);
-            var targetPath = Path.Combine(targetDir, fileName);
-            File.Copy(file, targetPath, true);
-        }
-
-        // recursively copy subdirectories
-        foreach (var directory in Directory.GetDirectories(sourceDir))
-        {
-            var dirName = Path.GetFileName(directory);
-            var targetPath = Path.Combine(targetDir, dirName);
-            CopyDirectory(directory, targetPath);
         }
     }
 
     private async Task AddModToList(ModInfo modInfo, GameInstallation gameInstall)
     {
+        Console.WriteLine($"ModManager: AddModToList called for mod: {modInfo.Name} (ID: {modInfo.Id})");
+        
         try
         {
             var modsListPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "mods_list.json");
+            Console.WriteLine($"ModManager: Mods list path: {modsListPath}");
             var mods = new List<ModInfo>();
 
             if (File.Exists(modsListPath))
             {
+                Console.WriteLine("ModManager: Loading existing mods list");
                 var json = await File.ReadAllTextAsync(modsListPath);
                 try
                 {
                     mods = JsonSerializer.Deserialize<List<ModInfo>>(json) ?? new List<ModInfo>();
+                    Console.WriteLine($"ModManager: Loaded {mods.Count} existing mods from list");
                 }
                 catch (JsonException ex)
                 {
@@ -737,20 +921,32 @@ public class ModManager : IModManager
                     mods = new List<ModInfo>();
                 }
             }
+            else
+            {
+                Console.WriteLine("ModManager: No existing mods list found, starting fresh");
+            }
 
             // remove existing entry if present
-            mods.RemoveAll(m => m.Id == modInfo.Id);
+            var removedCount = mods.RemoveAll(m => m.Id == modInfo.Id);
+            if (removedCount > 0)
+            {
+                Console.WriteLine($"ModManager: Removed {removedCount} existing entries for mod {modInfo.Id}");
+            }
             
             // add new entry
+            Console.WriteLine($"ModManager: Adding mod {modInfo.Name} to mods list");
             mods.Add(modInfo);
 
             // save updated list
+            Console.WriteLine($"ModManager: Saving {mods.Count} mods to mods_list.json");
             var updatedJson = JsonSerializer.Serialize(mods, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(modsListPath, updatedJson);
+            Console.WriteLine("ModManager: Successfully wrote mods list to file");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error adding mod to list: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
     }
 

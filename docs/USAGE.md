@@ -4,17 +4,6 @@
 
 Lacesong is a cross-platform mod management tool for Unity/Mono games, starting with Hollow Knight: Silksong. It provides a simple, safe, and consistent way to install, manage, and update community mods using the BepInEx mod loader.
 
-## Features
-
-- **Automatic Game Detection** - Finds Hollow Knight: Silksong installations automatically from Steam, Epic Games Store, GOG Galaxy, and Xbox Game Pass
-- **BepInEx Management** - Install, update, and manage BepInEx mod loader
-- **Mod Installation** - Install mods from files or URLs with dependency resolution
-- **Mod Management** - Enable, disable, and uninstall mods safely
-- **Backup System** - Automatic backups before installations
-- **Update System** - Built-in updater for Lacesong itself
-- **Modern UI** - Clean, intuitive WPF interface with dark theme
-- **Logging** - Comprehensive logging with easy access to log files
-
 ## Installation
 
 ### Prerequisites
@@ -25,7 +14,7 @@ Lacesong is a cross-platform mod management tool for Unity/Mono games, starting 
 
 ### Download and Install
 
-1. Download the latest Lacesong installer from [GitHub Releases](https://github.com/YourOrg/Lacesong/releases)
+1. Download the latest Lacesong installer from [GitHub Releases](https://github.com/pecansolutions/lacesong/releases)
 2. Run the installer and follow the setup wizard
 3. Launch Lacesong from the Start Menu or Desktop shortcut
 
