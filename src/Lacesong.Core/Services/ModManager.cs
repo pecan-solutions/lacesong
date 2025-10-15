@@ -167,7 +167,7 @@ public class ModManager : IModManager
             }
 
             // remove from mod list
-            await RemoveModFromList(modId, gameInstall);
+            await RemoveModFromList(modInfo.Id, gameInstall);
 
             return OperationResult.SuccessResult($"Mod '{modInfo.Name}' uninstalled successfully");
         }
@@ -193,14 +193,15 @@ public class ModManager : IModManager
             }
 
             // create plugin mirror using symbolic links instead of copying or renaming originals
-            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modId);
+            var folder = modInfo.DirectoryName ?? CleanModNameForFolder(modInfo.Name);
+            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), folder);
             if (Directory.Exists(modPath))
             {
-                MirrorPluginDlls(modId, modPath, gameInstall);
+                MirrorPluginDlls(folder, modPath, gameInstall);
             }
 
             // update mod status
-            await UpdateModStatus(modId, true, gameInstall);
+            await UpdateModStatus(modInfo.Id, true, gameInstall);
 
             return OperationResult.SuccessResult($"Mod '{modInfo.Name}' enabled successfully");
         }
@@ -226,14 +227,15 @@ public class ModManager : IModManager
             }
 
             // clear plugin mirror to disable without touching original files
-            var pluginsRoot = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", modId);
+            var folder = modInfo.DirectoryName ?? CleanModNameForFolder(modInfo.Name);
+            var pluginsRoot = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", folder);
             if (Directory.Exists(pluginsRoot))
             {
                 Directory.Delete(pluginsRoot, true);
             }
 
             // update mod status
-            await UpdateModStatus(modId, false, gameInstall);
+            await UpdateModStatus(modInfo.Id, false, gameInstall);
 
             return OperationResult.SuccessResult($"Mod '{modInfo.Name}' disabled successfully");
         }
@@ -524,11 +526,57 @@ public class ModManager : IModManager
     /// </summary>
     private static string CleanModNameForFolder(string modName)
     {
-        if (string.IsNullOrEmpty(modName))
+        // 1. basic validation
+        if (string.IsNullOrWhiteSpace(modName))
             return "UnknownMod";
-            
-        // remove whitespace and underscores, keep other characters
-        return modName.Replace(" ", "").Replace("_", "");
+
+        const int MaxLen = 100;
+
+        // allowlist – ascii letters, digits, hyphen, dot
+        var sb = new System.Text.StringBuilder(modName.Length);
+        foreach (var ch in modName)
+        {
+            // reject path separators and control chars outright by substituting
+            if (ch == '/' || ch == '\\' || char.IsControl(ch))
+            {
+                sb.Append('-');
+                continue;
+            }
+
+            if (char.IsLetterOrDigit(ch) || ch == '-' || ch == '.')
+                sb.Append(ch);
+            else
+                sb.Append('-'); // disallowed -> dash
+        }
+
+        var cleaned = sb.ToString();
+
+        // collapse multiple dashes
+        while (cleaned.Contains("--"))
+            cleaned = cleaned.Replace("--", "-");
+
+        // trim leading/trailing dots, spaces, and dashes
+        cleaned = cleaned.Trim(' ', '.', '-');
+
+        // enforce length limit
+        if (cleaned.Length > MaxLen)
+            cleaned = cleaned.Substring(0, MaxLen);
+
+        if (string.IsNullOrEmpty(cleaned))
+            cleaned = "UnknownMod";
+
+        // avoid windows reserved device names (case-insensitive)
+        string[] reserved =
+        {
+            "CON", "PRN", "AUX", "NUL",
+            "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+            "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+        };
+
+        if (reserved.Any(r => string.Equals(r, cleaned, StringComparison.OrdinalIgnoreCase)))
+            cleaned += "_";
+
+        return cleaned;
     }
 
     /// <summary>
@@ -554,7 +602,8 @@ public class ModManager : IModManager
                 Tags = manifest.TryGetProperty("tags", out var tagsEl) && tagsEl.ValueKind == JsonValueKind.Array ?
                     tagsEl.EnumerateArray().Select(x => x.GetString() ?? string.Empty).Where(x => !string.IsNullOrEmpty(x)).ToList() : new List<string>(),
                 IsInstalled = true,
-                IsEnabled = false // will be set properly during installation
+                IsEnabled = false, // will be set properly during installation
+                DirectoryName = CleanModNameForFolder(manifest.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? fallbackId : fallbackId)
             };
 
             return modInfo;
@@ -645,14 +694,17 @@ public class ModManager : IModManager
             if (string.IsNullOrEmpty(entry.FullName))
                 continue;
 
-            var destPath = Path.Combine(destinationDirectory, entry.FullName);
-            var fullDestPath = Path.GetFullPath(destPath);
+            var fullDestPath = Path.GetFullPath(Path.Combine(destinationDirectory, entry.FullName));
 
-            // skip entries that would escape the destination directory (zip-slip)
-            if (!fullDestPath.StartsWith(fullDestRoot, StringComparison.Ordinal))
-                continue;
+            var comparison = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal;
 
-            if (entry.FullName.EndsWith('/') || entry.FullName.EndsWith('\\'))
+            if (!fullDestPath.StartsWith(fullDestRoot, comparison))
+                continue; // zip-slip attempt
+
+            // directory entry – Name is empty when it represents a directory
+            if (string.IsNullOrEmpty(entry.Name))
             {
                 Directory.CreateDirectory(fullDestPath);
                 continue;
@@ -890,7 +942,8 @@ public class ModManager : IModManager
             modInfo.DirectoryName = folderName;
             
             var modsBasePath = GetModsDirectoryPath(gameInstall);
-            var modPath = Path.Combine(modsBasePath, folderName);
+            var folder = modInfo.DirectoryName ?? CleanModNameForFolder(modInfo.Name);
+            var modPath = Path.Combine(modsBasePath, folder);
             Console.WriteLine($"ModManager: Full mod installation path: {modPath}");
             
             // create mod directory
