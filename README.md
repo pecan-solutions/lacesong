@@ -65,15 +65,17 @@ Lacesong is a community-driven tool, not affiliated with Team Cherry or Hollow K
 
 ## Credits
 
-- wwdarrenwei (Darren Wei) - Creator of Lacesong, Lead Developer, Planner/PM
+- [wdarrenww](https://github.com/wdarrenw) (Darren Wei) - Creator of Lacesong, Lead Developer, Planner/PM
 
 - lavenderpres (Presley) - Assistant Planning/PM, Senior Developer, Avalonia Translation
 
-- Iris - Senior Developer, Avalonia and WPF UI Development, Avalonia Translation
+- piespecan (Iris) - Senior Developer, Avalonia and WPF UI Development, Avalonia Translation
 
 - Leonardo - Developer, Planning, WPF development
 
-- Joseph - Developer, Avalonia UI assisting
+- Joseph - Developer, Avalonia UI
+
+- Sylvie - Developer, Avalonia UI and Mod Logic
 
 Thanks in advance to all future contributors!
 
