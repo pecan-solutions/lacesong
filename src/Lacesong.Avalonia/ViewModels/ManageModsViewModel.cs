@@ -181,6 +181,52 @@ public partial class ManageModsViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private async Task EnableModAsync(ModInfo mod)
+    {
+        if (mod == null || _gameStateService.CurrentGame == null) return;
+
+        await ExecuteAsync(async () =>
+        {
+            var result = await _modManager.EnableMod(mod.Id, _gameStateService.CurrentGame);
+
+            if (result.Success)
+            {
+                SetStatus($"{mod.Name} enabled");
+                _snackbarService.Show("Success", $"Enabled {mod.Name}.", "Success");
+                await LoadModsAsync();
+            }
+            else
+            {
+                SetStatus(result.Error, true);
+                _snackbarService.Show("Error", result.Error, "Error");
+            }
+        }, "Enabling mod...");
+    }
+
+    [RelayCommand]
+    private async Task DisableModAsync(ModInfo mod)
+    {
+        if (mod == null || _gameStateService.CurrentGame == null) return;
+
+        await ExecuteAsync(async () =>
+        {
+            var result = await _modManager.DisableMod(mod.Id, _gameStateService.CurrentGame);
+
+            if (result.Success)
+            {
+                SetStatus($"{mod.Name} disabled");
+                _snackbarService.Show("Success", $"Disabled {mod.Name}.", "Success");
+                await LoadModsAsync();
+            }
+            else
+            {
+                SetStatus(result.Error, true);
+                _snackbarService.Show("Error", result.Error, "Error");
+            }
+        }, "Disabling mod...");
+    }
+
+    [RelayCommand]
     private void OpenModsFolder()
     {
         if (_gameStateService.CurrentGame == null) return;

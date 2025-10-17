@@ -68,6 +68,40 @@
         <Setter Property="Background" Value="#C85858"/>
     </Style>
 
+    <!-- Icon Button Style -->
+    <Style Selector="Button.iconButton">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="8"/>
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                <BrushTransition Property="Foreground" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.iconButton:hover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource GlassHoverFillColor}"/>
+    </Style>
+
+    <Style Selector="Button.iconButton.danger:hover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#A84848"/>
+    </Style>
+
+    <Style Selector="Button.iconButton PathIcon">
+        <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+    </Style>
+
+    <Style Selector="Button.iconButton.danger PathIcon">
+        <Setter Property="Foreground" Value="#FFE8E8"/>
+    </Style>
+
     <!-- Navigation Button Style -->
     <Style Selector="Button.navButton">
         <Setter Property="Background" Value="Transparent"/>

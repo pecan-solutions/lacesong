@@ -30,7 +30,7 @@
                 <ListBox ItemsSource="{Binding Mods}" SelectedItem="{Binding SelectedMod, Mode=TwoWay}" Background="Transparent" BorderThickness="0">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="48,*" Margin="8" RowDefinitions="Auto,Auto,Auto">
+                            <Grid ColumnDefinitions="48,*,Auto" Margin="8" RowDefinitions="Auto,Auto,Auto">
                                 <!-- Icon -->
                                 <Border Grid.Column="0" Grid.RowSpan="3" Width="48" Height="48" CornerRadius="6" ClipToBounds="True" Margin="0,0,12,0" VerticalAlignment="Top" Background="{DynamicResource PlaceholderIconBrush}">
                                     <Image Source="{Binding IconPath, Converter={StaticResource LocalImageConverter}}" Stretch="UniformToFill"/>
@@ -49,6 +49,35 @@
                                 <!-- Status -->
                                 <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="4">
                                     <TextBlock Text="{Binding IsEnabled, Converter={StaticResource ModStatusConverter}}" Classes="smallFaded"/>
+                                </StackPanel>
+
+                                <!-- Quick Actions -->
+                                <StackPanel Grid.Column="2" Grid.RowSpan="3" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                    <!-- Enable Button -->
+                                    <Button Classes="iconButton" 
+                                            Command="{Binding $parent[UserControl].DataContext.EnableModCommand}"
+                                            CommandParameter="{Binding}"
+                                            IsEnabled="{Binding IsEnabled, Converter={StaticResource InverseBooleanConverter}}"
+                                            ToolTip.Tip="Enable Mod">
+                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" Width="16" Height="16"/>
+                                    </Button>
+                                    
+                                    <!-- Disable Button -->
+                                    <Button Classes="iconButton" 
+                                            Command="{Binding $parent[UserControl].DataContext.DisableModCommand}"
+                                            CommandParameter="{Binding}"
+                                            IsEnabled="{Binding IsEnabled}"
+                                            ToolTip.Tip="Disable Mod">
+                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z" Width="16" Height="16"/>
+                                    </Button>
+                                    
+                                    <!-- Uninstall Button -->
+                                    <Button Classes="iconButton danger" 
+                                            Command="{Binding $parent[UserControl].DataContext.UninstallModCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="Uninstall Mod">
+                                        <PathIcon Data="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4zM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9z" Width="16" Height="16"/>
+                                    </Button>
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
@@ -98,6 +127,18 @@
                         </StackPanel>
 
                         <!-- Action Buttons -->
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button Content="Enable"
+                                    Command="{Binding EnableModCommand}"
+                                    CommandParameter="{Binding SelectedMod}"
+                                    IsEnabled="{Binding SelectedMod.IsEnabled, Converter={StaticResource InverseBooleanConverter}}"
+                                    Padding="16,12" />
+                            <Button Content="Disable"
+                                    Command="{Binding DisableModCommand}"
+                                    CommandParameter="{Binding SelectedMod}"
+                                    IsEnabled="{Binding SelectedMod.IsEnabled}"
+                                    Padding="16,12" />
+                        </StackPanel>
                         <Button Content="Uninstall Mod" 
                                 HorizontalAlignment="Stretch"
                                 Command="{Binding UninstallModCommand}"
