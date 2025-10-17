@@ -48,7 +48,7 @@ Lacesong is a community-driven tool, not affiliated with Team Cherry or Hollow K
 
 ## Credits
 
-- [wdarrenww](https://github.com/wdarrenw) (Darren Wei) - Creator of Lacesong, Lead Developer, Planner/PM
+- [wdarrenww](https://github.com/wdarrenww) (Darren Wei) - Creator of Lacesong, Lead Developer, Planner/PM
 
 - lavenderpres (Presley) - Assistant Planning/PM, Senior Developer, Avalonia Translation
 
