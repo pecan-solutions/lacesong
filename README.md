@@ -17,30 +17,13 @@ Mod catalog screenshot showing Thunderstore integration and "The Marrow" theme.
 
 **Core**: .NET 9, C#, BepInEx integration, JSON-based manifests  
 **UI**: Avalonia (cross-platform MVVM), CommunityToolkit.Mvvm  
-**Services**: Octokit (GitHub API), System.CommandLine (CLI)  
 **Testing**: xUnit, Moq, FlaUI (UI automation)  
-**Distribution**: Self-contained executables for Windows, macOS, Linux
 
 ## Installation
 
 ### Desktop Application
 
-Desktop application is work in progress and needs to be tested on Linux first.
-
-## Development
-
-### Build System
-
-Build scripts for all platforms:
-```bash
-# Windows
-build.bat
-
-# macOS/Linux
-./build.sh
-```
-
-Produces self-contained executables with all dependencies included.
+Desktop application is a work in progress (WIP)
 
 ## Contributing
 
