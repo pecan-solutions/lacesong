@@ -383,6 +383,22 @@ public class ModManager : IModManager
                     {
                         modInfo.IsEnabled = isEnabled;
                         modInfo.IsInstalled = true;
+                        
+                        // set icon path if not already set
+                        if (string.IsNullOrEmpty(modInfo.IconPath))
+                        {
+                            var modInfoIconPath = Path.Combine(modPath, "icon.png");
+                            if (File.Exists(modInfoIconPath))
+                            {
+                                modInfo.IconPath = modInfoIconPath;
+                                Console.WriteLine($"ModManager: Found icon.png at: {modInfoIconPath}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"ModManager: No icon.png found at: {modInfoIconPath}");
+                            }
+                        }
+                        
                         return modInfo;
                     }
                 }
@@ -468,7 +484,7 @@ public class ModManager : IModManager
             }
 
             // fallback: create mod info from directory structure
-            return new ModInfo
+            var fallbackModInfo = new ModInfo
             {
                 Id = modId,
                 Name = modId.Replace("_", " ").Replace("-", " "),
@@ -479,6 +495,20 @@ public class ModManager : IModManager
                 IsEnabled = isEnabled,
                 DirectoryName = Path.GetFileName(modPath)
             };
+            
+            // check for icon.png in fallback case
+            var fallbackIconPath = Path.Combine(modPath, "icon.png");
+            if (File.Exists(fallbackIconPath))
+            {
+                fallbackModInfo.IconPath = fallbackIconPath;
+                Console.WriteLine($"ModManager: Found icon.png at: {fallbackIconPath}");
+            }
+            else
+            {
+                Console.WriteLine($"ModManager: No icon.png found at: {fallbackIconPath}");
+            }
+            
+            return fallbackModInfo;
         }
         catch (Exception ex)
         {
