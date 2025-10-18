@@ -3,6 +3,16 @@ using System.Text.Json.Serialization;
 namespace Lacesong.Core.Models;
 
 /// <summary>
+/// represents executable architecture types supported by bepinex
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum Architecture
+{
+    X64,
+    X86
+}
+
+/// <summary>
 /// represents a game installation with its metadata
 /// </summary>
 public class GameInstallation
@@ -42,6 +52,9 @@ public class GameInstallation
 
     [JsonPropertyName("detectedBy")]
     public string DetectedBy { get; set; } = string.Empty;
+
+    [JsonPropertyName("architecture")]
+    public Architecture Architecture { get; set; } = Architecture.X64;
 }
 
 /// <summary>

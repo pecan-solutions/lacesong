@@ -4,7 +4,36 @@ All notable changes to this project will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.0] - 2025-01-27
+## [Unreleased]
+### Added
+- Add mod profiles for dynamic and quick mod loading
+
+### Changed
+- Adjust the launch options to be in a bar at the top.
+
+## [0.4.0] - 2025-10-18
+### Added
+- Auto-update BepInEx functionality with automatic latest version detection
+- Dynamic BepInEx version resolution based on target executable platform
+- Cross-platform BepInEx installation support (Windows, macOS, Linux)
+- Automatic Rosetta installation for macOS .app bundles
+- Platform-specific executable detection and handling
+- Enhanced BepInEx installation UI with simplified version selection
+- Improved mod name formatting with better underscore and dash handling
+
+### Changed
+- Simplified BepInEx installation to automatically install latest version
+- Enhanced BepInEx download system to use GitHub API for asset resolution
+- Improved platform detection based on target executable type rather than current OS
+- Streamlined BepInEx installation UI by removing version selection dropdown
+- Enhanced mod update service interface with force check parameter
+
+### Fixed
+- Fixed BepInEx installation for macOS .app bundles with proper executable name detection
+- Improved cross-platform compatibility for BepInEx installation scripts
+- Enhanced mod name display with better formatting for underscores and dashes
+
+## [0.3.0] - 2025-10-18
 ### Added
 - Mod update checking functionality with Thunderstore API integration
 - "Check for Mod Updates" button in settings view
@@ -20,21 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated SettingsViewModel to include mod update checking capabilities
 - Improved ModUpdateService to use direct Thunderstore API instead of local index
 - Enhanced ThunderstoreService with package detail API support
+- Platform depends on targeted executable, not the platform itself.
 
 ### Fixed
 - Improved mod update detection accuracy using latest Thunderstore data
 - Better error handling for mod update operations
-
-## [Unreleased]
-### Added
-- Auto-update BepInEx and set executable_name
-- Add mod profiles for dynamic and quick mod loading
-
-### Changed
-- Adjust the launch options to be in a bar at the top.
-
-### Fixed
-- Fix the "Launch Vanilla" and "Launch Modded" game options
 
 ## [0.2.0] - 2025-10-18
 ### Added

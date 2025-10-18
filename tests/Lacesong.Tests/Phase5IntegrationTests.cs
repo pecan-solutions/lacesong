@@ -56,6 +56,8 @@ public class Phase5IntegrationTests
         var verify = new Mock<IVerificationService>();
         var backup = new Mock<IBackupManager>();
 
+        var thunder = new Mock<ThunderstoreService>();
+
         // simulate backup creation returns path
         backup.Setup(b => b.CreateBackup(It.IsAny<GameInstallation>(), It.IsAny<string>()))
               .ReturnsAsync(OperationResult.SuccessResult("ok", "backup_path"));

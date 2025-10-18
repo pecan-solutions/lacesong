@@ -1,6 +1,8 @@
 using Lacesong.Core.Interfaces;
 using Lacesong.Core.Models;
 using System.IO.Compression;
+using System.Text.Json;
+using System.Runtime.InteropServices;
 
 namespace Lacesong.Core.Services;
 
@@ -12,6 +14,7 @@ public class BepInExManager : IBepInExManager
     private const string BepInExDownloadUrlTemplate = "https://github.com/BepInEx/BepInEx/releases/download/v{0}/BepInEx_{1}_x64_{0}.zip";
     private const string BepInExCoreDll = "BepInEx/core/BepInEx.Core.dll";
     private const string BepInExLoaderDll = "BepInEx/core/BepInEx.dll";
+    private const string GithubReleaseTagUrl = "https://api.github.com/repos/BepInEx/BepInEx/releases/tags/v{0}";
 
     /// <summary>
     /// gets the base directory where bepinex should be installed for the given game installation
@@ -54,7 +57,7 @@ public class BepInExManager : IBepInExManager
             }
 
             // download bepinex
-            var downloadResult = await DownloadBepInEx(options.Version);
+            var downloadResult = await DownloadBepInEx(options.Version, gameInstall);
             if (!downloadResult.Success)
             {
                 return OperationResult.ErrorResult($"Failed to download BepInEx: {downloadResult.Error}", "Download failed");
@@ -284,45 +287,90 @@ public class BepInExManager : IBepInExManager
         return File.Exists(executablePath);
     }
 
-    private async Task<OperationResult> DownloadBepInEx(string version)
+    private static (string os, string arch) DetermineTarget(GameInstallation gi)
+    {
+        var exePath = Path.Combine(gi.InstallPath, gi.Executable);
+        var exeType = ExecutableTypeDetector.GetExecutableType(exePath);
+
+        var os = exeType switch
+        {
+            ExecutableType.Windows => "win",
+            ExecutableType.macOS => "macos",
+            ExecutableType.Unix => "linux",
+            _ => "win"
+        };
+
+        // use detected architecture from game installation, or detect it if not set
+        var architecture = gi.Architecture != Models.Architecture.X64 ? gi.Architecture : ExecutableArchitectureDetector.DetectArchitecture(exePath);
+        var arch = ExecutableArchitectureDetector.GetArchitectureString(architecture);
+
+        return (os, arch);
+    }
+
+    private async Task<string?> ResolveAssetUrl(string version, GameInstallation gi)
     {
         try
         {
-            // determine platform for download url
-            var platform = GetPlatformName();
-            var downloadUrl = string.Format(BepInExDownloadUrlTemplate, version, platform);
+            var tagUrl = string.Format(GithubReleaseTagUrl, version);
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "Lacesong-ModManager/1.0.0");
+
+            var response = await client.GetAsync(tagUrl);
+            if (!response.IsSuccessStatusCode) return null;
+
+            using var responseContent = response.Content;
+            using var doc = JsonDocument.Parse(await responseContent.ReadAsStringAsync());
+            if (!doc.RootElement.TryGetProperty("assets", out var assetsElement)) return null;
+
+            var (os, arch) = DetermineTarget(gi);
+            var expectedName = $"BepInEx_{os}_{arch}_{version}.zip";
+
+            foreach (var asset in assetsElement.EnumerateArray())
+            {
+                if (!asset.TryGetProperty("name", out var nameEl)) continue;
+                var name = nameEl.GetString();
+                if (name == expectedName && asset.TryGetProperty("browser_download_url", out var urlEl))
+                {
+                    return urlEl.GetString();
+                }
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task<OperationResult> DownloadBepInEx(string version, GameInstallation gi)
+    {
+        try
+        {
+            var assetUrl = await ResolveAssetUrl(version, gi);
+            if (string.IsNullOrEmpty(assetUrl))
+            {
+                return OperationResult.ErrorResult("Could not resolve BepInEx asset URL for this platform.");
+            }
+
             var tempPath = Path.GetTempFileName();
-            var tempZipPath = Path.ChangeExtension(tempPath, ".zip");
+            var tempZip = Path.ChangeExtension(tempPath, ".zip");
             File.Delete(tempPath);
 
-            using var httpClient = new HttpClient();
-            httpClient.Timeout = TimeSpan.FromMinutes(10);
-
-            var response = await httpClient.GetAsync(downloadUrl);
+            using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+            using var response = await client.GetAsync(assetUrl);
             response.EnsureSuccessStatusCode();
+            
+            using var responseContent = response.Content;
+            var data = await responseContent.ReadAsByteArrayAsync();
+            await File.WriteAllBytesAsync(tempZip, data);
 
-            var content = await response.Content.ReadAsByteArrayAsync();
-            await File.WriteAllBytesAsync(tempZipPath, content);
-
-            return OperationResult.SuccessResult("BepInEx downloaded successfully", tempZipPath);
+            return OperationResult.SuccessResult("Downloaded BepInEx", tempZip);
         }
         catch (Exception ex)
         {
             return OperationResult.ErrorResult(ex.Message, "Failed to download BepInEx");
         }
-    }
-
-    private string GetPlatformName()
-    {
-        if (OperatingSystem.IsWindows())
-            return "win";
-        if (OperatingSystem.IsLinux())
-            return "linux";
-        if (OperatingSystem.IsMacOS())
-            return "macos";
-        
-        // default to windows if platform detection fails
-        return "win";
     }
 
     private async Task<OperationResult> ExtractBepInEx(string zipPath, string gamePath)
@@ -407,6 +455,43 @@ SkipAssemblyScan = false
 
             await File.WriteAllTextAsync(configPath, config);
 
+            // patch run_bepinex.sh if required based on target executable type
+            try
+            {
+                var exePath = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
+                var exeType = ExecutableTypeDetector.GetExecutableType(exePath);
+                if (exeType == ExecutableType.macOS || exeType == ExecutableType.Unix)
+                {
+                    var scriptPath = Path.Combine(baseDir, "run_bepinex.sh");
+                    if (File.Exists(scriptPath))
+                    {
+                        var lines = await File.ReadAllLinesAsync(scriptPath);
+                        for (int i = 0; i < lines.Length; i++)
+                        {
+                            if (lines[i].TrimStart().StartsWith("executable_name="))
+                            {
+                                var replacement = exeType == ExecutableType.macOS
+                                    ? "executable_name=\"Hollow Knight Silksong.app\""
+                                    : "executable_name=\"\"";
+                                lines[i] = replacement;
+                                break;
+                            }
+                        }
+                        await File.WriteAllLinesAsync(scriptPath, lines);
+                        // ensure script is executable on unix systems
+                        try
+                        {
+                            if (!OperatingSystem.IsWindows())
+                            {
+                                System.Diagnostics.Process.Start("chmod", $"+x \"{scriptPath}\"")?.WaitForExit();
+                            }
+                        }
+                        catch { /* ignore chmod errors */ }
+                    }
+                }
+            }
+            catch { /* ignore script patch errors */ }
+ 
             return OperationResult.SuccessResult("BepInEx configured successfully");
         }
         catch (Exception ex)

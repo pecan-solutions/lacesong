@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Lacesong.Core.Models;
 
 namespace Lacesong.Core.Services;
 

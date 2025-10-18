@@ -200,6 +200,16 @@ public class GameLauncher : IGameLauncher
             if (!File.Exists(exePath) && ExecutableTypeDetector.IsMacOSAppBundle(exePath))
             {
                 Console.WriteLine($"[DEBUG] macOS app bundle detected");
+
+                // ensure rosetta for .app bundles (silksong is x64 unity)
+                try
+                {
+                    EnsureRosettaInstalled();
+                }
+                catch (Exception rosettaEx)
+                {
+                    Console.WriteLine($"[DEBUG] Rosetta check/install failed: {rosettaEx.Message}");
+                }
                 Console.WriteLine($"[DEBUG] App bundle path: {exePath}");
                 Console.WriteLine($"[DEBUG] App bundle exists: {Directory.Exists(exePath)}");
                 
@@ -282,6 +292,56 @@ public class GameLauncher : IGameLauncher
             Console.WriteLine($"[DEBUG] Exception in StartGameInternal: {ex.Message}");
             Console.WriteLine($"[DEBUG] Exception stack trace: {ex.StackTrace}");
             return Task.FromResult(OperationResult.ErrorResult(ex.Message, "launch failed"));
+        }
+    }
+
+    private static void EnsureRosettaInstalled()
+    {
+        // only relevant on macos
+        if (!OperatingSystem.IsMacOS())
+            return;
+
+        try
+        {
+            // simple check: the oahd (rosetta translation) service runs when rosetta is installed
+            var checkProc = Process.Start(new ProcessStartInfo
+            {
+                FileName = "/usr/bin/pgrep",
+                Arguments = "oahd",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            checkProc?.WaitForExit();
+            if (checkProc != null && checkProc.ExitCode == 0)
+            {
+                // rosetta already present
+                return;
+            }
+        }
+        catch
+        {
+            // ignore check errors – fallback to install attempt
+        }
+
+        try
+        {
+            // attempt to install rosetta silently
+            var installProc = Process.Start(new ProcessStartInfo
+            {
+                FileName = "/usr/sbin/softwareupdate",
+                Arguments = "--install-rosetta --agree-to-license",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            installProc?.WaitForExit();
+        }
+        catch
+        {
+            // swallow exceptions – if installation fails the game may still run natively
         }
     }
 

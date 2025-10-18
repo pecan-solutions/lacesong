@@ -435,8 +435,9 @@ public interface IModUpdateService
     /// </summary>
     /// <param name="gameInstall">game installation</param>
     /// <param name="modIds">specific mod ids to check, null for all</param>
+    /// <param name="force">force check even if recently checked</param>
     /// <returns>list of available updates</returns>
-    Task<List<ModUpdate>> CheckForUpdates(GameInstallation gameInstall, List<string>? modIds = null);
+    Task<List<ModUpdate>> CheckForUpdates(GameInstallation gameInstall, List<string>? modIds = null, bool force = false);
 
     /// <summary>
     /// installs a mod update

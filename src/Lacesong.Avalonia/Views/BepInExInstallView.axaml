@@ -35,13 +35,11 @@
                                Classes="smallFaded" 
                                Margin="0,0,0,4"
                                IsVisible="{Binding LatestVersion, Converter={StaticResource StringNotNullOrEmptyConverter}}"/>
-                    <ComboBox ItemsSource="{Binding AvailableVersions}" SelectedItem="{Binding SelectedVersion}"
-                              Margin="0,0,0,16"/>
                     <CheckBox Content="Force reinstall (if already installed)" IsChecked="{Binding ForceReinstall}"
                               Margin="0,0,0,8"/>
                     <CheckBox Content="Create backup before installation" IsChecked="{Binding CreateBackup}"
                               Margin="0,0,0,16"/>
-                    <Button Content="Install BepInEx" Command="{Binding InstallBepInExCommand}" Classes="primary"
+                    <Button Content="Install Latest" Command="{Binding InstallLatestCommand}" Classes="primary"
                             Margin="0,0,0,8"/>
                     <Button Content="Uninstall BepInEx" Command="{Binding UninstallBepInExCommand}"/>
                 </StackPanel>

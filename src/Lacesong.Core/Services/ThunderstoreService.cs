@@ -5,7 +5,7 @@ using Lacesong.Core.Models;
 
 namespace Lacesong.Core.Services;
 
-public class ThunderstoreService
+public class ThunderstoreService : IDisposable
 {
     private readonly HttpClient _http;
     private readonly IMemoryCache _cache;
@@ -13,9 +13,13 @@ public class ThunderstoreService
     private readonly TimeSpan _cacheTtl = TimeSpan.FromMinutes(15);
     private readonly string _baseUrl;
     private readonly string _cacheDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Lacesong", "cache");
+    private readonly bool _ownsHttpClient;
+    private readonly bool _ownsCache;
 
     public ThunderstoreService(HttpClient? http = null, IMemoryCache? cache = null, string? baseUrl = null)
     {
+        _ownsHttpClient = http == null;
+        _ownsCache = cache == null;
         _http = http ?? new HttpClient();
         _cache = cache ?? new MemoryCache(new MemoryCacheOptions());
         _baseUrl = baseUrl ?? Environment.GetEnvironmentVariable("THUNDERSTORE_BASE_URL")?.TrimEnd('/') ?? "https://thunderstore.io";
@@ -118,5 +122,16 @@ public class ThunderstoreService
         {
             return null;
         }
+    }
+
+    public void Dispose()
+    {
+        if (_ownsHttpClient)
+            _http?.Dispose();
+        
+        if (_ownsCache)
+            _cache?.Dispose();
+            
+        _throttle?.Dispose();
     }
 }

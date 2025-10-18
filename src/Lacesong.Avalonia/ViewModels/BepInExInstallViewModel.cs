@@ -25,34 +25,24 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
     private GameInstallation? _gameInstallation;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(InstallBepInExCommand))]
-    [NotifyCanExecuteChangedFor(nameof(UninstallBepInExCommand))]
     private bool _isBepInExInstalled;
 
     [ObservableProperty]
     private string _installedVersion = string.Empty;
 
     [ObservableProperty]
-    private string _selectedVersion = "5.4.22";
-
-    [ObservableProperty]
     private string _latestVersion = string.Empty;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(InstallBepInExCommand))]
     private bool _forceReinstall;
+
+    partial void OnForceReinstallChanged(bool value)
+    {
+        InstallLatestCommand.NotifyCanExecuteChanged();
+    }
 
     [ObservableProperty]
     private bool _createBackup = true;
-
-    [ObservableProperty]
-    private List<string> _availableVersions = new()
-    {
-        "5.4.22",
-        "5.4.21",
-        "5.4.20",
-        "5.4.19"
-    };
 
     [ObservableProperty]
     private string _installationStatus = "Ready";
@@ -83,6 +73,8 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
     {
         GameInstallation = _gameStateService.CurrentGame;
         CheckBepInExStatus();
+        InstallLatestCommand.NotifyCanExecuteChanged();
+        UninstallBepInExCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand]
@@ -93,6 +85,8 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
             IsBepInExInstalled = false;
             InstalledVersion = string.Empty;
             InstallationStatus = "No game selected";
+            InstallLatestCommand.NotifyCanExecuteChanged();
+            UninstallBepInExCommand.NotifyCanExecuteChanged();
             return;
         }
 
@@ -108,16 +102,19 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
             InstalledVersion = string.Empty;
             InstallationStatus = "BepInEx is not installed";
         }
+        
+        InstallLatestCommand.NotifyCanExecuteChanged();
+        UninstallBepInExCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand(CanExecute = nameof(CanInstallBepInEx))]
-    private async Task InstallBepInEx()
+    private async Task InstallLatest()
     {
         if (GameInstallation == null) return;
 
         var result = await _dialogService.ShowConfirmationDialogAsync(
             "Install BepInEx",
-            $"Are you sure you want to install BepInEx {SelectedVersion} to {GameInstallation.Name}?");
+            $"Are you sure you want to install BepInEx {LatestVersion} to {GameInstallation.Name}?");
             
         if (!result) return;
 
@@ -125,7 +122,7 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
         {
             var options = new BepInExInstallOptions
             {
-                Version = SelectedVersion,
+                Version = LatestVersion,
                 ForceReinstall = ForceReinstall,
                 BackupExisting = CreateBackup
             };
@@ -150,7 +147,7 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
         }, "Installing BepInEx...");
     }
 
-    [RelayCommand(CanExecute = nameof(CanUninstallBepInEx))]
+    [RelayCommand]
     private async Task UninstallBepInEx()
     {
         if (GameInstallation == null || !IsBepInExInstalled) return;
@@ -215,17 +212,6 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
                 {
                     // remove 'v' prefix if present (e.g., "v5.4.23.4" -> "5.4.23.4")
                     LatestVersion = tagName.TrimStart('v');
-                    
-                    // update available versions list to include latest version
-                    if (!AvailableVersions.Contains(LatestVersion))
-                    {
-                        var updatedVersions = new List<string> { LatestVersion };
-                        updatedVersions.AddRange(AvailableVersions);
-                        AvailableVersions = updatedVersions;
-                        
-                        // set selected version to latest
-                        SelectedVersion = LatestVersion;
-                    }
                     
                     Logger.LogInformation($"Latest BepInEx version: {LatestVersion}");
                 }
