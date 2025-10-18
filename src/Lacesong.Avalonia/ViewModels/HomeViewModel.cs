@@ -254,22 +254,34 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
     [RelayCommand(CanExecute = nameof(CanExecuteLaunchVanilla))]
     private async Task LaunchVanilla()
     {
+        Console.WriteLine($"[DEBUG] LaunchVanilla called - IsGameRunning: {IsGameRunning}");
+        Console.WriteLine($"[DEBUG] CurrentGame: {(CurrentGame != null ? $"Path: {CurrentGame.InstallPath}, Executable: {CurrentGame.Executable}" : "null")}");
+        
         if (!IsGameRunning)
         {
             await ExecuteAsync(async () =>
             {
+                Console.WriteLine($"[DEBUG] About to call _gameLauncher.LaunchVanilla with game at: {CurrentGame?.InstallPath}");
                 var result = await _gameLauncher.LaunchVanilla(CurrentGame);
+                Console.WriteLine($"[DEBUG] LaunchVanilla result - Success: {result.Success}, Message: {result.Message}, Error: {result.Error}");
+                
                 if (result.Success)
                 {
+                    Console.WriteLine($"[DEBUG] Launch successful, setting ActiveMode to Vanilla and IsGameRunning to true");
                     ActiveMode = LaunchMode.Vanilla;
                     IsGameRunning = true;
                     StartProcessMonitoring(); // start monitoring after successful launch
+                }
+                else
+                {
+                    Console.WriteLine($"[DEBUG] Launch failed with message: {result.Message}");
                 }
                 SetStatus(result.Success ? "Launched vanilla game." : $"Failed to launch: {result.Message}");
             }, "Launching vanilla game...");
         }
         else if (ActiveMode == LaunchMode.Vanilla)
         {
+            Console.WriteLine($"[DEBUG] Game is running in vanilla mode, stopping game");
             await ExecuteAsync(async () =>
             {
                 var result = await _gameLauncher.Stop(CurrentGame);
@@ -281,6 +293,10 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
                 }
                 SetStatus(result.Success ? "Game stopped." : result.Message);
             }, "Stopping game...");
+        }
+        else
+        {
+            Console.WriteLine($"[DEBUG] Game is running but not in vanilla mode, skipping launch");
         }
     }
 

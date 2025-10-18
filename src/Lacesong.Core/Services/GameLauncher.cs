@@ -42,41 +42,73 @@ public class GameLauncher : IGameLauncher
 
     public async Task<OperationResult> LaunchVanilla(GameInstallation gameInstall)
     {
+        Console.WriteLine($"[DEBUG] GameLauncher.LaunchVanilla called with gameInstall: {(gameInstall != null ? $"Path: {gameInstall.InstallPath}, Executable: {gameInstall.Executable}" : "null")}");
+        
         // ensure mods directory exists even for vanilla launches
+        Console.WriteLine($"[DEBUG] Ensuring mods directory exists");
         ModManager.EnsureModsDirectory(gameInstall);
+        
         var bepinexPath = Path.Combine(gameInstall.InstallPath, "BepInEx");
         var pluginsPath = Path.Combine(bepinexPath, "plugins");
+        Console.WriteLine($"[DEBUG] BepInEx path: {bepinexPath}");
+        Console.WriteLine($"[DEBUG] Plugins path: {pluginsPath}");
+        Console.WriteLine($"[DEBUG] Plugins directory exists: {Directory.Exists(pluginsPath)}");
 
         // when launching vanilla we only need to hide plugins so that bepinex loads with no mods.
         // moving the entire bepinex folder caused unnecessary io and increased risk of corrupting the install.
         // instead, we temporarily rename the plugins folder (or symlink target) and restore after we finish starting the game.
         var tempDisabledPath = pluginsPath + "_disabled";
+        Console.WriteLine($"[DEBUG] Temp disabled path: {tempDisabledPath}");
+        
         try
         {
             // temporarily disable plugins folder (symlinks) to ensure a pure vanilla launch
             if (Directory.Exists(pluginsPath))
             {
+                Console.WriteLine($"[DEBUG] Plugins directory exists, disabling it for vanilla launch");
                 if (Directory.Exists(tempDisabledPath))
+                {
+                    Console.WriteLine($"[DEBUG] Temp disabled directory already exists, deleting it");
                     Directory.Delete(tempDisabledPath, true);
+                }
 
                 // use move to keep operation fast even for large plugin sets. this is effectively O(1) as it just changes directory entry.
+                Console.WriteLine($"[DEBUG] Moving plugins directory to disabled location");
                 Directory.Move(pluginsPath, tempDisabledPath);
+                Console.WriteLine($"[DEBUG] Successfully moved plugins directory");
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] Plugins directory does not exist, skipping disable step");
             }
 
+            Console.WriteLine($"[DEBUG] Calling StartGameInternal with isVanilla=true");
             var result = await StartGameInternal(gameInstall, isVanilla:true);
+            Console.WriteLine($"[DEBUG] StartGameInternal returned - Success: {result.Success}, Message: {result.Message}, Error: {result.Error}");
 
             return result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG] Exception in LaunchVanilla: {ex.Message}");
+            Console.WriteLine($"[DEBUG] Exception stack trace: {ex.StackTrace}");
+            return OperationResult.ErrorResult($"Exception in LaunchVanilla: {ex.Message}", "launch failed");
         }
         finally
         {
             // restore plugins folder immediately after launch attempt – this mirrors previous behaviour where bepinex was restored right away.
             // note: we don't wait for game process exit to remain non-blocking. this keeps previous semantics while avoiding heavy directory moves.
+            Console.WriteLine($"[DEBUG] Restoring plugins folder");
             RestorePluginsFolder(pluginsPath, tempDisabledPath);
         }
     }
 
     private Task<OperationResult> StartGameInternal(GameInstallation gameInstall, bool isVanilla)
     {
+        Console.WriteLine($"[DEBUG] StartGameInternal called with isVanilla: {isVanilla}");
+        Console.WriteLine($"[DEBUG] GameInstall: {(gameInstall != null ? $"Path: {gameInstall.InstallPath}, Executable: {gameInstall.Executable}" : "null")}");
+        Console.WriteLine($"[DEBUG] Operating System: {(OperatingSystem.IsWindows() ? "Windows" : "Non-Windows")}");
+        
         try
         {
             var procList = new List<Process>();
@@ -84,13 +116,18 @@ public class GameLauncher : IGameLauncher
             // on non-windows, check for run_bepinex.sh script first
             if (!OperatingSystem.IsWindows())
             {
+                Console.WriteLine($"[DEBUG] Non-Windows system detected, checking for run_bepinex.sh script");
                 var scriptPath = Path.Combine(gameInstall.InstallPath, "run_bepinex.sh");
+                Console.WriteLine($"[DEBUG] Script path: {scriptPath}");
+                Console.WriteLine($"[DEBUG] Script exists: {File.Exists(scriptPath)}");
+                
                 if (File.Exists(scriptPath))
                 {
                     // only run script for modded launches (when isVanilla is false)
                     // or when policy allows vanilla launches with script
                     if (!isVanilla)
                     {
+                        Console.WriteLine($"[DEBUG] Modded launch detected, using script");
                         var psiScript = new ProcessStartInfo
                         {
                             FileName = "/usr/bin/env",
@@ -98,46 +135,85 @@ public class GameLauncher : IGameLauncher
                             WorkingDirectory = gameInstall.InstallPath,
                             UseShellExecute = false
                         };
-            var scriptProc = Process.Start(psiScript);
-            if (scriptProc != null) 
-            {
-                scriptProc.EnableRaisingEvents = true;
-                procList.Add(scriptProc);
-                
-                // attach exited event to clean up tracking when script terminates
-                var scriptProcessId = scriptProc.Id;
-                var installPath = gameInstall.InstallPath;
-                EventHandler exitedHandler = (sender, e) =>
-                {
-                    if (_runningProcesses.TryGetValue(installPath, out var processes))
-                    {
-                        lock (processes) // ensure thread-safe list operations
+                        Console.WriteLine($"[DEBUG] Starting script with ProcessStartInfo - FileName: {psiScript.FileName}, Arguments: {psiScript.Arguments}, WorkingDirectory: {psiScript.WorkingDirectory}");
+                        
+                        var scriptProc = Process.Start(psiScript);
+                        Console.WriteLine($"[DEBUG] Script process started: {(scriptProc != null ? $"PID: {scriptProc.Id}" : "null")}");
+                        
+                        if (scriptProc != null) 
                         {
-                            processes.RemoveAll(p => p.Id == scriptProcessId);
-                            if (processes.Count == 0)
+                            scriptProc.EnableRaisingEvents = true;
+                            procList.Add(scriptProc);
+                            
+                            // attach exited event to clean up tracking when script terminates
+                            var scriptProcessId = scriptProc.Id;
+                            var installPath = gameInstall.InstallPath;
+                            EventHandler exitedHandler = (sender, e) =>
                             {
-                                _runningProcesses.TryRemove(installPath, out _);
-                            }
+                                Console.WriteLine($"[DEBUG] Script process {scriptProcessId} exited");
+                                if (_runningProcesses.TryGetValue(installPath, out var processes))
+                                {
+                                    lock (processes) // ensure thread-safe list operations
+                                    {
+                                        processes.RemoveAll(p => p.Id == scriptProcessId);
+                                        if (processes.Count == 0)
+                                        {
+                                            _runningProcesses.TryRemove(installPath, out _);
+                                        }
+                                    }
+                                }
+                            };
+                            scriptProc.Exited += exitedHandler;
                         }
-                    }
-                };
-                scriptProc.Exited += exitedHandler;
-            }
                         
                         // script handles launching the game, so we're done
                         if (procList.Count > 0)
                         {
+                            Console.WriteLine($"[DEBUG] Adding {procList.Count} processes to running processes");
                             _runningProcesses[gameInstall.InstallPath] = procList;
                         }
+                        Console.WriteLine($"[DEBUG] Returning success for script launch");
                         return Task.FromResult(OperationResult.SuccessResult("game launched via script"));
                     }
+                    else
+                    {
+                        Console.WriteLine($"[DEBUG] Vanilla launch detected, skipping script");
+                    }
                 }
+                else
+                {
+                    Console.WriteLine($"[DEBUG] Script not found, falling back to direct executable launch");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] Windows system detected, skipping script check");
             }
 
             // fallback to direct executable launch (windows or when no script exists)
             var exePath = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
+            Console.WriteLine($"[DEBUG] Executable path: {exePath}");
+            Console.WriteLine($"[DEBUG] Executable exists: {File.Exists(exePath)}");
+            
+            // on macos, also check for .app bundles
+            if (!File.Exists(exePath) && !OperatingSystem.IsWindows())
+            {
+                Console.WriteLine($"[DEBUG] Executable not found, checking for macOS .app bundle");
+                var appBundlePath = Path.Combine(gameInstall.InstallPath, $"{Path.GetFileNameWithoutExtension(gameInstall.Executable)}.app");
+                Console.WriteLine($"[DEBUG] App bundle path: {appBundlePath}");
+                Console.WriteLine($"[DEBUG] App bundle exists: {Directory.Exists(appBundlePath)}");
+                
+                if (Directory.Exists(appBundlePath))
+                {
+                    exePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(gameInstall.Executable));
+                    Console.WriteLine($"[DEBUG] Updated executable path for macOS: {exePath}");
+                    Console.WriteLine($"[DEBUG] macOS executable exists: {File.Exists(exePath)}");
+                }
+            }
+            
             if (!File.Exists(exePath))
             {
+                Console.WriteLine($"[DEBUG] Executable not found, returning error");
                 return Task.FromResult(OperationResult.ErrorResult("game executable not found", "launch failed"));
             }
 
@@ -147,7 +223,11 @@ public class GameLauncher : IGameLauncher
                 WorkingDirectory = gameInstall.InstallPath,
                 UseShellExecute = true
             };
+            Console.WriteLine($"[DEBUG] Starting game with ProcessStartInfo - FileName: {psiGame.FileName}, WorkingDirectory: {psiGame.WorkingDirectory}, UseShellExecute: {psiGame.UseShellExecute}");
+            
             var gameProc = Process.Start(psiGame);
+            Console.WriteLine($"[DEBUG] Game process started: {(gameProc != null ? $"PID: {gameProc.Id}" : "null")}");
+            
             if (gameProc != null) 
             {
                 gameProc.EnableRaisingEvents = true;
@@ -158,6 +238,7 @@ public class GameLauncher : IGameLauncher
                 var installPath = gameInstall.InstallPath;
                 EventHandler exitedHandler = (sender, e) =>
                 {
+                    Console.WriteLine($"[DEBUG] Game process {gameProcessId} exited");
                     if (_runningProcesses.TryGetValue(installPath, out var processes))
                     {
                         lock (processes) // ensure thread-safe list operations
@@ -175,27 +256,41 @@ public class GameLauncher : IGameLauncher
 
             if (procList.Count > 0)
             {
+                Console.WriteLine($"[DEBUG] Adding {procList.Count} processes to running processes");
                 _runningProcesses[gameInstall.InstallPath] = procList;
             }
 
+            Console.WriteLine($"[DEBUG] Returning success for direct executable launch");
             return Task.FromResult(OperationResult.SuccessResult("game launched"));
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[DEBUG] Exception in StartGameInternal: {ex.Message}");
+            Console.WriteLine($"[DEBUG] Exception stack trace: {ex.StackTrace}");
             return Task.FromResult(OperationResult.ErrorResult(ex.Message, "launch failed"));
         }
     }
 
     private static void RestorePluginsFolder(string originalPath, string disabledPath)
     {
+        Console.WriteLine($"[DEBUG] RestorePluginsFolder called - Original: {originalPath}, Disabled: {disabledPath}");
         try
         {
             if (Directory.Exists(disabledPath) && !Directory.Exists(originalPath))
             {
+                Console.WriteLine($"[DEBUG] Moving disabled folder back to original location");
                 Directory.Move(disabledPath, originalPath);
+                Console.WriteLine($"[DEBUG] Successfully restored plugins folder");
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] Skipping restore - Disabled exists: {Directory.Exists(disabledPath)}, Original exists: {Directory.Exists(originalPath)}");
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG] Exception in RestorePluginsFolder: {ex.Message}");
+        }
     }
 
     public async Task<OperationResult> Stop(GameInstallation gameInstall)
@@ -265,10 +360,12 @@ public class GameLauncher : IGameLauncher
         } // end lock block
 
         // second pass: perform async operations outside the lock
-        foreach (var (process, needsGracefulWait, needsKillWait) in processesToWaitFor)
+        foreach (var (process, needsGracefulWait, initialNeedsKillWait) in processesToWaitFor)
         {
             try
             {
+                bool needsKillWait = initialNeedsKillWait;
+                
                 if (needsGracefulWait)
                 {
                     try
