@@ -522,10 +522,31 @@ public class ModManager : IModManager
 
     public static void EnsureModsDirectory(GameInstallation gameInstall)
     {
+        Console.WriteLine($"[DEBUG] EnsureModsDirectory called for game: {gameInstall?.Name}");
+        Console.WriteLine($"[DEBUG] Game install path: {gameInstall?.InstallPath}");
+        Console.WriteLine($"[DEBUG] Game mod directory: {gameInstall?.ModDirectory}");
+        
         var modsRoot = GetModsDirectoryPath(gameInstall);
+        Console.WriteLine($"[DEBUG] Mods root path: {modsRoot}");
+        Console.WriteLine($"[DEBUG] Mods root exists: {Directory.Exists(modsRoot)}");
+        
         if (!Directory.Exists(modsRoot))
         {
-            Directory.CreateDirectory(modsRoot);
+            Console.WriteLine($"[DEBUG] Creating mods directory: {modsRoot}");
+            try
+            {
+                Directory.CreateDirectory(modsRoot);
+                Console.WriteLine($"[DEBUG] Successfully created mods directory");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] Failed to create mods directory: {ex.Message}");
+                throw;
+            }
+        }
+        else
+        {
+            Console.WriteLine($"[DEBUG] Mods directory already exists");
         }
     }
 

@@ -18,8 +18,8 @@
             <Grid Grid.Row="1" ColumnDefinitions="*,24,*" RowDefinitions="Auto,24,*">
                 <!-- Launch Buttons -->
                 <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
-                    <Button Content="Launch Modded" Command="{Binding LaunchModdedCommand}" Classes="primary" MinWidth="160"/>
-                    <Button Content="Launch Vanilla" Command="{Binding LaunchVanillaCommand}" MinWidth="160"/>
+                    <Button Content="{Binding ModdedButtonText}" Command="{Binding LaunchModdedCommand}" Classes="primary" MinWidth="160"/>
+                    <Button Content="{Binding VanillaButtonText}" Command="{Binding LaunchVanillaCommand}" MinWidth="160"/>
                 </StackPanel>
                 
                 <!-- Quick Actions -->
