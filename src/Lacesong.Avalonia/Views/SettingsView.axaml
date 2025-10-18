@@ -56,6 +56,7 @@
 
                 <!-- Action Buttons -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,16,0,0">
+                    <Button Content="Check for Mod Updates" Command="{Binding CheckModUpdatesCommand}"/>
                     <Button Content="Reset to Defaults" Command="{Binding ResetToDefaultsCommand}"/>
                     <Button Content="Save Settings" Command="{Binding SaveSettingsCommand}" Classes="primary"/>
                 </StackPanel>

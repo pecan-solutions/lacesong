@@ -2,11 +2,19 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Lacesong.Core.Models;
 using Lacesong.Core.Services;
 using System;
+using Lacesong.Core.Interfaces;
 
 namespace Lacesong.Avalonia.Services;
 
 public partial class GameStateService : ObservableObject, IGameStateService
 {
+    private readonly IModUpdateService _updateService;
+
+    public GameStateService(IModUpdateService updateService)
+    {
+        _updateService = updateService;
+    }
+
     [ObservableProperty]
     private GameInstallation _currentGame = new();
 
@@ -14,7 +22,7 @@ public partial class GameStateService : ObservableObject, IGameStateService
 
     public event Action? GameStateChanged;
 
-    public void SetCurrentGame(GameInstallation game)
+    public async void SetCurrentGame(GameInstallation game)
     {
         CurrentGame = game;
         
@@ -23,6 +31,9 @@ public partial class GameStateService : ObservableObject, IGameStateService
         if (!string.IsNullOrEmpty(game.InstallPath))
         {
             ModManager.EnsureModsDirectory(game);
+            // run startup update check (non-forced, uses cache)
+            _ = _updateService.CheckForUpdates(game);
+            await _updateService.ScheduleUpdateChecks(game);
         }
         
         GameStateChanged?.Invoke();

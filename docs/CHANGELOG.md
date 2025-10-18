@@ -4,6 +4,27 @@ All notable changes to this project will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-01-27
+### Added
+- Mod update checking functionality with Thunderstore API integration
+- "Check for Mod Updates" button in settings view
+- ThunderstorePackageDetailDto model for package detail API responses
+- Comprehensive mod update service with caching support
+- Disk and memory caching for Thunderstore API calls
+- Unit tests for mod update functionality
+- Automatic startup update checks when game is detected
+- Scheduled update checks for continuous mod monitoring
+
+### Changed
+- Enhanced GameStateService to trigger update checks on game detection
+- Updated SettingsViewModel to include mod update checking capabilities
+- Improved ModUpdateService to use direct Thunderstore API instead of local index
+- Enhanced ThunderstoreService with package detail API support
+
+### Fixed
+- Improved mod update detection accuracy using latest Thunderstore data
+- Better error handling for mod update operations
+
 ## [Unreleased]
 ### Added
 - Auto-update BepInEx and set executable_name

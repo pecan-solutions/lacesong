@@ -12,6 +12,7 @@ public class ThunderstoreService
     private readonly SemaphoreSlim _throttle = new(1, 1);
     private readonly TimeSpan _cacheTtl = TimeSpan.FromMinutes(15);
     private readonly string _baseUrl;
+    private readonly string _cacheDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Lacesong", "cache");
 
     public ThunderstoreService(HttpClient? http = null, IMemoryCache? cache = null, string? baseUrl = null)
     {
@@ -58,6 +59,64 @@ public class ThunderstoreService
         finally
         {
             _throttle.Release();
+        }
+    }
+
+    public async Task<ThunderstorePackageDetailDto?> GetPackageDetailAsync(string ns, string name, bool force = false, CancellationToken token = default)
+    {
+        var cacheKey = $"pkg_{ns}_{name}";
+        if (!force && _cache.TryGetValue(cacheKey, out ThunderstorePackageDetailDto cachedDto))
+        {
+            return cachedDto;
+        }
+
+        // disk cache
+        Directory.CreateDirectory(_cacheDir);
+        var filePath = Path.Combine(_cacheDir, $"{cacheKey}.json");
+        if (!force && File.Exists(filePath))
+        {
+            var info = new FileInfo(filePath);
+            if (DateTime.UtcNow - info.LastWriteTimeUtc < TimeSpan.FromHours(24))
+            {
+                try
+                {
+                    var txt = await File.ReadAllTextAsync(filePath, token);
+                    var dto = System.Text.Json.JsonSerializer.Deserialize<ThunderstorePackageDetailDto>(txt);
+                    if (dto != null)
+                    {
+                        _cache.Set(cacheKey, dto, _cacheTtl);
+                        return dto;
+                    }
+                }
+                catch { /* ignore and refetch */ }
+            }
+        }
+
+        var url = $"{_baseUrl}/api/experimental/package/{ns}/{name}/";
+        try
+        {
+            var resp = await _http.GetAsync(url, token);
+            if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return null; // mod not on thunderstore
+            }
+            resp.EnsureSuccessStatusCode();
+            var dto = await resp.Content.ReadFromJsonAsync<ThunderstorePackageDetailDto>(cancellationToken: token);
+            if (dto != null)
+            {
+                _cache.Set(cacheKey, dto, _cacheTtl);
+                try
+                {
+                    var json = System.Text.Json.JsonSerializer.Serialize(dto);
+                    await File.WriteAllTextAsync(filePath, json, token);
+                }
+                catch { /* ignore */ }
+            }
+            return dto;
+        }
+        catch
+        {
+            return null;
         }
     }
 }

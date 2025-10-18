@@ -12,6 +12,7 @@ namespace Lacesong.Core.Services;
 public class ModUpdateService : IModUpdateService
 {
     private readonly IModIndexService _modIndexService;
+    private readonly ThunderstoreService _tsService;
     private readonly IModManager _modManager;
     private readonly IModConfigService _configService;
     private readonly IConflictDetectionService _conflictService;
@@ -25,6 +26,7 @@ public class ModUpdateService : IModUpdateService
 
     public ModUpdateService(
         IModIndexService modIndexService,
+        ThunderstoreService tsService,
         IModManager modManager,
         IModConfigService configService,
         IConflictDetectionService conflictService,
@@ -32,6 +34,7 @@ public class ModUpdateService : IModUpdateService
         IBackupManager backupManager)
     {
         _modIndexService = modIndexService;
+        _tsService = tsService;
         _modManager = modManager;
         _configService = configService;
         _conflictService = conflictService;
@@ -39,7 +42,7 @@ public class ModUpdateService : IModUpdateService
         _backupManager = backupManager;
     }
 
-    public async Task<List<ModUpdate>> CheckForUpdates(GameInstallation gameInstall, List<string>? modIds = null)
+    public async Task<List<ModUpdate>> CheckForUpdates(GameInstallation gameInstall, List<string>? modIds = null, bool force = false)
     {
         var updates = new List<ModUpdate>();
         
@@ -52,7 +55,7 @@ public class ModUpdateService : IModUpdateService
 
             foreach (var mod in modsToCheck)
             {
-                var update = await CheckModForUpdate(mod, gameInstall);
+                var update = await CheckModForUpdate(mod, gameInstall, force);
                 if (update != null)
                 {
                     updates.Add(update);
@@ -304,62 +307,34 @@ public class ModUpdateService : IModUpdateService
         }
     }
 
-    private async Task<ModUpdate?> CheckModForUpdate(ModInfo installedMod, GameInstallation gameInstall)
+    private async Task<ModUpdate?> CheckModForUpdate(ModInfo installedMod, GameInstallation gameInstall, bool force = false)
     {
-        try
+        // parse id author-ModName maybe with version after? installedMod.Id is full name from thunderstore originally
+        var parts = installedMod.Id.Split('-');
+        if (parts.Length < 2)
         {
-            // get mod from index
-            var modEntry = await _modIndexService.GetMod(installedMod.Id);
-            if (modEntry == null)
-            {
-                return null; // mod not in index, no updates available
-            }
-
-            // find latest version compatible with current game version
-            var gameVersion = GetGameVersion(gameInstall);
-            var compatibleVersions = modEntry.Versions
-                .Where(v => IsVersionCompatible(v, gameVersion))
-                .OrderByDescending(v => ParseVersion(v.Version))
-                .ToList();
-
-            if (compatibleVersions.Count == 0)
-            {
-                return null; // no compatible versions
-            }
-
-            var latestVersion = compatibleVersions.First();
-            var currentVersion = ParseVersion(installedMod.Version);
-            var availableVersion = ParseVersion(latestVersion.Version);
-
-            // check if update is available
-            if (availableVersion <= currentVersion)
-            {
-                return null; // no update available
-            }
-
-            // determine update type
-            var updateType = DetermineUpdateType(currentVersion, availableVersion);
-
-            return new ModUpdate
-            {
-                ModId = installedMod.Id,
-                CurrentVersion = installedMod.Version,
-                AvailableVersion = latestVersion.Version,
-                UpdateType = updateType,
-                DownloadUrl = latestVersion.DownloadUrl,
-                FileSize = latestVersion.FileSize,
-                ReleaseNotes = latestVersion.Changelog,
-                ReleaseDate = latestVersion.ReleaseDate,
-                IsPrerelease = latestVersion.IsPrerelease,
-                RequiresGameVersion = latestVersion.GameVersion,
-                RequiresBepInExVersion = latestVersion.BepInExVersion
-            };
+            return null; // cannot parse
         }
-        catch (Exception ex)
+        var ns = parts[0];
+        var pkgName = string.Join('-', parts.Skip(1));
+        var detail = await _tsService.GetPackageDetailAsync(ns, pkgName, force);
+        if (detail?.Latest == null)
         {
-            Console.WriteLine($"Error checking mod for updates: {ex.Message}");
             return null;
         }
+        var availableVersion = detail.Latest.Version_Number;
+        if (ParseVersion(availableVersion) <= ParseVersion(installedMod.Version)) return null;
+        return new ModUpdate
+        {
+            ModId = installedMod.Id,
+            CurrentVersion = installedMod.Version,
+            AvailableVersion = availableVersion,
+            UpdateType = DetermineUpdateType(ParseVersion(installedMod.Version), ParseVersion(availableVersion)),
+            DownloadUrl = detail.Latest.Download_Url,
+            FileSize = 0,
+            ReleaseDate = detail.Latest.Date_Created,
+            IsPrerelease = false
+        };
     }
 
     private async Task<OperationResult> VerifyUpdate(ModUpdate update, GameInstallation gameInstall)

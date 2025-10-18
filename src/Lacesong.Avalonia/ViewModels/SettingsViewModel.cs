@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Linq;
+using Lacesong.Core.Interfaces;
 
 namespace Lacesong.Avalonia.ViewModels;
 
@@ -16,6 +17,8 @@ public partial class SettingsViewModel : BaseViewModel
     private readonly ILoggingService _loggingService;
     private readonly IUpdateService _updateService;
     private readonly IThemeService _themeService;
+    private readonly IModUpdateService _modUpdateService;
+    private readonly IGameStateService _gameState;
 
     [ObservableProperty]
     private Settings _currentSettings;
@@ -45,12 +48,16 @@ public partial class SettingsViewModel : BaseViewModel
         ISettingsService settingsService,
         ILoggingService loggingService,
         IUpdateService updateService,
-        IThemeService themeService) : base(logger)
+        IThemeService themeService,
+        IModUpdateService modUpdateService,
+        IGameStateService gameState) : base(logger)
     {
         _settingsService = settingsService;
         _loggingService = loggingService;
         _updateService = updateService;
         _themeService = themeService;
+        _modUpdateService = modUpdateService;
+        _gameState = gameState;
 
         _currentSettings = _settingsService.CurrentSettings;
         Themes = _themeService.GetAvailableThemes().ToList();
@@ -102,5 +109,27 @@ public partial class SettingsViewModel : BaseViewModel
                 SetStatus("You are running the latest version");
             }
         }, "Checking for updates...");
+    }
+
+    [RelayCommand]
+    private async Task CheckModUpdatesAsync()
+    {
+        await ExecuteAsync(async () =>
+        {
+            if (!_gameState.IsGameDetected)
+            {
+                SetStatus("game not detected");
+                return;
+            }
+            var updates = await _modUpdateService.CheckForUpdates(_gameState.CurrentGame, null, true);
+            if (updates.Count == 0)
+            {
+                SetStatus("all mods up to date");
+            }
+            else
+            {
+                SetStatus($"{updates.Count} updates found");
+            }
+        }, "checking mods for updates...");
     }
 }
