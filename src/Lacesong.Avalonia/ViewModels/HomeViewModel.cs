@@ -22,6 +22,37 @@ public partial class HomeViewModel : BaseViewModel
     [ObservableProperty]
     private string _gameStatusText;
 
+    private enum LaunchMode { None, Modded, Vanilla }
+
+    [ObservableProperty]
+    private LaunchMode _activeMode = LaunchMode.None;
+
+    [ObservableProperty]
+    private bool _isGameRunning;
+
+    public string ModdedButtonText => ActiveMode == LaunchMode.Modded && IsGameRunning ? "Stop Game" : "Launch Modded";
+    public string VanillaButtonText => ActiveMode == LaunchMode.Vanilla && IsGameRunning ? "Stop Game" : "Launch Vanilla";
+
+    partial void OnActiveModeChanged(LaunchMode oldValue, LaunchMode newValue)
+    {
+        OnPropertyChanged(nameof(ModdedButtonText));
+        OnPropertyChanged(nameof(VanillaButtonText));
+        DetectCommandCanExecChanged();
+    }
+
+    partial void OnIsGameRunningChanged(bool oldValue, bool newValue)
+    {
+        OnPropertyChanged(nameof(ModdedButtonText));
+        OnPropertyChanged(nameof(VanillaButtonText));
+        DetectCommandCanExecChanged();
+    }
+
+    private void DetectCommandCanExecChanged()
+    {
+        LaunchModdedCommand.NotifyCanExecuteChanged();
+        LaunchVanillaCommand.NotifyCanExecuteChanged();
+    }
+
     public GameInstallation CurrentGame => _gameStateService.CurrentGame;
     public bool IsGameDetected => _gameStateService.IsGameDetected;
     public string SelectGameButtonText => IsGameDetected ? "Change Game" : "Select Game Manually";
@@ -95,36 +126,71 @@ public partial class HomeViewModel : BaseViewModel
     [RelayCommand]
     private void GoToBrowseMods() => _navigationService.NavigateTo<BrowseModsViewModel>();
 
-    private bool CanExecuteGameCommands() => IsGameDetected;
+    private bool CanExecuteGameCommands()
+    {
+        return IsGameDetected && !IsGameRunning;
+    }
 
     [RelayCommand(CanExecute = nameof(CanExecuteGameCommands))]
     private async Task LaunchModded()
     {
-        await ExecuteAsync(async () =>
+        if (!IsGameRunning)
         {
-            if (!IsGameDetected)
+            await ExecuteAsync(async () =>
             {
-                SetStatus("Game not detected.");
-                return;
-            }
-            var result = await _gameLauncher.LaunchModded(CurrentGame);
-            SetStatus(result.Success ? "Launched modded game." : $"Failed to launch: {result.Message}");
-        }, "Launching modded game...");
+                var result = await _gameLauncher.LaunchModded(CurrentGame);
+                if (result.Success)
+                {
+                    ActiveMode = LaunchMode.Modded;
+                    IsGameRunning = true;
+                }
+                SetStatus(result.Success ? "Launched modded game." : $"Failed to launch: {result.Message}");
+            }, "Launching modded game...");
+        }
+        else if (ActiveMode == LaunchMode.Modded)
+        {
+            await ExecuteAsync(async () =>
+            {
+                var result = await _gameLauncher.Stop(CurrentGame);
+                if (result.Success)
+                {
+                    IsGameRunning = false;
+                    ActiveMode = LaunchMode.None;
+                }
+                SetStatus(result.Success ? "Game stopped." : result.Message);
+            }, "Stopping game...");
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanExecuteGameCommands))]
     private async Task LaunchVanilla()
     {
-        await ExecuteAsync(async () =>
+        if (!IsGameRunning)
         {
-            if (!IsGameDetected)
+            await ExecuteAsync(async () =>
             {
-                SetStatus("Game not detected.");
-                return;
-            }
-            var result = await _gameLauncher.LaunchVanilla(CurrentGame);
-            SetStatus(result.Success ? "Launched vanilla game." : $"Failed to launch: {result.Message}");
-        }, "Launching vanilla game...");
+                var result = await _gameLauncher.LaunchVanilla(CurrentGame);
+                if (result.Success)
+                {
+                    ActiveMode = LaunchMode.Vanilla;
+                    IsGameRunning = true;
+                }
+                SetStatus(result.Success ? "Launched vanilla game." : $"Failed to launch: {result.Message}");
+            }, "Launching vanilla game...");
+        }
+        else if (ActiveMode == LaunchMode.Vanilla)
+        {
+            await ExecuteAsync(async () =>
+            {
+                var result = await _gameLauncher.Stop(CurrentGame);
+                if (result.Success)
+                {
+                    IsGameRunning = false;
+                    ActiveMode = LaunchMode.None;
+                }
+                SetStatus(result.Success ? "Game stopped." : result.Message);
+            }, "Stopping game...");
+        }
     }
 
     [RelayCommand]

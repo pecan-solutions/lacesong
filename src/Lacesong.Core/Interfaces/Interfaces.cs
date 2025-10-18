@@ -613,4 +613,14 @@ public interface IGameLauncher
     /// <param name="gameInstall">game installation to launch</param>
     /// <returns>operation result</returns>
     Task<OperationResult> LaunchVanilla(GameInstallation gameInstall);
+
+    /// <summary>
+    /// stops any running instance of the game started by this launcher
+    /// </summary>
+    Task<OperationResult> Stop(GameInstallation gameInstall);
+
+    /// <summary>
+    /// returns true if the game is currently running (tracked by this launcher)
+    /// </summary>
+    bool IsRunning(GameInstallation gameInstall);
 }

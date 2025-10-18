@@ -2,6 +2,11 @@ using Lacesong.Core.Interfaces;
 using Lacesong.Core.Models;
 using System.Diagnostics;
 using System.IO;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
+using System.Runtime.InteropServices;
 
 namespace Lacesong.Core.Services;
 
@@ -12,6 +17,8 @@ public class GameLauncher : IGameLauncher
 {
     private readonly IBepInExManager _bepInExManager;
     private readonly IModManager _modManager;
+    // map install path to list of processes we spawned so we can stop them later
+    private readonly ConcurrentDictionary<string, List<Process>> _runningProcesses = new();
 
     public GameLauncher(IBepInExManager bepInExManager, IModManager modManager)
     {
@@ -29,7 +36,7 @@ public class GameLauncher : IGameLauncher
             return Task.FromResult(OperationResult.ErrorResult("BepInEx is not installed", "modded launch failed"));
         }
 
-        return StartGame(gameInstall);
+        return StartGameInternal(gameInstall, isVanilla:false);
     }
 
     public async Task<OperationResult> LaunchVanilla(GameInstallation gameInstall)
@@ -55,7 +62,7 @@ public class GameLauncher : IGameLauncher
                 Directory.Move(pluginsPath, tempDisabledPath);
             }
 
-            var result = await StartGame(gameInstall);
+            var result = await StartGameInternal(gameInstall, isVanilla:true);
 
             return result;
         }
@@ -67,23 +74,51 @@ public class GameLauncher : IGameLauncher
         }
     }
 
-    private static Task<OperationResult> StartGame(GameInstallation gameInstall)
+    private Task<OperationResult> StartGameInternal(GameInstallation gameInstall, bool isVanilla)
     {
         try
         {
+            var procList = new List<Process>();
+
+            // on mac/linux run prelaunch script if it exists
+            if (!OperatingSystem.IsWindows())
+            {
+                var scriptPath = Path.Combine(gameInstall.InstallPath, "run_bepinex.sh");
+                if (File.Exists(scriptPath))
+                {
+                    var psiScript = new ProcessStartInfo
+                    {
+                        FileName = scriptPath,
+                        WorkingDirectory = gameInstall.InstallPath,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    };
+                    var scriptProc = Process.Start(psiScript);
+                    if (scriptProc != null) procList.Add(scriptProc);
+                }
+            }
+
             var exePath = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
             if (!File.Exists(exePath))
             {
                 return Task.FromResult(OperationResult.ErrorResult("game executable not found", "launch failed"));
             }
 
-            var psi = new ProcessStartInfo
+            var psiGame = new ProcessStartInfo
             {
                 FileName = exePath,
                 WorkingDirectory = gameInstall.InstallPath,
                 UseShellExecute = true
             };
-            Process.Start(psi);
+            var gameProc = Process.Start(psiGame);
+            if (gameProc != null) procList.Add(gameProc);
+
+            if (procList.Count > 0)
+            {
+                _runningProcesses[gameInstall.InstallPath] = procList;
+            }
+
             return Task.FromResult(OperationResult.SuccessResult("game launched"));
         }
         catch (Exception ex)
@@ -103,4 +138,28 @@ public class GameLauncher : IGameLauncher
         }
         catch { }
     }
+
+    public Task<OperationResult> Stop(GameInstallation gameInstall)
+    {
+        if (!_runningProcesses.TryRemove(gameInstall.InstallPath, out var procs) || procs.Count == 0)
+        {
+            return Task.FromResult(OperationResult.ErrorResult("game not running", "stop failed"));
+        }
+
+        foreach (var p in procs)
+        {
+            try
+            {
+                if (!p.HasExited)
+                {
+                    p.Kill(true);
+                }
+            }
+            catch { }
+        }
+
+        return Task.FromResult(OperationResult.SuccessResult("game stopped"));
+    }
+
+    public bool IsRunning(GameInstallation gameInstall) => _runningProcesses.ContainsKey(gameInstall.InstallPath);
 }
