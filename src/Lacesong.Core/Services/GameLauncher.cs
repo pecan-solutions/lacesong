@@ -93,12 +93,36 @@ public class GameLauncher : IGameLauncher
                     {
                         var psiScript = new ProcessStartInfo
                         {
-                            FileName = scriptPath,
+                            FileName = "/usr/bin/env",
+                            Arguments = $"bash \"{scriptPath}\"",
                             WorkingDirectory = gameInstall.InstallPath,
-                            UseShellExecute = true
+                            UseShellExecute = false
                         };
-                        var scriptProc = Process.Start(psiScript);
-                        if (scriptProc != null) procList.Add(scriptProc);
+            var scriptProc = Process.Start(psiScript);
+            if (scriptProc != null) 
+            {
+                scriptProc.EnableRaisingEvents = true;
+                procList.Add(scriptProc);
+                
+                // attach exited event to clean up tracking when script terminates
+                var scriptProcessId = scriptProc.Id;
+                var installPath = gameInstall.InstallPath;
+                EventHandler exitedHandler = (sender, e) =>
+                {
+                    if (_runningProcesses.TryGetValue(installPath, out var processes))
+                    {
+                        lock (processes) // ensure thread-safe list operations
+                        {
+                            processes.RemoveAll(p => p.Id == scriptProcessId);
+                            if (processes.Count == 0)
+                            {
+                                _runningProcesses.TryRemove(installPath, out _);
+                            }
+                        }
+                    }
+                };
+                scriptProc.Exited += exitedHandler;
+            }
                         
                         // script handles launching the game, so we're done
                         if (procList.Count > 0)
@@ -124,7 +148,30 @@ public class GameLauncher : IGameLauncher
                 UseShellExecute = true
             };
             var gameProc = Process.Start(psiGame);
-            if (gameProc != null) procList.Add(gameProc);
+            if (gameProc != null) 
+            {
+                gameProc.EnableRaisingEvents = true;
+                procList.Add(gameProc);
+                
+                // attach exited event to clean up tracking when game terminates
+                var gameProcessId = gameProc.Id;
+                var installPath = gameInstall.InstallPath;
+                EventHandler exitedHandler = (sender, e) =>
+                {
+                    if (_runningProcesses.TryGetValue(installPath, out var processes))
+                    {
+                        lock (processes) // ensure thread-safe list operations
+                        {
+                            processes.RemoveAll(p => p.Id == gameProcessId);
+                            if (processes.Count == 0)
+                            {
+                                _runningProcesses.TryRemove(installPath, out _);
+                            }
+                        }
+                    }
+                };
+                gameProc.Exited += exitedHandler;
+            }
 
             if (procList.Count > 0)
             {
@@ -161,63 +208,101 @@ public class GameLauncher : IGameLauncher
         var failedProcesses = new List<string>();
         var timeoutMs = 5000; // 5 second timeout for graceful shutdown
 
-        foreach (var p in procs)
+        lock (procs) // ensure thread-safe access to process list
         {
-            try
+            foreach (var p in procs)
             {
-                if (p.HasExited)
-                    continue;
-
-                bool gracefulShutdownSucceeded = false;
-
-                // try graceful shutdown first (close main window)
-                if (OperatingSystem.IsWindows() && !p.MainWindowHandle.Equals(IntPtr.Zero))
+                try
                 {
+                    if (p.HasExited)
+                    {
+                        p.Dispose();
+                        continue;
+                    }
+
+                    bool gracefulShutdownSucceeded = false;
+
+                    // try graceful shutdown first (close main window)
+                    if (OperatingSystem.IsWindows() && !p.MainWindowHandle.Equals(IntPtr.Zero))
+                    {
+                        try
+                        {
+                            gracefulShutdownSucceeded = p.CloseMainWindow();
+                        }
+                        catch (Exception ex)
+                        {
+                            // fall through to kill if close main window fails
+                            failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): CloseMainWindow failed - {ex.Message}");
+                        }
+                    }
+
+                    // wait for graceful shutdown with timeout
+                    if (gracefulShutdownSucceeded)
+                    {
+                        try
+                        {
+                            using var cts = new CancellationTokenSource(timeoutMs);
+                            await p.WaitForExitAsync(cts.Token);
+                            gracefulShutdownSucceeded = p.HasExited;
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            // timeout occurred, process still running
+                            gracefulShutdownSucceeded = false;
+                        }
+                        catch (Exception ex)
+                        {
+                            gracefulShutdownSucceeded = false;
+                            failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): WaitForExitAsync failed - {ex.Message}");
+                        }
+                    }
+
+                    // if graceful shutdown failed or timed out, force kill
+                    if (!gracefulShutdownSucceeded)
+                    {
+                        try
+                        {
+                            p.Kill(true);
+                            
+                            // wait for kill to take effect with timeout
+                            using var killCts = new CancellationTokenSource(timeoutMs);
+                            await p.WaitForExitAsync(killCts.Token);
+                            
+                            // verify process actually exited
+                            if (!p.HasExited)
+                            {
+                                failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): Process did not exit after Kill");
+                            }
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            // timeout occurred, process still running
+                            failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): Process did not exit after Kill (timeout)");
+                        }
+                        catch (Exception ex)
+                        {
+                            failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): Kill failed - {ex.Message}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): Unexpected error - {ex.Message}");
+                }
+                finally
+                {
+                    // always dispose the process object to prevent handle leaks
                     try
                     {
-                        gracefulShutdownSucceeded = p.CloseMainWindow();
+                        p.Dispose();
                     }
                     catch
                     {
-                        // fall through to kill if close main window fails
-                    }
-                }
-
-                // wait for graceful shutdown with timeout
-                if (gracefulShutdownSucceeded)
-                {
-                    try
-                    {
-                        using var cts = new CancellationTokenSource(timeoutMs);
-                        await p.WaitForExitAsync(cts.Token);
-                        gracefulShutdownSucceeded = p.HasExited;
-                    }
-                    catch
-                    {
-                        gracefulShutdownSucceeded = false;
-                    }
-                }
-
-                // if graceful shutdown failed or timed out, force kill
-                if (!gracefulShutdownSucceeded)
-                {
-                    try
-                    {
-                        p.Kill(true);
-                        // give a brief moment for kill to take effect
-                        await Task.Delay(100);
-                    }
-                    catch (Exception ex)
-                    {
-                        failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): {ex.Message}");
+                        // ignore disposal errors
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): {ex.Message}");
-            }
-        }
+        } // end lock block
 
         // report results
         if (failedProcesses.Count > 0)
@@ -229,5 +314,60 @@ public class GameLauncher : IGameLauncher
         return OperationResult.SuccessResult("game stopped gracefully");
     }
 
-    public bool IsRunning(GameInstallation gameInstall) => _runningProcesses.ContainsKey(gameInstall.InstallPath);
+    public bool IsRunning(GameInstallation gameInstall)
+    {
+        if (!_runningProcesses.TryGetValue(gameInstall.InstallPath, out var processes))
+        {
+            return false;
+        }
+
+        lock (processes) // ensure thread-safe access to process list
+        {
+            var aliveProcesses = new List<Process>();
+            
+            foreach (var process in processes)
+            {
+                try
+                {
+                    // refresh process info to get current state
+                    process.Refresh();
+                    
+                    if (!process.HasExited)
+                    {
+                        aliveProcesses.Add(process);
+                    }
+                    else
+                    {
+                        // dispose dead process to prevent handle leaks
+                        process.Dispose();
+                    }
+                }
+                catch (Exception)
+                {
+                    // if we can't access the process (e.g., access denied), treat as dead
+                    try
+                    {
+                        process.Dispose();
+                    }
+                    catch
+                    {
+                        // ignore disposal errors
+                    }
+                }
+            }
+            
+            // update the process list with only alive processes
+            processes.Clear();
+            processes.AddRange(aliveProcesses);
+            
+            // if no alive processes remain, remove the entry from the dictionary
+            if (processes.Count == 0)
+            {
+                _runningProcesses.TryRemove(gameInstall.InstallPath, out _);
+                return false;
+            }
+            
+            return true;
+        }
+    }
 }
