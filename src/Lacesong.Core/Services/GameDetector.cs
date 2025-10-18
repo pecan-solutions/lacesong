@@ -79,13 +79,26 @@ public class GameDetector : IGameDetector
 
         var executablePath = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
         
-        // on macos, also check for .app bundles
-        if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
+        // check for .app bundles based on executable type, not current platform
+        if (ExecutableTypeDetector.IsMacOSAppBundle(executablePath))
         {
+            // for .app bundles, check if the bundle exists
+            if (Directory.Exists(executablePath))
+            {
+                // also verify the actual executable exists within the bundle
+                var actualExecutablePath = ExecutableTypeDetector.GetAppBundleExecutablePath(executablePath);
+                return File.Exists(actualExecutablePath);
+            }
+            return false;
+        }
+        else if (!File.Exists(executablePath))
+        {
+            // for non-app bundles, check if it might be an app bundle with different naming
             var appBundlePath = Path.Combine(gameInstall.InstallPath, $"{Path.GetFileNameWithoutExtension(gameInstall.Executable)}.app");
             if (Directory.Exists(appBundlePath))
             {
-                executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(gameInstall.Executable));
+                var actualExecutablePath = ExecutableTypeDetector.GetAppBundleExecutablePath(appBundlePath);
+                return File.Exists(actualExecutablePath);
             }
         }
         
@@ -107,36 +120,62 @@ public class GameDetector : IGameDetector
             // look for game executables in the directory
             foreach (var game in _supportedGames)
             {
-                var executableName = GetPlatformExecutableName(game.Executable);
-                var executablePath = Path.Combine(path, executableName);
-
-                // on macos, also check for .app bundles
-                if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
+                // try different executable types based on what might be present
+                var possibleExecutables = new[]
                 {
-                    var appBundlePath = Path.Combine(path, $"{Path.GetFileNameWithoutExtension(executableName)}.app");
-                    if (Directory.Exists(appBundlePath))
+                    $"{game.Executable}.exe",  // windows
+                    $"{game.Executable}.app", // macos
+                    game.Executable            // unix
+                };
+
+                foreach (var executableName in possibleExecutables)
+                {
+                    var executablePath = Path.Combine(path, executableName);
+
+                    // check for .app bundles
+                    if (ExecutableTypeDetector.IsMacOSAppBundle(executablePath))
                     {
-                        executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(executableName));
+                        if (Directory.Exists(executablePath))
+                        {
+                            var actualExecutablePath = ExecutableTypeDetector.GetAppBundleExecutablePath(executablePath);
+                            if (File.Exists(actualExecutablePath))
+                            {
+                                return new GameInstallation
+                                {
+                                    Name = game.Name,
+                                    Id = game.Id,
+                                    InstallPath = path,
+                                    Executable = executableName,
+                                    SteamAppId = game.SteamAppId,
+                                    EpicAppId = game.EpicAppId,
+                                    GogAppId = game.GogAppId,
+                                    XboxAppId = game.XboxAppId,
+                                    BepInExVersion = game.BepInExVersion,
+                                    ModDirectory = game.ModDirectory,
+                                    IsValid = true,
+                                    DetectedBy = "Manual Path"
+                                };
+                            }
+                        }
                     }
-                }
-
-                if (PlatformDetector.IsValidExecutable(executablePath))
-                {
-                    return new GameInstallation
+                    else if (ExecutableTypeDetector.IsValidExecutable(executablePath))
                     {
-                        Name = game.Name,
-                        Id = game.Id,
-                        InstallPath = path,
-                        Executable = executableName,
-                        SteamAppId = game.SteamAppId,
-                        EpicAppId = game.EpicAppId,
-                        GogAppId = game.GogAppId,
-                        XboxAppId = game.XboxAppId,
-                        BepInExVersion = game.BepInExVersion,
-                        ModDirectory = game.ModDirectory,
-                        IsValid = true,
-                        DetectedBy = "Manual Path"
-                    };
+                        return new GameInstallation
+                        {
+                            Name = game.Name,
+                            Id = game.Id,
+                            InstallPath = path,
+                            Executable = executableName,
+                            SteamAppId = game.SteamAppId,
+                            EpicAppId = game.EpicAppId,
+                            GogAppId = game.GogAppId,
+                            XboxAppId = game.XboxAppId,
+                            BepInExVersion = game.BepInExVersion,
+                            ModDirectory = game.ModDirectory,
+                            IsValid = true,
+                            DetectedBy = "Manual Path"
+                        };
+                    }
                 }
             }
         }
@@ -209,38 +248,70 @@ public class GameDetector : IGameDetector
                         foreach (var folderName in possibleFolderNames)
                         {
                             var gamePath = Path.Combine(steamAppsPath, folderName);
-                            var executableName = GetPlatformExecutableName(game.Executable);
-                            var executablePath = Path.Combine(gamePath, executableName);
-
-                            // on macos, also check for .app bundles
-                            if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
+                            
+                            // try different executable types based on what might be present
+                            var possibleExecutables = new[]
                             {
-                                var appBundlePath = Path.Combine(gamePath, $"{Path.GetFileNameWithoutExtension(executableName)}.app");
-                                if (Directory.Exists(appBundlePath))
+                                $"{game.Executable}.exe",  // windows
+                                $"{game.Executable}.app", // macos
+                                game.Executable            // unix
+                            };
+
+                            foreach (var executableName in possibleExecutables)
+                            {
+                                var executablePath = Path.Combine(gamePath, executableName);
+
+                                // check for .app bundles
+                                if (ExecutableTypeDetector.IsMacOSAppBundle(executablePath))
                                 {
-                                    executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(executableName));
+                                    if (Directory.Exists(executablePath))
+                                    {
+                                        var actualExecutablePath = ExecutableTypeDetector.GetAppBundleExecutablePath(executablePath);
+                                        if (File.Exists(actualExecutablePath))
+                                        {
+                                            detectedGames.Add(new GameInstallation
+                                            {
+                                                Name = game.Name,
+                                                Id = game.Id,
+                                                InstallPath = gamePath,
+                                                Executable = executableName,
+                                                SteamAppId = game.SteamAppId,
+                                                EpicAppId = game.EpicAppId,
+                                                GogAppId = game.GogAppId,
+                                                XboxAppId = game.XboxAppId,
+                                                BepInExVersion = game.BepInExVersion,
+                                                ModDirectory = game.ModDirectory,
+                                                IsValid = true,
+                                                DetectedBy = "Steam"
+                                            });
+                                            break; // found the game, no need to check other folder names
+                                        }
+                                    }
+                                }
+                                else if (ExecutableTypeDetector.IsValidExecutable(executablePath))
+                                {
+                                    detectedGames.Add(new GameInstallation
+                                    {
+                                        Name = game.Name,
+                                        Id = game.Id,
+                                        InstallPath = gamePath,
+                                        Executable = executableName,
+                                        SteamAppId = game.SteamAppId,
+                                        EpicAppId = game.EpicAppId,
+                                        GogAppId = game.GogAppId,
+                                        XboxAppId = game.XboxAppId,
+                                        BepInExVersion = game.BepInExVersion,
+                                        ModDirectory = game.ModDirectory,
+                                        IsValid = true,
+                                        DetectedBy = "Steam"
+                                    });
+                                    break; // found the game, no need to check other folder names
                                 }
                             }
-
-                            if (PlatformDetector.IsValidExecutable(executablePath))
-                            {
-                                detectedGames.Add(new GameInstallation
-                                {
-                                    Name = game.Name,
-                                    Id = game.Id,
-                                    InstallPath = gamePath,
-                                    Executable = executableName,
-                                    SteamAppId = game.SteamAppId,
-                                    EpicAppId = game.EpicAppId,
-                                    GogAppId = game.GogAppId,
-                                    XboxAppId = game.XboxAppId,
-                                    BepInExVersion = game.BepInExVersion,
-                                    ModDirectory = game.ModDirectory,
-                                    IsValid = true,
-                                    DetectedBy = "Steam"
-                                });
-                                break; // found the game, no need to check other folder names
-                            }
+                            
+                            // if we found a game, break out of folder name loop
+                            if (detectedGames.Any(g => g.InstallPath == gamePath))
+                                break;
                         }
                     }
                 }
@@ -284,36 +355,64 @@ public class GameDetector : IGameDetector
                         if (string.IsNullOrEmpty(game.EpicAppId) || manifest.AppId != game.EpicAppId)
                             continue;
 
-                        var executableName = GetPlatformExecutableName(game.Executable);
-                        var executablePath = Path.Combine(manifest.InstallLocation, executableName);
-
-                        // on macos, also check for .app bundles
-                        if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
+                        // try different executable types based on what might be present
+                        var possibleExecutables = new[]
                         {
-                            var appBundlePath = Path.Combine(manifest.InstallLocation, $"{Path.GetFileNameWithoutExtension(executableName)}.app");
-                            if (Directory.Exists(appBundlePath))
+                            $"{game.Executable}.exe",  // windows
+                            $"{game.Executable}.app", // macos
+                            game.Executable            // unix
+                        };
+
+                        foreach (var executableName in possibleExecutables)
+                        {
+                            var executablePath = Path.Combine(manifest.InstallLocation, executableName);
+
+                            // check for .app bundles
+                            if (ExecutableTypeDetector.IsMacOSAppBundle(executablePath))
                             {
-                                executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(executableName));
+                                if (Directory.Exists(executablePath))
+                                {
+                                    var actualExecutablePath = ExecutableTypeDetector.GetAppBundleExecutablePath(executablePath);
+                                    if (File.Exists(actualExecutablePath))
+                                    {
+                                        detectedGames.Add(new GameInstallation
+                                        {
+                                            Name = game.Name,
+                                            Id = game.Id,
+                                            InstallPath = manifest.InstallLocation,
+                                            Executable = executableName,
+                                            SteamAppId = game.SteamAppId,
+                                            EpicAppId = game.EpicAppId,
+                                            GogAppId = game.GogAppId,
+                                            XboxAppId = game.XboxAppId,
+                                            BepInExVersion = game.BepInExVersion,
+                                            ModDirectory = game.ModDirectory,
+                                            IsValid = true,
+                                            DetectedBy = "Epic Games"
+                                        });
+                                        break; // found the game, no need to check other executable types
+                                    }
+                                }
                             }
-                        }
-
-                        if (PlatformDetector.IsValidExecutable(executablePath))
-                        {
-                            detectedGames.Add(new GameInstallation
+                            else if (ExecutableTypeDetector.IsValidExecutable(executablePath))
                             {
-                                Name = game.Name,
-                                Id = game.Id,
-                                InstallPath = manifest.InstallLocation,
-                                Executable = executableName,
-                                SteamAppId = game.SteamAppId,
-                                EpicAppId = game.EpicAppId,
-                                GogAppId = game.GogAppId,
-                                XboxAppId = game.XboxAppId,
-                                BepInExVersion = game.BepInExVersion,
-                                ModDirectory = game.ModDirectory,
-                                IsValid = true,
-                                DetectedBy = "Epic Games"
-                            });
+                                detectedGames.Add(new GameInstallation
+                                {
+                                    Name = game.Name,
+                                    Id = game.Id,
+                                    InstallPath = manifest.InstallLocation,
+                                    Executable = executableName,
+                                    SteamAppId = game.SteamAppId,
+                                    EpicAppId = game.EpicAppId,
+                                    GogAppId = game.GogAppId,
+                                    XboxAppId = game.XboxAppId,
+                                    BepInExVersion = game.BepInExVersion,
+                                    ModDirectory = game.ModDirectory,
+                                    IsValid = true,
+                                    DetectedBy = "Epic Games"
+                                });
+                                break; // found the game, no need to check other executable types
+                            }
                         }
                     }
                 }
@@ -401,38 +500,70 @@ public class GameDetector : IGameDetector
                     foreach (var folderName in possibleFolderNames)
                     {
                         var gamePath = Path.Combine(commonPath, folderName);
-                        var executableName = GetPlatformExecutableName(game.Executable);
-                        var executablePath = Path.Combine(gamePath, executableName);
-
-                        // on macos, also check for .app bundles
-                        if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
+                        
+                        // try different executable types based on what might be present
+                        var possibleExecutables = new[]
                         {
-                            var appBundlePath = Path.Combine(gamePath, $"{Path.GetFileNameWithoutExtension(executableName)}.app");
-                            if (Directory.Exists(appBundlePath))
+                            $"{game.Executable}.exe",  // windows
+                            $"{game.Executable}.app", // macos
+                            game.Executable            // unix
+                        };
+
+                        foreach (var executableName in possibleExecutables)
+                        {
+                            var executablePath = Path.Combine(gamePath, executableName);
+
+                            // check for .app bundles
+                            if (ExecutableTypeDetector.IsMacOSAppBundle(executablePath))
                             {
-                                executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(executableName));
+                                if (Directory.Exists(executablePath))
+                                {
+                                    var actualExecutablePath = ExecutableTypeDetector.GetAppBundleExecutablePath(executablePath);
+                                    if (File.Exists(actualExecutablePath))
+                                    {
+                                        detectedGames.Add(new GameInstallation
+                                        {
+                                            Name = game.Name,
+                                            Id = game.Id,
+                                            InstallPath = gamePath,
+                                            Executable = executableName,
+                                            SteamAppId = game.SteamAppId,
+                                            EpicAppId = game.EpicAppId,
+                                            GogAppId = game.GogAppId,
+                                            XboxAppId = game.XboxAppId,
+                                            BepInExVersion = game.BepInExVersion,
+                                            ModDirectory = game.ModDirectory,
+                                            IsValid = true,
+                                            DetectedBy = "GOG"
+                                        });
+                                        break; // found the game, no need to check other executable types
+                                    }
+                                }
+                            }
+                            else if (ExecutableTypeDetector.IsValidExecutable(executablePath))
+                            {
+                                detectedGames.Add(new GameInstallation
+                                {
+                                    Name = game.Name,
+                                    Id = game.Id,
+                                    InstallPath = gamePath,
+                                    Executable = executableName,
+                                    SteamAppId = game.SteamAppId,
+                                    EpicAppId = game.EpicAppId,
+                                    GogAppId = game.GogAppId,
+                                    XboxAppId = game.XboxAppId,
+                                    BepInExVersion = game.BepInExVersion,
+                                    ModDirectory = game.ModDirectory,
+                                    IsValid = true,
+                                    DetectedBy = "GOG"
+                                });
+                                break; // found the game, no need to check other executable types
                             }
                         }
-
-                        if (PlatformDetector.IsValidExecutable(executablePath))
-                        {
-                            detectedGames.Add(new GameInstallation
-                            {
-                                Name = game.Name,
-                                Id = game.Id,
-                                InstallPath = gamePath,
-                                Executable = executableName,
-                                SteamAppId = game.SteamAppId,
-                                EpicAppId = game.EpicAppId,
-                                GogAppId = game.GogAppId,
-                                XboxAppId = game.XboxAppId,
-                                BepInExVersion = game.BepInExVersion,
-                                ModDirectory = game.ModDirectory,
-                                IsValid = true,
-                                DetectedBy = "GOG"
-                            });
-                            break; // found the game, no need to check other folder names
-                        }
+                        
+                        // if we found a game, break out of folder name loop
+                        if (detectedGames.Any(g => g.InstallPath == gamePath))
+                            break;
                     }
                 }
             }
@@ -482,28 +613,70 @@ public class GameDetector : IGameDetector
                     foreach (var folderName in possibleFolderNames)
                     {
                         var gamePath = Path.Combine(xboxPath, folderName);
-                        var executableName = GetPlatformExecutableName(game.Executable);
-                        var executablePath = Path.Combine(gamePath, executableName);
-
-                        if (PlatformDetector.IsValidExecutable(executablePath))
+                        
+                        // try different executable types based on what might be present
+                        var possibleExecutables = new[]
                         {
-                            detectedGames.Add(new GameInstallation
+                            $"{game.Executable}.exe",  // windows
+                            $"{game.Executable}.app", // macos
+                            game.Executable            // unix
+                        };
+
+                        foreach (var executableName in possibleExecutables)
+                        {
+                            var executablePath = Path.Combine(gamePath, executableName);
+
+                            // check for .app bundles
+                            if (ExecutableTypeDetector.IsMacOSAppBundle(executablePath))
                             {
-                                Name = game.Name,
-                                Id = game.Id,
-                                InstallPath = gamePath,
-                                Executable = executableName,
-                                SteamAppId = game.SteamAppId,
-                                EpicAppId = game.EpicAppId,
-                                GogAppId = game.GogAppId,
-                                XboxAppId = game.XboxAppId,
-                                BepInExVersion = game.BepInExVersion,
-                                ModDirectory = game.ModDirectory,
-                                IsValid = true,
-                                DetectedBy = "Xbox Game Pass"
-                            });
-                            break; // found the game, no need to check other folder names
+                                if (Directory.Exists(executablePath))
+                                {
+                                    var actualExecutablePath = ExecutableTypeDetector.GetAppBundleExecutablePath(executablePath);
+                                    if (File.Exists(actualExecutablePath))
+                                    {
+                                        detectedGames.Add(new GameInstallation
+                                        {
+                                            Name = game.Name,
+                                            Id = game.Id,
+                                            InstallPath = gamePath,
+                                            Executable = executableName,
+                                            SteamAppId = game.SteamAppId,
+                                            EpicAppId = game.EpicAppId,
+                                            GogAppId = game.GogAppId,
+                                            XboxAppId = game.XboxAppId,
+                                            BepInExVersion = game.BepInExVersion,
+                                            ModDirectory = game.ModDirectory,
+                                            IsValid = true,
+                                            DetectedBy = "Xbox Game Pass"
+                                        });
+                                        break; // found the game, no need to check other executable types
+                                    }
+                                }
+                            }
+                            else if (ExecutableTypeDetector.IsValidExecutable(executablePath))
+                            {
+                                detectedGames.Add(new GameInstallation
+                                {
+                                    Name = game.Name,
+                                    Id = game.Id,
+                                    InstallPath = gamePath,
+                                    Executable = executableName,
+                                    SteamAppId = game.SteamAppId,
+                                    EpicAppId = game.EpicAppId,
+                                    GogAppId = game.GogAppId,
+                                    XboxAppId = game.XboxAppId,
+                                    BepInExVersion = game.BepInExVersion,
+                                    ModDirectory = game.ModDirectory,
+                                    IsValid = true,
+                                    DetectedBy = "Xbox Game Pass"
+                                });
+                                break; // found the game, no need to check other executable types
+                            }
                         }
+                        
+                        // if we found a game, break out of folder name loop
+                        if (detectedGames.Any(g => g.InstallPath == gamePath))
+                            break;
                     }
                 }
             }
@@ -543,38 +716,70 @@ public class GameDetector : IGameDetector
                     foreach (var folderName in possibleFolderNames)
                     {
                         var gamePath = Path.Combine(commonPath, folderName);
-                        var executableName = GetPlatformExecutableName(game.Executable);
-                        var executablePath = Path.Combine(gamePath, executableName);
-
-                        // on macos, also check for .app bundles
-                        if (PlatformDetector.IsMacOS && !File.Exists(executablePath))
+                        
+                        // try different executable types based on what might be present
+                        var possibleExecutables = new[]
                         {
-                            var appBundlePath = Path.Combine(gamePath, $"{Path.GetFileNameWithoutExtension(executableName)}.app");
-                            if (Directory.Exists(appBundlePath))
+                            $"{game.Executable}.exe",  // windows
+                            $"{game.Executable}.app", // macos
+                            game.Executable            // unix
+                        };
+
+                        foreach (var executableName in possibleExecutables)
+                        {
+                            var executablePath = Path.Combine(gamePath, executableName);
+
+                            // check for .app bundles
+                            if (ExecutableTypeDetector.IsMacOSAppBundle(executablePath))
                             {
-                                executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(executableName));
+                                if (Directory.Exists(executablePath))
+                                {
+                                    var actualExecutablePath = ExecutableTypeDetector.GetAppBundleExecutablePath(executablePath);
+                                    if (File.Exists(actualExecutablePath))
+                                    {
+                                        detectedGames.Add(new GameInstallation
+                                        {
+                                            Name = game.Name,
+                                            Id = game.Id,
+                                            InstallPath = gamePath,
+                                            Executable = executableName,
+                                            SteamAppId = game.SteamAppId,
+                                            EpicAppId = game.EpicAppId,
+                                            GogAppId = game.GogAppId,
+                                            XboxAppId = game.XboxAppId,
+                                            BepInExVersion = game.BepInExVersion,
+                                            ModDirectory = game.ModDirectory,
+                                            IsValid = true,
+                                            DetectedBy = "Common Path"
+                                        });
+                                        break; // found the game, no need to check other executable types
+                                    }
+                                }
+                            }
+                            else if (ExecutableTypeDetector.IsValidExecutable(executablePath))
+                            {
+                                detectedGames.Add(new GameInstallation
+                                {
+                                    Name = game.Name,
+                                    Id = game.Id,
+                                    InstallPath = gamePath,
+                                    Executable = executableName,
+                                    SteamAppId = game.SteamAppId,
+                                    EpicAppId = game.EpicAppId,
+                                    GogAppId = game.GogAppId,
+                                    XboxAppId = game.XboxAppId,
+                                    BepInExVersion = game.BepInExVersion,
+                                    ModDirectory = game.ModDirectory,
+                                    IsValid = true,
+                                    DetectedBy = "Common Path"
+                                });
+                                break; // found the game, no need to check other executable types
                             }
                         }
-
-                        if (PlatformDetector.IsValidExecutable(executablePath))
-                        {
-                            detectedGames.Add(new GameInstallation
-                            {
-                                Name = game.Name,
-                                Id = game.Id,
-                                InstallPath = gamePath,
-                                Executable = executableName,
-                                SteamAppId = game.SteamAppId,
-                                EpicAppId = game.EpicAppId,
-                                GogAppId = game.GogAppId,
-                                XboxAppId = game.XboxAppId,
-                                BepInExVersion = game.BepInExVersion,
-                                ModDirectory = game.ModDirectory,
-                                IsValid = true,
-                                DetectedBy = "Common Path"
-                            });
-                            break; // found the game, no need to check other folder names
-                        }
+                        
+                        // if we found a game, break out of folder name loop
+                        if (detectedGames.Any(g => g.InstallPath == gamePath))
+                            break;
                     }
                 }
             }
@@ -691,13 +896,6 @@ public class GameDetector : IGameDetector
         public string InstallLocation { get; set; } = string.Empty;
     }
 
-    /// <summary>
-    /// gets the appropriate executable name for the current platform
-    /// </summary>
-    private string GetPlatformExecutableName(string baseExecutable)
-    {
-        return PlatformDetector.GetExecutableName(baseExecutable);
-    }
 
     /// <summary>
     /// gets common installation paths for the current platform

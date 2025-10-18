@@ -494,13 +494,14 @@ public class ModManager : IModManager
 
         var executablePath = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
 
-        if (PlatformDetector.IsMacOS)
+        // check for .app bundles based on executable type, not current platform
+        if (ExecutableTypeDetector.IsMacOSAppBundle(executablePath))
         {
             var appBundleName = $"{Path.GetFileNameWithoutExtension(gameInstall.Executable)}.app";
             var appBundlePath = Path.Combine(gameInstall.InstallPath, appBundleName);
             if (Directory.Exists(appBundlePath))
             {
-                executablePath = Path.Combine(appBundlePath, "Contents", "MacOS", gameInstall.Executable);
+                executablePath = ExecutableTypeDetector.GetAppBundleExecutablePath(appBundlePath);
             }
         }
         
@@ -508,23 +509,11 @@ public class ModManager : IModManager
     }
 
     /// <summary>
-    /// gets the correct mods directory path accounting for platform differences
+    /// gets the correct mods directory path accounting for executable type differences
     /// </summary>
     public static string GetModsDirectoryPath(GameInstallation gameInstall)
     {
-        // on macos, unity games use .app bundles with data stored at Contents/Resources/Data/
-        if (PlatformDetector.IsMacOS)
-        {
-            var appBundlePath = Path.Combine(gameInstall.InstallPath, $"{Path.GetFileNameWithoutExtension(gameInstall.Executable)}.app");
-            if (Directory.Exists(appBundlePath))
-            {
-                // macos unity games store data in Contents/Resources/Data/
-                return Path.Combine(appBundlePath, "Contents", "Resources", "Data", "Managed", "Mods");
-            }
-        }
-        
-        // fallback to standard path for windows, linux, or if .app bundle not found
-        return Path.Combine(gameInstall.InstallPath, gameInstall.ModDirectory);
+        return ExecutableTypeDetector.GetModsDirectoryPath(gameInstall);
     }
 
     public static void EnsureModsDirectory(GameInstallation gameInstall)

@@ -113,10 +113,11 @@ public class GameLauncher : IGameLauncher
         {
             var procList = new List<Process>();
 
-            // on non-windows, check for run_bepinex.sh script first
-            if (!OperatingSystem.IsWindows())
+            // check for run_bepinex.sh script based on executable type, not current platform
+            var executablePath = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
+            if (ExecutableTypeDetector.ShouldUseRunBepInExScript(executablePath))
             {
-                Console.WriteLine($"[DEBUG] Non-Windows system detected, checking for run_bepinex.sh script");
+                Console.WriteLine($"[DEBUG] Unix executable detected, checking for run_bepinex.sh script");
                 var scriptPath = Path.Combine(gameInstall.InstallPath, "run_bepinex.sh");
                 Console.WriteLine($"[DEBUG] Script path: {scriptPath}");
                 Console.WriteLine($"[DEBUG] Script exists: {File.Exists(scriptPath)}");
@@ -187,7 +188,7 @@ public class GameLauncher : IGameLauncher
             }
             else
             {
-                Console.WriteLine($"[DEBUG] Windows system detected, skipping script check");
+                Console.WriteLine($"[DEBUG] Windows executable detected, skipping script check");
             }
 
             // fallback to direct executable launch (windows or when no script exists)
@@ -195,19 +196,32 @@ public class GameLauncher : IGameLauncher
             Console.WriteLine($"[DEBUG] Executable path: {exePath}");
             Console.WriteLine($"[DEBUG] Executable exists: {File.Exists(exePath)}");
             
-            // on macos, also check for .app bundles
-            if (!File.Exists(exePath) && !OperatingSystem.IsWindows())
+            // check for .app bundles based on executable type, not current platform
+            if (!File.Exists(exePath) && ExecutableTypeDetector.IsMacOSAppBundle(exePath))
             {
-                Console.WriteLine($"[DEBUG] Executable not found, checking for macOS .app bundle");
+                Console.WriteLine($"[DEBUG] macOS app bundle detected");
+                Console.WriteLine($"[DEBUG] App bundle path: {exePath}");
+                Console.WriteLine($"[DEBUG] App bundle exists: {Directory.Exists(exePath)}");
+                
+                if (Directory.Exists(exePath))
+                {
+                    exePath = ExecutableTypeDetector.GetAppBundleExecutablePath(exePath);
+                    Console.WriteLine($"[DEBUG] Updated executable path for macOS: {exePath}");
+                    Console.WriteLine($"[DEBUG] macOS executable exists: {File.Exists(exePath)}");
+                }
+            }
+            else if (!File.Exists(exePath))
+            {
+                // check if it might be an app bundle with different naming
                 var appBundlePath = Path.Combine(gameInstall.InstallPath, $"{Path.GetFileNameWithoutExtension(gameInstall.Executable)}.app");
-                Console.WriteLine($"[DEBUG] App bundle path: {appBundlePath}");
-                Console.WriteLine($"[DEBUG] App bundle exists: {Directory.Exists(appBundlePath)}");
+                Console.WriteLine($"[DEBUG] Checking for alternative app bundle: {appBundlePath}");
+                Console.WriteLine($"[DEBUG] Alternative app bundle exists: {Directory.Exists(appBundlePath)}");
                 
                 if (Directory.Exists(appBundlePath))
                 {
-                    exePath = Path.Combine(appBundlePath, "Contents", "MacOS", Path.GetFileNameWithoutExtension(gameInstall.Executable));
-                    Console.WriteLine($"[DEBUG] Updated executable path for macOS: {exePath}");
-                    Console.WriteLine($"[DEBUG] macOS executable exists: {File.Exists(exePath)}");
+                    exePath = ExecutableTypeDetector.GetAppBundleExecutablePath(appBundlePath);
+                    Console.WriteLine($"[DEBUG] Updated executable path for alternative macOS: {exePath}");
+                    Console.WriteLine($"[DEBUG] Alternative macOS executable exists: {File.Exists(exePath)}");
                 }
             }
             
