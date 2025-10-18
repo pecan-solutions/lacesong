@@ -207,7 +207,9 @@ public class GameLauncher : IGameLauncher
 
         var failedProcesses = new List<string>();
         var timeoutMs = 5000; // 5 second timeout for graceful shutdown
+        var processesToWaitFor = new List<(Process process, bool needsGracefulWait, bool needsKillWait)>();
 
+        // first pass: collect processes and attempt graceful shutdown
         lock (procs) // ensure thread-safe access to process list
         {
             foreach (var p in procs)
@@ -236,62 +238,20 @@ public class GameLauncher : IGameLauncher
                         }
                     }
 
-                    // wait for graceful shutdown with timeout
+                    // collect processes that need async waiting
                     if (gracefulShutdownSucceeded)
                     {
-                        try
-                        {
-                            using var cts = new CancellationTokenSource(timeoutMs);
-                            await p.WaitForExitAsync(cts.Token);
-                            gracefulShutdownSucceeded = p.HasExited;
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            // timeout occurred, process still running
-                            gracefulShutdownSucceeded = false;
-                        }
-                        catch (Exception ex)
-                        {
-                            gracefulShutdownSucceeded = false;
-                            failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): WaitForExitAsync failed - {ex.Message}");
-                        }
+                        processesToWaitFor.Add((p, true, false));
                     }
-
-                    // if graceful shutdown failed or timed out, force kill
-                    if (!gracefulShutdownSucceeded)
+                    else
                     {
-                        try
-                        {
-                            p.Kill(true);
-                            
-                            // wait for kill to take effect with timeout
-                            using var killCts = new CancellationTokenSource(timeoutMs);
-                            await p.WaitForExitAsync(killCts.Token);
-                            
-                            // verify process actually exited
-                            if (!p.HasExited)
-                            {
-                                failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): Process did not exit after Kill");
-                            }
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            // timeout occurred, process still running
-                            failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): Process did not exit after Kill (timeout)");
-                        }
-                        catch (Exception ex)
-                        {
-                            failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): Kill failed - {ex.Message}");
-                        }
+                        // will need to kill and wait
+                        processesToWaitFor.Add((p, false, true));
                     }
                 }
                 catch (Exception ex)
                 {
                     failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): Unexpected error - {ex.Message}");
-                }
-                finally
-                {
-                    // always dispose the process object to prevent handle leaks
                     try
                     {
                         p.Dispose();
@@ -303,6 +263,77 @@ public class GameLauncher : IGameLauncher
                 }
             }
         } // end lock block
+
+        // second pass: perform async operations outside the lock
+        foreach (var (process, needsGracefulWait, needsKillWait) in processesToWaitFor)
+        {
+            try
+            {
+                if (needsGracefulWait)
+                {
+                    try
+                    {
+                        using var cts = new CancellationTokenSource(timeoutMs);
+                        await process.WaitForExitAsync(cts.Token);
+                        
+                        if (!process.HasExited)
+                        {
+                            // graceful shutdown timed out, need to kill
+                            needsKillWait = true;
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // timeout occurred, process still running
+                        needsKillWait = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        failedProcesses.Add($"{process.ProcessName} (PID: {process.Id}): WaitForExitAsync failed - {ex.Message}");
+                        needsKillWait = true;
+                    }
+                }
+
+                if (needsKillWait)
+                {
+                    try
+                    {
+                        process.Kill(true);
+                        
+                        // wait for kill to take effect with timeout
+                        using var killCts = new CancellationTokenSource(timeoutMs);
+                        await process.WaitForExitAsync(killCts.Token);
+                        
+                        // verify process actually exited
+                        if (!process.HasExited)
+                        {
+                            failedProcesses.Add($"{process.ProcessName} (PID: {process.Id}): Process did not exit after Kill");
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // timeout occurred, process still running
+                        failedProcesses.Add($"{process.ProcessName} (PID: {process.Id}): Process did not exit after Kill (timeout)");
+                    }
+                    catch (Exception ex)
+                    {
+                        failedProcesses.Add($"{process.ProcessName} (PID: {process.Id}): Kill failed - {ex.Message}");
+                    }
+                }
+            }
+            finally
+            {
+                // always dispose the process object to prevent handle leaks
+                try
+                {
+                    process.Dispose();
+                }
+                catch
+                {
+                    // ignore disposal errors
+                }
+            }
+        }
 
         // report results
         if (failedProcesses.Count > 0)
