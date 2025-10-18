@@ -15,7 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fix the "Launch Vanilla" and "Launch Modded" game options
 
-## [0.1.0] - 2025-01-XX
+## [0.2.0] - 2025-10-18
+### Added
+- Quick uninstall and install mods from the list view on BrowseMods
+- ModInstallStatusConverter and ModNotInstallStatusConverter for dynamic button visibility
+- Efficient installed mod tracking using HashSet for fast lookups
+- Enhanced mod installation with owner information from Thunderstore API
+- Comprehensive uninstall functionality with confirmation dialogs
+- Cross-platform symbolic link support for mod files and directories
+- Directory junction creation for Windows systems
+- Recursive directory copying fallback for unsupported systems
+- Enhanced mod analysis with better manifest parsing and fallback handling
+- Unit tests for symlink creation and directory mirroring functionality
+
+## [0.1.0] - 2025-10-17
 ### Added
 - Enhanced launch mode management with dynamic button states (Launch/Stop)
 - Comprehensive process monitoring and management system
