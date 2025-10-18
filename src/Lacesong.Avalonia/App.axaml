@@ -36,6 +36,8 @@
             <converters:ObjectToBooleanConverter x:Key="ObjectToBooleanConverter" />
             <converters:UrlToImageConverter x:Key="UrlToImageConverter" />
             <converters:LocalImageConverter x:Key="LocalImageConverter" />
+            <converters:ModInstallStatusConverter x:Key="ModInstallStatusConverter" />
+            <converters:ModNotInstallStatusConverter x:Key="ModNotInstallStatusConverter" />
         </ResourceDictionary>
     </Application.Resources>
 

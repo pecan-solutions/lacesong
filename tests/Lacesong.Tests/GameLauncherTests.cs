@@ -170,4 +170,85 @@ public class GameLauncherTests
             }
         }
     }
+
+    [Fact]
+    public void MirrorPluginDlls_CreatesSymlinksForFilesAndDirectories()
+    {
+        // arrange
+        var tempDir = Path.Combine(Path.GetTempPath(), "lacesong_symlink_test_" + Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+        
+        var gameInstall = new GameInstallation
+        {
+            Name = "Test Game",
+            InstallPath = tempDir
+        };
+
+        // create bepinex plugins directory
+        var pluginsDir = Path.Combine(tempDir, "BepInEx", "plugins");
+        Directory.CreateDirectory(pluginsDir);
+
+        // create mod directory with dll files and asset folders
+        var modsDir = Path.Combine(tempDir, "mods");
+        Directory.CreateDirectory(modsDir);
+        var modDir = Path.Combine(modsDir, "test_mod");
+        Directory.CreateDirectory(modDir);
+
+        // create test files and directories
+        var dllFile = Path.Combine(modDir, "test.dll");
+        File.WriteAllText(dllFile, "test dll content");
+        
+        var texturesDir = Path.Combine(modDir, "textures");
+        Directory.CreateDirectory(texturesDir);
+        File.WriteAllText(Path.Combine(texturesDir, "texture.png"), "fake texture");
+        
+        var soundsDir = Path.Combine(modDir, "sounds");
+        Directory.CreateDirectory(soundsDir);
+        File.WriteAllText(Path.Combine(soundsDir, "sound.wav"), "fake sound");
+        
+        var configFile = Path.Combine(modDir, "config.txt");
+        File.WriteAllText(configFile, "mod config");
+
+        try
+        {
+            // act - use reflection to call the private MirrorPluginDlls method
+            var modManagerType = typeof(ModManager);
+            var mirrorMethod = modManagerType.GetMethod("MirrorPluginDlls", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            
+            mirrorMethod!.Invoke(null, new object[] { "test_mod", modDir, gameInstall });
+
+            // assert
+            var pluginMirrorDir = Path.Combine(pluginsDir, "test_mod");
+            Assert.True(Directory.Exists(pluginMirrorDir), "Plugin mirror directory should exist");
+
+            // check that dll file is symlinked/copied
+            var symlinkedDll = Path.Combine(pluginMirrorDir, "test.dll");
+            Assert.True(File.Exists(symlinkedDll), "DLL file should be symlinked/copied");
+            Assert.Equal("test dll content", File.ReadAllText(symlinkedDll));
+
+            // check that asset directories are symlinked/copied
+            var symlinkedTexturesDir = Path.Combine(pluginMirrorDir, "textures");
+            Assert.True(Directory.Exists(symlinkedTexturesDir), "Textures directory should be symlinked/copied");
+            Assert.True(File.Exists(Path.Combine(symlinkedTexturesDir, "texture.png")), "Texture file should exist in symlinked directory");
+
+            var symlinkedSoundsDir = Path.Combine(pluginMirrorDir, "sounds");
+            Assert.True(Directory.Exists(symlinkedSoundsDir), "Sounds directory should be symlinked/copied");
+            Assert.True(File.Exists(Path.Combine(symlinkedSoundsDir, "sound.wav")), "Sound file should exist in symlinked directory");
+
+            // check that config file is symlinked/copied
+            var symlinkedConfig = Path.Combine(pluginMirrorDir, "config.txt");
+            Assert.True(File.Exists(symlinkedConfig), "Config file should be symlinked/copied");
+            Assert.Equal("mod config", File.ReadAllText(symlinkedConfig));
+        }
+        finally
+        {
+            // cleanup
+            try
+            {
+                Directory.Delete(tempDir, true);
+            }
+            catch { }
+        }
+    }
 }

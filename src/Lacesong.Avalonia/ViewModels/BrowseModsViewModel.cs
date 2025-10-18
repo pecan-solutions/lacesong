@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Lacesong.Core.Interfaces;
 using Lacesong.Core.Models;
+using Lacesong.Core.Services;
 using Lacesong.Avalonia.Services;
 using Lacesong.Avalonia.Models;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Lacesong.Avalonia.ViewModels;
 
@@ -24,6 +26,12 @@ public partial class BrowseModsViewModel : BaseViewModel
     private readonly IGameStateService _gameStateService;
     private CancellationTokenSource? _searchDebounceTokenSource;
     private const int SearchDebounceDelayMs = 500;
+    
+    // efficient tracking of installed mods by name (for Thunderstore matching)
+    private HashSet<string> _installedModNames = new();
+    
+    // public property for binding
+    public HashSet<string> InstalledModNames => _installedModNames;
 
     [ObservableProperty]
     private ObservableCollection<ModDisplayItem> _mods = new();
@@ -153,6 +161,7 @@ public partial class BrowseModsViewModel : BaseViewModel
         try
         {
             await LoadCategoriesAsync();
+            await RefreshInstalledModsAsync();
             await LoadModsAsync();
             Console.WriteLine("BrowseModsViewModel: InitializeAsync completed successfully");
         }
@@ -190,6 +199,9 @@ public partial class BrowseModsViewModel : BaseViewModel
             _isLoadingMods = true;
             try
             {
+                // refresh installed mods tracking first
+                await RefreshInstalledModsAsync();
+                
                 // preserve the currently selected mod completely
                 var previouslySelectedMod = SelectedMod;
 
@@ -294,9 +306,10 @@ public partial class BrowseModsViewModel : BaseViewModel
                 
                 Console.WriteLine($"BrowseModsViewModel: InstallModAsync - Selected version: {latestVersion.Version} from {latestVersion.ReleaseDate}");
                 Console.WriteLine($"BrowseModsViewModel: InstallModAsync - Download URL: {latestVersion.DownloadUrl}");
+                Console.WriteLine($"BrowseModsViewModel: InstallModAsync - Owner: {mod.Author}");
                 Console.WriteLine($"BrowseModsViewModel: InstallModAsync - Calling _modManager.InstallModFromZip");
                 
-                var op = await _modManager.InstallModFromZip(latestVersion.DownloadUrl, _gameStateService.CurrentGame, progress, cts.Token);
+                var op = await _modManager.InstallModFromZip(latestVersion.DownloadUrl, _gameStateService.CurrentGame, progress, cts.Token, mod.Author);
                 
                 Console.WriteLine($"BrowseModsViewModel: InstallModAsync - InstallModFromZip result - Success: {op.Success}, Message: {op.Message}, Error: {op.Error}");
                 return op;
@@ -306,9 +319,14 @@ public partial class BrowseModsViewModel : BaseViewModel
             
             if (result.Success)
             {
-                Console.WriteLine($"BrowseModsViewModel: InstallModAsync - Installation successful, refreshing mod list");
+                Console.WriteLine($"BrowseModsViewModel: InstallModAsync - Installation successful, updating installed mods list");
                 _snackbarService.Show("Success", $"Mod '{mod.Name}' installed successfully.", "Success");
-                await LoadModsAsync(); // Refresh the list to remove the installed mod
+                
+                // add to installed mods tracking by name
+                _installedModNames.Add(mod.Name);
+                
+                // refresh the mod list to update button states
+                await LoadModsAsync();
                 Console.WriteLine("BrowseModsViewModel: InstallModAsync - Mod list refreshed");
             }
             else
@@ -351,6 +369,218 @@ public partial class BrowseModsViewModel : BaseViewModel
             _ = LoadModsAsync();
             OnPropertyChanged(nameof(CanGoToPreviousPage));
             OnPropertyChanged(nameof(CanGoToNextPage));
+        }
+    }
+
+    [RelayCommand]
+    private async Task UninstallModAsync(ModDisplayItem modDisplay)
+    {
+        Console.WriteLine($"BrowseModsViewModel: UninstallModAsync called for mod: {modDisplay?.ModEntry?.Name ?? "null"}");
+        
+        if (modDisplay == null) 
+        {
+            Console.WriteLine("BrowseModsViewModel: UninstallModAsync - modDisplay is null, returning");
+            return;
+        }
+        
+        if (_gameStateService.CurrentGame == null || string.IsNullOrEmpty(_gameStateService.CurrentGame.InstallPath))
+        {
+            Console.WriteLine("BrowseModsViewModel: UninstallModAsync - No current game detected");
+            await _dialogService.ShowMessageDialogAsync("Game Not Detected", "Please select a valid game installation before uninstalling mods.");
+            return;
+        }
+
+        var confirmResult = await _dialogService.ShowConfirmationDialogAsync(
+            "Uninstall Mod",
+            $"Are you sure you want to uninstall '{modDisplay.Name}'? This action cannot be undone.");
+            
+        if (!confirmResult) return;
+
+        Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Current game: {_gameStateService.CurrentGame.Name} at {_gameStateService.CurrentGame.InstallPath}");
+
+        try
+        {
+            var mod = modDisplay.ModEntry;
+            Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Mod details - Name: {mod.Name}, Author: {mod.Author}, Thunderstore ID: {mod.Id}");
+            
+            // find the actual installed mod ID by name
+            var actualModId = await FindModIdByNameAsync(mod.Name);
+            if (string.IsNullOrEmpty(actualModId))
+            {
+                Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Could not find installed mod ID for: {mod.Name}");
+                _snackbarService.Show("Error", $"Could not find installed mod '{mod.Name}'. It may have been manually removed.", "Error");
+                return;
+            }
+            
+            Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Found actual mod ID: {actualModId} for mod: {mod.Name}");
+            
+            InstallingModId = mod.Id; // use Thunderstore ID for progress tracking
+            InstallProgress = 0;
+            var progress = new Progress<double>(p => 
+            {
+                InstallProgress = p;
+                Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Progress: {p:P2}");
+            });
+
+            var result = await ExecuteAsync(async () =>
+            {
+                Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Calling _modManager.UninstallMod with ID: {actualModId}");
+                
+                var op = await _modManager.UninstallMod(actualModId, _gameStateService.CurrentGame);
+                
+                Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - UninstallMod result - Success: {op.Success}, Message: {op.Message}, Error: {op.Error}");
+                return op;
+            }, "Uninstalling mod...");
+
+            Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Final result - Success: {result.Success}");
+            
+            if (result.Success)
+            {
+                Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Uninstallation successful, updating installed mods list");
+                _snackbarService.Show("Success", $"Mod '{mod.Name}' uninstalled successfully.", "Success");
+                
+                // remove from installed mods tracking by name
+                _installedModNames.Remove(mod.Name);
+                
+                // refresh the mod list to update button states
+                await LoadModsAsync();
+                Console.WriteLine("BrowseModsViewModel: UninstallModAsync - Mod list refreshed");
+            }
+            else
+            {
+                Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Uninstallation failed: {result.Error}");
+                _snackbarService.Show("Uninstallation Failed", result.Error, "Error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Exception occurred: {ex.Message}");
+            Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Stack trace: {ex.StackTrace}");
+            _snackbarService.Show("Error", $"An unexpected error occurred: {ex.Message}", "Error");
+        }
+        finally
+        {
+            Console.WriteLine("BrowseModsViewModel: UninstallModAsync - Cleaning up");
+            InstallingModId = null;
+        }
+    }
+
+    // method to find the actual mod ID (directory name) by mod name
+    private async Task<string?> FindModIdByNameAsync(string modName)
+    {
+        if (_gameStateService.CurrentGame == null || string.IsNullOrEmpty(_gameStateService.CurrentGame.InstallPath))
+            return null;
+
+        try
+        {
+            var modsDirectory = ModManager.GetModsDirectoryPath(_gameStateService.CurrentGame);
+            if (!Directory.Exists(modsDirectory))
+                return null;
+
+            var modDirectories = Directory.GetDirectories(modsDirectory);
+            
+            foreach (var modDir in modDirectories)
+            {
+                var manifestPath = Path.Combine(modDir, "manifest.json");
+                if (File.Exists(manifestPath))
+                {
+                    try
+                    {
+                        var manifestContent = await File.ReadAllTextAsync(manifestPath);
+                        var manifest = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(manifestContent);
+                        
+                        if (manifest.TryGetProperty("name", out var nameElement))
+                        {
+                            var currentModName = nameElement.GetString();
+                            if (string.Equals(currentModName, modName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                // return the directory name as the mod ID
+                                return Path.GetFileName(modDir);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"BrowseModsViewModel: Error parsing manifest.json in {modDir}: {ex.Message}");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"BrowseModsViewModel: Error finding mod ID by name: {ex.Message}");
+        }
+
+        return null;
+    }
+
+    // helper method to check if a mod is installed by name
+    public bool IsModInstalled(string modName)
+    {
+        return _installedModNames.Contains(modName);
+    }
+
+    // method to refresh installed mods tracking by scanning manifest.json files
+    private async Task RefreshInstalledModsAsync()
+    {
+        if (_gameStateService.CurrentGame == null || string.IsNullOrEmpty(_gameStateService.CurrentGame.InstallPath))
+        {
+            _installedModNames.Clear();
+            return;
+        }
+
+        try
+        {
+            _installedModNames.Clear();
+            
+            // get the mods directory path (handles cross-platform differences)
+            var modsDirectory = ModManager.GetModsDirectoryPath(_gameStateService.CurrentGame);
+            Console.WriteLine($"BrowseModsViewModel: Scanning mods directory: {modsDirectory}");
+            
+            if (!Directory.Exists(modsDirectory))
+            {
+                Console.WriteLine("BrowseModsViewModel: Mods directory does not exist");
+                return;
+            }
+
+            // scan all mod directories for manifest.json files
+            var modDirectories = Directory.GetDirectories(modsDirectory);
+            Console.WriteLine($"BrowseModsViewModel: Found {modDirectories.Length} mod directories");
+            
+            foreach (var modDir in modDirectories)
+            {
+                var manifestPath = Path.Combine(modDir, "manifest.json");
+                if (File.Exists(manifestPath))
+                {
+                    try
+                    {
+                        // efficiently read and parse just the name field
+                        var manifestContent = await File.ReadAllTextAsync(manifestPath);
+                        var manifest = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(manifestContent);
+                        
+                        if (manifest.TryGetProperty("name", out var nameElement))
+                        {
+                            var modName = nameElement.GetString();
+                            if (!string.IsNullOrEmpty(modName))
+                            {
+                                _installedModNames.Add(modName);
+                                Console.WriteLine($"BrowseModsViewModel: Found installed mod: {modName}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"BrowseModsViewModel: Error parsing manifest.json in {modDir}: {ex.Message}");
+                    }
+                }
+            }
+            
+            Console.WriteLine($"BrowseModsViewModel: Refreshed installed mods tracking - {_installedModNames.Count} mods installed");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"BrowseModsViewModel: Failed to refresh installed mods: {ex.Message}");
+            _installedModNames.Clear();
         }
     }
 }

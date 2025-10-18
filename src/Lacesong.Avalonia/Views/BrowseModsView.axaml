@@ -31,24 +31,24 @@
                 <ListBox ItemsSource="{Binding Mods}" SelectedItem="{Binding SelectedMod, Mode=TwoWay}" Background="Transparent" BorderThickness="0">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="48,*" Margin="8" RowDefinitions="Auto,Auto,Auto">
+                            <Grid ColumnDefinitions="48,*,Auto" Margin="8" RowDefinitions="Auto,Auto,Auto">
                                 <!-- Icon -->
                                 <Border Grid.Column="0" Grid.RowSpan="3" Width="48" Height="48" CornerRadius="4" ClipToBounds="True" Margin="0,0,12,0" VerticalAlignment="Top">
                                     <Image Source="{Binding Icon}" Stretch="UniformToFill" IsVisible="{Binding Icon, Converter={StaticResource ObjectToBooleanConverter}}"/>
                                 </Border>
                                 
                                 <!-- Name -->
-                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding Name}" Classes="h4" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding Name}" Classes="h4" TextWrapping="Wrap" Margin="0,0,8,4"/>
                                 
                                 <!-- Author and Date -->
-                                <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+                                <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,0,8,4">
                                     <TextBlock Text="{Binding Author, StringFormat='by {0}'}" Classes="smallFaded"/>
                                     <TextBlock Text="•" Classes="smallFaded"/>
                                     <TextBlock Text="{Binding LastUpdated, Converter={StaticResource RelativeTimeConverter}}" Classes="smallFaded"/>
                                 </StackPanel>
                                 
                                 <!-- Stats -->
-                                <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="12">
+                                <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="12" Margin="0,0,8,0">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="★" Classes="smallFaded"/>
                                         <TextBlock Text="{Binding Rating, StringFormat='{}{0:F1}'}" Classes="smallFaded"/>
@@ -57,6 +57,58 @@
                                         <TextBlock Text="↓" Classes="smallFaded"/>
                                         <TextBlock Text="{Binding DownloadCount}" Classes="smallFaded"/>
                                     </StackPanel>
+                                </StackPanel>
+                                
+                                <!-- Quick Action Buttons -->
+                                <StackPanel Grid.Column="2" Grid.RowSpan="3" VerticalAlignment="Center">
+                                    <ProgressBar Minimum="0" Maximum="1" Height="2" VerticalAlignment="Top" Value="{Binding $parent[UserControl].DataContext.InstallProgress}" Width="24" Margin="0,0,0,2">
+                                        <ProgressBar.IsVisible>
+                                            <MultiBinding Converter="{StaticResource IdMatchConverter}">
+                                                <Binding Path="Id"/>
+                                                <Binding Path="$parent[UserControl].DataContext.InstallingModId"/>
+                                            </MultiBinding>
+                                        </ProgressBar.IsVisible>
+                                    </ProgressBar>
+                                    
+                                    <!-- Install Button (shown when mod is not installed) -->
+                                    <Button Classes="iconButton" 
+                                            Command="{Binding $parent[UserControl].DataContext.InstallModCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="Quick Install">
+                                        <Button.IsVisible>
+                                            <MultiBinding Converter="{StaticResource ModNotInstallStatusConverter}">
+                                                <Binding Path="Name"/>
+                                                <Binding Path="$parent[UserControl].DataContext.InstalledModNames"/>
+                                            </MultiBinding>
+                                        </Button.IsVisible>
+                                        <Button.IsEnabled>
+                                            <MultiBinding Converter="{StaticResource InverseIdMatchConverter}">
+                                                <Binding Path="Id"/>
+                                                <Binding Path="$parent[UserControl].DataContext.InstallingModId"/>
+                                            </MultiBinding>
+                                        </Button.IsEnabled>
+                                        <PathIcon Data="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" Width="16" Height="16"/>
+                                    </Button>
+                                    
+                                    <!-- Uninstall Button (shown when mod is installed) -->
+                                    <Button Classes="iconButton danger" 
+                                            Command="{Binding $parent[UserControl].DataContext.UninstallModCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="Quick Uninstall">
+                                        <Button.IsVisible>
+                                            <MultiBinding Converter="{StaticResource ModInstallStatusConverter}">
+                                                <Binding Path="Name"/>
+                                                <Binding Path="$parent[UserControl].DataContext.InstalledModNames"/>
+                                            </MultiBinding>
+                                        </Button.IsVisible>
+                                        <Button.IsEnabled>
+                                            <MultiBinding Converter="{StaticResource InverseIdMatchConverter}">
+                                                <Binding Path="Id"/>
+                                                <Binding Path="$parent[UserControl].DataContext.InstallingModId"/>
+                                            </MultiBinding>
+                                        </Button.IsEnabled>
+                                        <PathIcon Data="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4zM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9z" Width="16" Height="16"/>
+                                    </Button>
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>

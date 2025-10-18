@@ -2,6 +2,7 @@ using Lacesong.Core.Interfaces;
 using Lacesong.Core.Models;
 using System.IO.Compression;
 using System.Text.Json;
+using System.Linq;
 
 namespace Lacesong.Core.Services;
 
@@ -24,8 +25,14 @@ public class ModManager : IModManager
 
     public async Task<OperationResult> InstallModFromZip(string source, GameInstallation gameInstall, IProgress<double>? progress, CancellationToken token = default)
     {
+        return await InstallModFromZip(source, gameInstall, progress, token, null);
+    }
+
+    public async Task<OperationResult> InstallModFromZip(string source, GameInstallation gameInstall, IProgress<double>? progress, CancellationToken token = default, string? owner = null)
+    {
         Console.WriteLine($"ModManager: InstallModFromZip called with source: {source}");
         Console.WriteLine($"ModManager: GameInstall - Name: {gameInstall.Name}, Path: {gameInstall.InstallPath}");
+        Console.WriteLine($"ModManager: Owner from API: {owner ?? "null"}");
         
         try
         {
@@ -63,7 +70,7 @@ public class ModManager : IModManager
 
                 // ---------------- extract and analyze ----------------
                 Console.WriteLine("ModManager: Extracting and analyzing mod");
-                var extractResult = await ExtractAndAnalyzeMod(tempZipPath, gameInstall);
+                var extractResult = await ExtractAndAnalyzeMod(tempZipPath, gameInstall, owner);
                 if (!extractResult.Success)
                 {
                     Console.WriteLine($"ModManager: Extract and analyze failed: {extractResult.Error}");
@@ -364,7 +371,29 @@ public class ModManager : IModManager
             var pluginMirrorPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", modId);
             var isEnabled = Directory.Exists(pluginMirrorPath);
 
-            // look for manifest.json first (new format)
+            // look for modinfo.json first (primary source)
+            var modInfoPath = Path.Combine(modPath, ModInfoFileName);
+            if (File.Exists(modInfoPath))
+            {
+                var json = await File.ReadAllTextAsync(modInfoPath);
+                try
+                {
+                    var modInfo = JsonSerializer.Deserialize<ModInfo>(json);
+                    if (modInfo != null)
+                    {
+                        modInfo.IsEnabled = isEnabled;
+                        modInfo.IsInstalled = true;
+                        return modInfo;
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    Console.WriteLine($"Error deserializing {ModInfoFileName} for {modId}: {ex.Message}");
+                    Console.WriteLine($"Problematic JSON: {json}");
+                }
+            }
+
+            // fallback to manifest.json if modinfo.json not found or failed to parse
             var manifestPath = Path.Combine(modPath, "manifest.json");
             if (File.Exists(manifestPath))
             {
@@ -435,28 +464,6 @@ public class ModManager : IModManager
                 catch (Exception ex)
                 {
                     Console.WriteLine($"failed to parse manifest for {modId}: {ex.Message}");
-                }
-            }
-
-            // fallback to modinfo.json if manifest.json not found or failed to parse
-            var modInfoPath = Path.Combine(modPath, ModInfoFileName);
-            if (File.Exists(modInfoPath))
-            {
-                var json = await File.ReadAllTextAsync(modInfoPath);
-                try
-                {
-                    var modInfo = JsonSerializer.Deserialize<ModInfo>(json);
-                    if (modInfo != null)
-                    {
-                        modInfo.IsEnabled = isEnabled;
-                        modInfo.IsInstalled = true;
-                        return modInfo;
-                    }
-                }
-                catch (JsonException ex)
-                {
-                    Console.WriteLine($"Error deserializing {ModInfoFileName} for {modId}: {ex.Message}");
-                    Console.WriteLine($"Problematic JSON: {json}");
                 }
             }
 
@@ -609,9 +616,48 @@ public class ModManager : IModManager
     }
 
     /// <summary>
+    /// extracts the mod name from manifest json to use as fallback when id is not available
+    /// </summary>
+    private static string ExtractModNameFromManifest(string manifestJson)
+    {
+        try
+        {
+            var manifest = JsonSerializer.Deserialize<JsonElement>(manifestJson);
+            
+            // try to get the name field first
+            if (manifest.TryGetProperty("name", out var nameEl))
+            {
+                var name = nameEl.GetString();
+                if (!string.IsNullOrEmpty(name))
+                {
+                    return CleanModNameForFolder(name);
+                }
+            }
+            
+            // if no name, try to get the id field
+            if (manifest.TryGetProperty("id", out var idEl))
+            {
+                var id = idEl.GetString();
+                if (!string.IsNullOrEmpty(id))
+                {
+                    return CleanModNameForFolder(id);
+                }
+            }
+            
+            // fallback to a generic name
+            return "UnknownMod";
+        }
+        catch (JsonException ex)
+        {
+            Console.WriteLine($"failed to extract mod name from manifest: {ex.Message}");
+            return "UnknownMod";
+        }
+    }
+
+    /// <summary>
     /// parses manifest.json content to ModInfo, handling field name differences
     /// </summary>
-    private static ModInfo? ParseManifestToModInfo(string manifestJson, string fallbackId)
+    private static ModInfo? ParseManifestToModInfo(string manifestJson, string fallbackId, string? owner = null)
     {
         try
         {
@@ -624,7 +670,9 @@ public class ModManager : IModManager
                 Description = manifest.TryGetProperty("description", out var descEl) ? descEl.GetString() ?? string.Empty : string.Empty,
                 Version = manifest.TryGetProperty("version", out var verEl) ? verEl.GetString() ?? "1.0.0" : 
                          (manifest.TryGetProperty("version_number", out var verAlt) ? verAlt.GetString() ?? "1.0.0" : "1.0.0"),
-                Author = manifest.TryGetProperty("author", out var authorEl) ? authorEl.GetString() ?? "Unknown" : "Unknown",
+                // use owner from API response as primary source, fallback to manifest author, then "Unknown"
+                Author = !string.IsNullOrEmpty(owner) ? owner : 
+                         (manifest.TryGetProperty("author", out var authorEl) ? authorEl.GetString() ?? "Unknown" : "Unknown"),
                 WebsiteUrl = manifest.TryGetProperty("website_url", out var webEl) ? webEl.GetString() : null,
                 Dependencies = manifest.TryGetProperty("dependencies", out var depsEl) && depsEl.ValueKind == JsonValueKind.Array ?
                     depsEl.EnumerateArray().Select(x => x.GetString() ?? string.Empty).Where(x => !string.IsNullOrEmpty(x)).ToList() : new List<string>(),
@@ -661,25 +709,140 @@ public class ModManager : IModManager
 
         Directory.CreateDirectory(pluginsRoot);
 
+        // symlink all dll files
         var dllFiles = Directory.GetFiles(modsPath, "*.dll", SearchOption.AllDirectories);
-
         foreach (var dll in dllFiles)
         {
             var linkPath = Path.Combine(pluginsRoot, Path.GetFileName(dll));
-            try
+            CreateSymbolicLinkForFile(linkPath, dll);
+        }
+
+        // symlink all directories (for assets like textures, sounds, etc.)
+        var directories = Directory.GetDirectories(modsPath);
+        foreach (var dir in directories)
+        {
+            var dirName = Path.GetFileName(dir);
+            var linkPath = Path.Combine(pluginsRoot, dirName);
+            CreateSymbolicLinkForDirectory(linkPath, dir);
+        }
+
+        // also symlink any files in the root mod directory that aren't dlls
+        var rootFiles = Directory.GetFiles(modsPath)
+            .Where(f => !f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        
+        foreach (var file in rootFiles)
+        {
+            var fileName = Path.GetFileName(file);
+            var linkPath = Path.Combine(pluginsRoot, fileName);
+            CreateSymbolicLinkForFile(linkPath, file);
+        }
+    }
+
+    /// <summary>
+    /// creates a symbolic link for a file, with fallback to copying if symlinks aren't supported
+    /// </summary>
+    private static void CreateSymbolicLinkForFile(string linkPath, string targetPath)
+    {
+        try
+        {
+            // attempt to create symbolic link (preferred – no duplication)
+            File.CreateSymbolicLink(linkPath, targetPath);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // fallback to hard copy if symlink creation is not permitted (developer mode disabled)
+            File.Copy(targetPath, linkPath, true);
+        }
+        catch (PlatformNotSupportedException)
+        {
+            File.Copy(targetPath, linkPath, true);
+        }
+    }
+
+    /// <summary>
+    /// creates a symbolic link for a directory, using junctions on Windows and symlinks on other platforms
+    /// </summary>
+    private static void CreateSymbolicLinkForDirectory(string linkPath, string targetPath)
+    {
+        try
+        {
+            if (OperatingSystem.IsWindows())
             {
-                // attempt to create symbolic link (preferred – no duplication)
-                File.CreateSymbolicLink(linkPath, dll);
+                // on windows, use directory junctions for folders
+                CreateDirectoryJunction(linkPath, targetPath);
             }
-            catch (UnauthorizedAccessException)
+            else
             {
-                // fallback to hard copy if symlink creation is not permitted (developer mode disabled)
-                File.Copy(dll, linkPath, true);
+                // on unix-like systems, use symbolic links for directories
+                Directory.CreateSymbolicLink(linkPath, targetPath);
             }
-            catch (PlatformNotSupportedException)
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // fallback to recursive copy if junction/symlink creation is not permitted
+            CopyDirectoryRecursive(targetPath, linkPath);
+        }
+        catch (PlatformNotSupportedException)
+        {
+            CopyDirectoryRecursive(targetPath, linkPath);
+        }
+    }
+
+    /// <summary>
+    /// creates a directory junction on Windows using mklink command
+    /// </summary>
+    private static void CreateDirectoryJunction(string junctionPath, string targetPath)
+    {
+        try
+        {
+            // use mklink /J to create a directory junction
+            var process = new System.Diagnostics.Process
             {
-                File.Copy(dll, linkPath, true);
+                StartInfo = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/c mklink /J \"{junctionPath}\" \"{targetPath}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                }
+            };
+
+            process.Start();
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                var error = process.StandardError.ReadToEnd();
+                throw new InvalidOperationException($"Failed to create junction: {error}");
             }
+        }
+        catch (Exception ex)
+        {
+            // if junction creation fails, fall back to recursive copy
+            CopyDirectoryRecursive(targetPath, junctionPath);
+        }
+    }
+
+    /// <summary>
+    /// recursively copies a directory as fallback when symlinks/junctions aren't available
+    /// </summary>
+    private static void CopyDirectoryRecursive(string sourceDir, string destDir)
+    {
+        Directory.CreateDirectory(destDir);
+
+        foreach (var file in Directory.GetFiles(sourceDir))
+        {
+            var destFile = Path.Combine(destDir, Path.GetFileName(file));
+            File.Copy(file, destFile, true);
+        }
+
+        foreach (var subDir in Directory.GetDirectories(sourceDir))
+        {
+            var destSubDir = Path.Combine(destDir, Path.GetFileName(subDir));
+            CopyDirectoryRecursive(subDir, destSubDir);
         }
     }
 
@@ -753,9 +916,10 @@ public class ModManager : IModManager
         return CleanModNameForFolder(basis);
     }
 
-    private async Task<OperationResult> ExtractAndAnalyzeMod(string zipPath, GameInstallation gameInstall)
+    private async Task<OperationResult> ExtractAndAnalyzeMod(string zipPath, GameInstallation gameInstall, string? owner = null)
     {
         Console.WriteLine($"ModManager: ExtractAndAnalyzeMod called with zipPath: {zipPath}");
+        Console.WriteLine($"ModManager: Owner from API: {owner ?? "null"}");
 
         string tempExtractPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         try
@@ -789,7 +953,10 @@ public class ModManager : IModManager
                 var manifestJson = await File.ReadAllTextAsync(manifestPath);
                 Console.WriteLine($"ModManager: Manifest content length: {manifestJson.Length} characters");
                 Console.WriteLine($"ModManager: Manifest content preview: {manifestJson.Substring(0, Math.Min(200, manifestJson.Length))}...");
-                modInfo = ParseManifestToModInfo(manifestJson, "temp");
+                
+                // extract mod name from manifest to use as fallback instead of "temp"
+                var fallbackName = ExtractModNameFromManifest(manifestJson);
+                modInfo = ParseManifestToModInfo(manifestJson, fallbackName, owner);
                 Console.WriteLine($"ModManager: Parsed mod info - Name: {modInfo?.Name}, ID: {modInfo?.Id}");
             }
             else
@@ -803,7 +970,10 @@ public class ModManager : IModManager
                     var manifestJson = await File.ReadAllTextAsync(nestedManifest);
                     Console.WriteLine($"ModManager: Nested manifest content length: {manifestJson.Length} characters");
                     Console.WriteLine($"ModManager: Nested manifest content preview: {manifestJson.Substring(0, Math.Min(200, manifestJson.Length))}...");
-                    modInfo = ParseManifestToModInfo(manifestJson, "temp");
+                    
+                    // extract mod name from manifest to use as fallback instead of "temp"
+                    var fallbackName = ExtractModNameFromManifest(manifestJson);
+                    modInfo = ParseManifestToModInfo(manifestJson, fallbackName, owner);
                     Console.WriteLine($"ModManager: Parsed nested mod info - Name: {modInfo?.Name}, ID: {modInfo?.Id}");
                 }
                 else
@@ -816,7 +986,7 @@ public class ModManager : IModManager
             if (modInfo == null)
             {
                 Console.WriteLine("ModManager: Attempting to infer mod info from directory structure");
-                modInfo = await InferModInfo(tempExtractPath);
+                modInfo = await InferModInfo(tempExtractPath, owner);
                 Console.WriteLine($"ModManager: Inferred mod info - Name: {modInfo?.Name}, ID: {modInfo?.Id}");
             }
 
@@ -849,7 +1019,7 @@ public class ModManager : IModManager
         }
     }
 
-    private async Task<ModInfo?> InferModInfo(string extractPath)
+    private async Task<ModInfo?> InferModInfo(string extractPath, string? owner = null)
     {
         try
         {
@@ -868,7 +1038,7 @@ public class ModManager : IModManager
                 Name = modName,
                 Version = "1.0.0",
                 Description = "Mod installed from zip file",
-                Author = "Unknown",
+                Author = !string.IsNullOrEmpty(owner) ? owner : "Unknown",
                 Dependencies = new List<string>()
             };
         }
