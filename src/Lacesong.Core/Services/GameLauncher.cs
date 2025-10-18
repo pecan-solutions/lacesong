@@ -80,25 +80,36 @@ public class GameLauncher : IGameLauncher
         {
             var procList = new List<Process>();
 
-            // on mac/linux run prelaunch script if it exists
+            // on non-windows, check for run_bepinex.sh script first
             if (!OperatingSystem.IsWindows())
             {
                 var scriptPath = Path.Combine(gameInstall.InstallPath, "run_bepinex.sh");
                 if (File.Exists(scriptPath))
                 {
-                    var psiScript = new ProcessStartInfo
+                    // only run script for modded launches (when isVanilla is false)
+                    // or when policy allows vanilla launches with script
+                    if (!isVanilla)
                     {
-                        FileName = scriptPath,
-                        WorkingDirectory = gameInstall.InstallPath,
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true
-                    };
-                    var scriptProc = Process.Start(psiScript);
-                    if (scriptProc != null) procList.Add(scriptProc);
+                        var psiScript = new ProcessStartInfo
+                        {
+                            FileName = scriptPath,
+                            WorkingDirectory = gameInstall.InstallPath,
+                            UseShellExecute = true
+                        };
+                        var scriptProc = Process.Start(psiScript);
+                        if (scriptProc != null) procList.Add(scriptProc);
+                        
+                        // script handles launching the game, so we're done
+                        if (procList.Count > 0)
+                        {
+                            _runningProcesses[gameInstall.InstallPath] = procList;
+                        }
+                        return Task.FromResult(OperationResult.SuccessResult("game launched via script"));
+                    }
                 }
             }
 
+            // fallback to direct executable launch (windows or when no script exists)
             var exePath = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
             if (!File.Exists(exePath))
             {
