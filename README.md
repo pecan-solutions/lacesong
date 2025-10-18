@@ -10,8 +10,8 @@ Lacesong provides a simple, safe, and consistent way to install, manage, and upd
 
 ## Screenshots
 
-![Application Screenshot of the Mod Catalog](docs/images/screenshotlacesong.png)
-Mod catalog screenshot showing Thunderstore integration and "The Marrow" theme.
+![Application Screenshot of the Mod Catalog](docs/images/lacesongscreenshot.png)
+Mod catalog screenshot showing mod management and "Moss Groto" theme.
 
 ## Tech Stack
 
