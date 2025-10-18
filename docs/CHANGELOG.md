@@ -15,6 +15,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fix the "Launch Vanilla" and "Launch Modded" game options
 
+## [0.1.0] - 2025-01-XX
+### Added
+- Enhanced launch mode management with dynamic button states (Launch/Stop)
+- Comprehensive process monitoring and management system
+- Cross-platform game launcher improvements (Windows, macOS, Linux)
+- Support for `run_bepinex.sh` script on non-Windows systems
+- macOS `.app` bundle detection and handling
+- Graceful game shutdown with fallback to force kill
+- Process tracking and cleanup with proper resource management
+- Comprehensive unit tests for GameLauncher functionality
+- Enhanced debugging and logging throughout launch process
+
+### Changed
+- Improved command execution logic with separate start/stop capabilities
+- Enhanced UI responsiveness with dynamic button text based on game state
+- Better error handling and exception reporting in game launcher
+- Refactored HomeViewModel to implement IDisposable for proper cleanup
+
+### Fixed
+- Prevent double-launch scenarios and deadlock in game startup
+- Resolve compilation errors with await statements in lock contexts
+- Improve thread safety in process management operations
+
 ## [0.0.1] - 2025-10-17
 ### Added
 - CHANGELOG.md tracking
