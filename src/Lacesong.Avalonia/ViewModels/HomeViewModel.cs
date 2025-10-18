@@ -22,7 +22,7 @@ public partial class HomeViewModel : BaseViewModel
     [ObservableProperty]
     private string _gameStatusText;
 
-    private enum LaunchMode { None, Modded, Vanilla }
+    public enum LaunchMode { None, Modded, Vanilla }
 
     [ObservableProperty]
     private LaunchMode _activeMode = LaunchMode.None;
@@ -51,6 +51,8 @@ public partial class HomeViewModel : BaseViewModel
     {
         LaunchModdedCommand.NotifyCanExecuteChanged();
         LaunchVanillaCommand.NotifyCanExecuteChanged();
+        InstallModFromFileCommand.NotifyCanExecuteChanged();
+        InstallModFromUrlCommand.NotifyCanExecuteChanged();
     }
 
     public GameInstallation CurrentGame => _gameStateService.CurrentGame;
@@ -126,9 +128,19 @@ public partial class HomeViewModel : BaseViewModel
     [RelayCommand]
     private void GoToBrowseMods() => _navigationService.NavigateTo<BrowseModsViewModel>();
 
-    private bool CanExecuteGameCommands()
+    private bool CanStartGame()
     {
         return IsGameDetected && !IsGameRunning;
+    }
+
+    private bool CanStopGame()
+    {
+        return IsGameDetected && IsGameRunning;
+    }
+
+    private bool CanExecuteGameCommands()
+    {
+        return IsGameDetected && (CanStartGame() || CanStopGame());
     }
 
     [RelayCommand(CanExecute = nameof(CanExecuteGameCommands))]
@@ -234,7 +246,7 @@ public partial class HomeViewModel : BaseViewModel
         }, "Selecting game directory...");
     }
 
-    [RelayCommand(CanExecute = nameof(CanExecuteGameCommands))]
+    [RelayCommand(CanExecute = nameof(CanStartGame))]
     private async Task InstallModFromFile()
     {
         await ExecuteAsync(async () =>
@@ -254,7 +266,7 @@ public partial class HomeViewModel : BaseViewModel
         }, "Installing mod from file...");
     }
 
-    [RelayCommand(CanExecute = nameof(CanExecuteGameCommands))]
+    [RelayCommand(CanExecute = nameof(CanStartGame))]
     private async Task InstallModFromUrl()
     {
         await ExecuteAsync(async () =>
@@ -274,3 +286,4 @@ public partial class HomeViewModel : BaseViewModel
         }, "Installing mod from URL...");
     }
 }
+

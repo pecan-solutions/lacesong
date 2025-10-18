@@ -14,7 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix the "Launch Vanilla" and "Launch Modded" game options
-- Fix the enablng/disabling of mods with symlinks
 
 ## [0.0.1] - 2025-10-17
 ### Added
