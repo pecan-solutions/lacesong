@@ -6,10 +6,12 @@ using Lacesong.Core.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
+using System.Threading;
+using Avalonia.Threading;
 
 namespace Lacesong.Avalonia.ViewModels;
 
-public partial class HomeViewModel : BaseViewModel
+public partial class HomeViewModel : BaseViewModel, IDisposable
 {
     private readonly INavigationService _navigationService;
     private readonly IGameStateService _gameStateService;
@@ -18,9 +20,13 @@ public partial class HomeViewModel : BaseViewModel
     private readonly IDialogService _dialogService;
     private readonly IGameLauncher _gameLauncher;
 
+    // process monitoring
+    private CancellationTokenSource? _processMonitoringCts;
+    private Task? _processMonitoringTask;
+    private bool _disposed;
 
     [ObservableProperty]
-    private string _gameStatusText;
+    private string _gameStatusText = string.Empty;
 
     public enum LaunchMode { None, Modded, Vanilla }
 
@@ -125,6 +131,58 @@ public partial class HomeViewModel : BaseViewModel
         }
     }
 
+    private void StartProcessMonitoring()
+    {
+        // stop any existing monitoring
+        StopProcessMonitoring();
+
+        if (!IsGameDetected || !IsGameRunning)
+            return;
+
+        _processMonitoringCts = new CancellationTokenSource();
+        _processMonitoringTask = Task.Run(async () =>
+        {
+            try
+            {
+                while (!_processMonitoringCts.Token.IsCancellationRequested)
+                {
+                    await Task.Delay(1000, _processMonitoringCts.Token); // check every second
+
+                    // check if game is still running
+                    if (!_gameLauncher.IsRunning(CurrentGame))
+                    {
+                        // game process has exited, update ui state
+                        // marshal to ui thread using dispatcher
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            IsGameRunning = false;
+                            ActiveMode = LaunchMode.None;
+                            SetStatus("Game exited.");
+                        });
+                        break;
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // expected when cancellation is requested
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error in process monitoring");
+            }
+        }, _processMonitoringCts.Token);
+    }
+
+    private void StopProcessMonitoring()
+    {
+        _processMonitoringCts?.Cancel();
+        _processMonitoringTask?.Wait(1000); // wait up to 1 second for graceful shutdown
+        _processMonitoringCts?.Dispose();
+        _processMonitoringCts = null;
+        _processMonitoringTask = null;
+    }
+
     [RelayCommand]
     private void GoToBrowseMods() => _navigationService.NavigateTo<BrowseModsViewModel>();
 
@@ -138,12 +196,29 @@ public partial class HomeViewModel : BaseViewModel
         return IsGameDetected && IsGameRunning;
     }
 
-    private bool CanExecuteGameCommands()
+    private bool CanExecuteLaunchModded()
     {
-        return IsGameDetected && (CanStartGame() || CanStopGame());
+        if (!IsGameDetected) return false;
+        
+        // can start modded if no game is running
+        if (!IsGameRunning) return true;
+        
+        // can stop if modded game is currently running
+        return ActiveMode == LaunchMode.Modded;
     }
 
-    [RelayCommand(CanExecute = nameof(CanExecuteGameCommands))]
+    private bool CanExecuteLaunchVanilla()
+    {
+        if (!IsGameDetected) return false;
+        
+        // can start vanilla if no game is running
+        if (!IsGameRunning) return true;
+        
+        // can stop if vanilla game is currently running
+        return ActiveMode == LaunchMode.Vanilla;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLaunchModded))]
     private async Task LaunchModded()
     {
         if (!IsGameRunning)
@@ -155,6 +230,7 @@ public partial class HomeViewModel : BaseViewModel
                 {
                     ActiveMode = LaunchMode.Modded;
                     IsGameRunning = true;
+                    StartProcessMonitoring(); // start monitoring after successful launch
                 }
                 SetStatus(result.Success ? "Launched modded game." : $"Failed to launch: {result.Message}");
             }, "Launching modded game...");
@@ -168,13 +244,14 @@ public partial class HomeViewModel : BaseViewModel
                 {
                     IsGameRunning = false;
                     ActiveMode = LaunchMode.None;
+                    StopProcessMonitoring(); // stop monitoring when manually stopped
                 }
                 SetStatus(result.Success ? "Game stopped." : result.Message);
             }, "Stopping game...");
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanExecuteGameCommands))]
+    [RelayCommand(CanExecute = nameof(CanExecuteLaunchVanilla))]
     private async Task LaunchVanilla()
     {
         if (!IsGameRunning)
@@ -186,6 +263,7 @@ public partial class HomeViewModel : BaseViewModel
                 {
                     ActiveMode = LaunchMode.Vanilla;
                     IsGameRunning = true;
+                    StartProcessMonitoring(); // start monitoring after successful launch
                 }
                 SetStatus(result.Success ? "Launched vanilla game." : $"Failed to launch: {result.Message}");
             }, "Launching vanilla game...");
@@ -199,6 +277,7 @@ public partial class HomeViewModel : BaseViewModel
                 {
                     IsGameRunning = false;
                     ActiveMode = LaunchMode.None;
+                    StopProcessMonitoring(); // stop monitoring when manually stopped
                 }
                 SetStatus(result.Success ? "Game stopped." : result.Message);
             }, "Stopping game...");
@@ -284,6 +363,15 @@ public partial class HomeViewModel : BaseViewModel
             var result = await _modManager.InstallModFromZip(url, CurrentGame);
             SetStatus(result.Success ? "Mod installed successfully." : $"Install failed: {result.Message}");
         }, "Installing mod from URL...");
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        
+        _gameStateService.GameStateChanged -= OnGameStateChanged;
+        StopProcessMonitoring();
+        _disposed = true;
     }
 }
 

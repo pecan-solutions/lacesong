@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Lacesong.Core.Services;
 
@@ -150,26 +151,82 @@ public class GameLauncher : IGameLauncher
         catch { }
     }
 
-    public Task<OperationResult> Stop(GameInstallation gameInstall)
+    public async Task<OperationResult> Stop(GameInstallation gameInstall)
     {
         if (!_runningProcesses.TryRemove(gameInstall.InstallPath, out var procs) || procs.Count == 0)
         {
-            return Task.FromResult(OperationResult.ErrorResult("game not running", "stop failed"));
+            return OperationResult.ErrorResult("game not running", "stop failed");
         }
+
+        var failedProcesses = new List<string>();
+        var timeoutMs = 5000; // 5 second timeout for graceful shutdown
 
         foreach (var p in procs)
         {
             try
             {
-                if (!p.HasExited)
+                if (p.HasExited)
+                    continue;
+
+                bool gracefulShutdownSucceeded = false;
+
+                // try graceful shutdown first (close main window)
+                if (OperatingSystem.IsWindows() && !p.MainWindowHandle.Equals(IntPtr.Zero))
                 {
-                    p.Kill(true);
+                    try
+                    {
+                        gracefulShutdownSucceeded = p.CloseMainWindow();
+                    }
+                    catch
+                    {
+                        // fall through to kill if close main window fails
+                    }
+                }
+
+                // wait for graceful shutdown with timeout
+                if (gracefulShutdownSucceeded)
+                {
+                    try
+                    {
+                        using var cts = new CancellationTokenSource(timeoutMs);
+                        await p.WaitForExitAsync(cts.Token);
+                        gracefulShutdownSucceeded = p.HasExited;
+                    }
+                    catch
+                    {
+                        gracefulShutdownSucceeded = false;
+                    }
+                }
+
+                // if graceful shutdown failed or timed out, force kill
+                if (!gracefulShutdownSucceeded)
+                {
+                    try
+                    {
+                        p.Kill(true);
+                        // give a brief moment for kill to take effect
+                        await Task.Delay(100);
+                    }
+                    catch (Exception ex)
+                    {
+                        failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): {ex.Message}");
+                    }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): {ex.Message}");
+            }
         }
 
-        return Task.FromResult(OperationResult.SuccessResult("game stopped"));
+        // report results
+        if (failedProcesses.Count > 0)
+        {
+            var errorMessage = $"failed to stop {failedProcesses.Count} process(es): {string.Join("; ", failedProcesses)}";
+            return OperationResult.ErrorResult(errorMessage, "stop failed");
+        }
+
+        return OperationResult.SuccessResult("game stopped gracefully");
     }
 
     public bool IsRunning(GameInstallation gameInstall) => _runningProcesses.ContainsKey(gameInstall.InstallPath);

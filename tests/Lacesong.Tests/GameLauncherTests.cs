@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using Lacesong.Core.Interfaces;
 using Lacesong.Core.Models;
 using Lacesong.Core.Services;
@@ -73,5 +74,100 @@ public class GameLauncherTests
 
         var result = await launcher.Stop(game);
         Assert.False(result.Success);
+    }
+
+    [Fact]
+    public async Task Stop_WithRunningProcess_ShouldAttemptGracefulShutdown()
+    {
+        // arrange
+        var bepMock = new Mock<IBepInExManager>();
+        var modMgr = new Mock<IModManager>().Object;
+        var launcher = new GameLauncher(bepMock.Object, modMgr);
+        var game = CreateTempGameInstall();
+
+        // start a mock process that will exit gracefully
+        var mockProcess = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = OperatingSystem.IsWindows() ? "cmd" : "sh",
+                Arguments = OperatingSystem.IsWindows() ? "/c exit" : "-c exit",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
+        };
+        mockProcess.Start();
+        
+        // manually add the process to the launcher's tracking
+        var runningProcessesField = typeof(GameLauncher).GetField("_runningProcesses", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var runningProcesses = (System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Generic.List<Process>>)runningProcessesField!.GetValue(launcher)!;
+        runningProcesses[game.InstallPath] = new System.Collections.Generic.List<Process> { mockProcess };
+
+        try
+        {
+            // act
+            var result = await launcher.Stop(game);
+
+            // assert
+            Assert.True(result.Success);
+            Assert.Contains("stopped gracefully", result.Message);
+        }
+        finally
+        {
+            // cleanup
+            if (!mockProcess.HasExited)
+            {
+                try { mockProcess.Kill(); } catch { }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Stop_WithNonExitingProcess_ShouldFallbackToKill()
+    {
+        // arrange
+        var bepMock = new Mock<IBepInExManager>();
+        var modMgr = new Mock<IModManager>().Object;
+        var launcher = new GameLauncher(bepMock.Object, modMgr);
+        var game = CreateTempGameInstall();
+
+        // start a long-running process that won't exit gracefully
+        var mockProcess = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = OperatingSystem.IsWindows() ? "cmd" : "sh",
+                Arguments = OperatingSystem.IsWindows() ? "/c timeout 10" : "-c sleep 10",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
+        };
+        mockProcess.Start();
+        
+        // manually add the process to the launcher's tracking
+        var runningProcessesField = typeof(GameLauncher).GetField("_runningProcesses", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var runningProcesses = (System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Generic.List<Process>>)runningProcessesField!.GetValue(launcher)!;
+        runningProcesses[game.InstallPath] = new System.Collections.Generic.List<Process> { mockProcess };
+
+        try
+        {
+            // act
+            var result = await launcher.Stop(game);
+
+            // assert
+            Assert.True(result.Success);
+            Assert.Contains("stopped gracefully", result.Message);
+            Assert.True(mockProcess.HasExited);
+        }
+        finally
+        {
+            // cleanup
+            if (!mockProcess.HasExited)
+            {
+                try { mockProcess.Kill(); } catch { }
+            }
+        }
     }
 }
