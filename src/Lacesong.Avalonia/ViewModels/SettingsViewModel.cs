@@ -14,7 +14,6 @@ namespace Lacesong.Avalonia.ViewModels;
 public partial class SettingsViewModel : BaseViewModel
 {
     private readonly ISettingsService _settingsService;
-    private readonly ILoggingService _loggingService;
     private readonly IUpdateService _updateService;
     private readonly IThemeService _themeService;
     private readonly IModUpdateService _modUpdateService;
@@ -23,15 +22,6 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty]
     private Settings _currentSettings;
 
-    public List<string> LogLevels { get; } = new()
-    {
-        "Trace",
-        "Debug",
-        "Information",
-        "Warning",
-        "Error",
-        "Critical"
-    };
 
     public List<string> BepInExVersions { get; } = new()
     {
@@ -46,14 +36,12 @@ public partial class SettingsViewModel : BaseViewModel
     public SettingsViewModel(
         ILogger<SettingsViewModel> logger,
         ISettingsService settingsService,
-        ILoggingService loggingService,
         IUpdateService updateService,
         IThemeService themeService,
         IModUpdateService modUpdateService,
         IGameStateService gameState) : base(logger)
     {
         _settingsService = settingsService;
-        _loggingService = loggingService;
         _updateService = updateService;
         _themeService = themeService;
         _modUpdateService = modUpdateService;
@@ -80,19 +68,6 @@ public partial class SettingsViewModel : BaseViewModel
         SetStatus("Settings reset to defaults");
     }
 
-    [RelayCommand]
-    private void OpenLogsFolder()
-    {
-        _loggingService.OpenLogsFolder();
-        SetStatus("Opened logs folder");
-    }
-
-    [RelayCommand]
-    private void ClearLogs()
-    {
-        _loggingService.ClearLogs();
-        SetStatus("Logs cleared successfully");
-    }
 
     [RelayCommand]
     private async Task CheckForUpdatesAsync()

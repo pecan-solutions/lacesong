@@ -407,13 +407,13 @@ public class ModIndexService : IModIndexService
         }
     }
 
-    private async Task LoadRepositories()
+    private void LoadRepositories()
     {
         try
         {
             if (File.Exists(_repositoriesConfigPath))
             {
-                var json = await File.ReadAllTextAsync(_repositoriesConfigPath);
+                var json = File.ReadAllText(_repositoriesConfigPath);
                 try
                 {
                     var savedRepositories = JsonSerializer.Deserialize<List<ModRepository>>(json);

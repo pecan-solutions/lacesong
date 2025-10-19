@@ -60,7 +60,6 @@ public class UIAutomationTests : IDisposable
         var mockModManager = new Mock<IModManager>();
         var mockBackupManager = new Mock<IBackupManager>();
         var mockDialogService = new Mock<IDialogService>();
-        var mockLoggingService = new Mock<ILoggingService>();
         var mockUpdateService = new Mock<IUpdateService>();
 
         // setup mock behaviors
@@ -89,7 +88,6 @@ public class UIAutomationTests : IDisposable
         services.AddSingleton(mockModManager.Object);
         services.AddSingleton(mockBackupManager.Object);
         services.AddSingleton(mockDialogService.Object);
-        services.AddSingleton(mockLoggingService.Object);
         services.AddSingleton(mockUpdateService.Object);
 
         // register view models
@@ -254,7 +252,6 @@ public class ViewModelTests
         var mockLogger = new Mock<ILogger<MainViewModel>>();
         var mockGameDetector = new Mock<IGameDetector>();
         var mockDialogService = new Mock<IDialogService>();
-        var mockLoggingService = new Mock<ILoggingService>();
         var mockUpdateService = new Mock<IUpdateService>();
 
         // act
@@ -262,7 +259,6 @@ public class ViewModelTests
             mockLogger.Object,
             mockGameDetector.Object,
             mockDialogService.Object,
-            mockLoggingService.Object,
             mockUpdateService.Object);
 
         // assert
@@ -400,20 +396,16 @@ public class ViewModelTests
     {
         // arrange
         var mockLogger = new Mock<ILogger<SettingsViewModel>>();
-        var mockLoggingService = new Mock<ILoggingService>();
         var mockUpdateService = new Mock<IUpdateService>();
 
         var viewModel = new SettingsViewModel(
             mockLogger.Object,
-            mockLoggingService.Object,
             mockUpdateService.Object);
 
         // act & assert
         Assert.True(viewModel.AutoCheckForUpdates);
         Assert.True(viewModel.CreateBackupsBeforeInstall);
         Assert.False(viewModel.ShowAdvancedOptions);
-        Assert.Equal("Information", viewModel.LogLevel);
         Assert.Equal("5.4.22", viewModel.BepinexVersion);
-        Assert.False(viewModel.EnableTelemetry);
     }
 }

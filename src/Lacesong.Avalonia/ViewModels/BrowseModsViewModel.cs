@@ -332,7 +332,7 @@ public partial class BrowseModsViewModel : BaseViewModel
             else
             {
                 Console.WriteLine($"BrowseModsViewModel: InstallModAsync - Installation failed: {result.Error}");
-                _snackbarService.Show("Installation Failed", result.Error, "Error");
+                _snackbarService.Show("Installation Failed", result.Error ?? "Unknown error occurred", "Error");
             }
         }
         catch (Exception ex)
@@ -449,7 +449,7 @@ public partial class BrowseModsViewModel : BaseViewModel
             else
             {
                 Console.WriteLine($"BrowseModsViewModel: UninstallModAsync - Uninstallation failed: {result.Error}");
-                _snackbarService.Show("Uninstallation Failed", result.Error, "Error");
+                _snackbarService.Show("Uninstallation Failed", result.Error ?? "Unknown error occurred", "Error");
             }
         }
         catch (Exception ex)

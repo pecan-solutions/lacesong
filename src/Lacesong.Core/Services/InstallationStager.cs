@@ -17,7 +17,7 @@ public class InstallationStager : IInstallationStager
         _dependencyResolver = dependencyResolver;
     }
 
-    public async Task<InstallationStage> CreateStage(string targetPath)
+    public Task<InstallationStage> CreateStage(string targetPath)
     {
         try
         {
@@ -35,7 +35,7 @@ public class InstallationStager : IInstallationStager
                 Status = InstallationStageStatus.Pending
             };
 
-            return stage;
+            return Task.FromResult(stage);
         }
         catch (Exception ex)
         {
@@ -192,13 +192,13 @@ public class InstallationStager : IInstallationStager
         }
     }
 
-    public async Task<OperationResult> CommitStage(InstallationStage stage)
+    public Task<OperationResult> CommitStage(InstallationStage stage)
     {
         try
         {
             if (stage.Status != InstallationStageStatus.Ready)
             {
-                return OperationResult.ErrorResult("Stage is not ready for commit", "Invalid stage status");
+                return Task.FromResult(OperationResult.ErrorResult("Stage is not ready for commit", "Invalid stage status"));
             }
 
             // ensure target directory exists
@@ -229,16 +229,16 @@ public class InstallationStager : IInstallationStager
             }
 
             stage.Status = InstallationStageStatus.Ready;
-            return OperationResult.SuccessResult("Stage committed successfully");
+            return Task.FromResult(OperationResult.SuccessResult("Stage committed successfully"));
         }
         catch (Exception ex)
         {
             stage.Status = InstallationStageStatus.Failed;
-            return OperationResult.ErrorResult(ex.Message, "Stage commit failed");
+            return Task.FromResult(OperationResult.ErrorResult(ex.Message, "Stage commit failed"));
         }
     }
 
-    public async Task<OperationResult> RollbackStage(InstallationStage stage)
+    public Task<OperationResult> RollbackStage(InstallationStage stage)
     {
         try
         {
@@ -257,15 +257,15 @@ public class InstallationStager : IInstallationStager
             }
 
             stage.Status = InstallationStageStatus.RolledBack;
-            return OperationResult.SuccessResult("Stage rolled back successfully");
+            return Task.FromResult(OperationResult.SuccessResult("Stage rolled back successfully"));
         }
         catch (Exception ex)
         {
-            return OperationResult.ErrorResult(ex.Message, "Stage rollback failed");
+            return Task.FromResult(OperationResult.ErrorResult(ex.Message, "Stage rollback failed"));
         }
     }
 
-    public async Task<OperationResult> CleanupStage(InstallationStage stage)
+    public Task<OperationResult> CleanupStage(InstallationStage stage)
     {
         try
         {
@@ -275,11 +275,11 @@ public class InstallationStager : IInstallationStager
                 Directory.Delete(stage.TempPath, true);
             }
 
-            return OperationResult.SuccessResult("Stage cleanup completed");
+            return Task.FromResult(OperationResult.SuccessResult("Stage cleanup completed"));
         }
         catch (Exception ex)
         {
-            return OperationResult.ErrorResult(ex.Message, "Stage cleanup failed");
+            return Task.FromResult(OperationResult.ErrorResult(ex.Message, "Stage cleanup failed"));
         }
     }
 

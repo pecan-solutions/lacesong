@@ -193,7 +193,7 @@ public partial class ManageModsViewModel : BaseViewModel
                 SetStatus($"Uninstallation failed: {uninstallResult.Error}", true);
                 _snackbarService.Show(
                     "Uninstallation Failed", 
-                    uninstallResult.Error, 
+                    uninstallResult.Error ?? "Unknown error occurred", 
                     "Error");
             }
         }, "Uninstalling mod...");
@@ -230,8 +230,8 @@ public partial class ManageModsViewModel : BaseViewModel
             }
             else
             {
-                SetStatus(result.Error, true);
-                _snackbarService.Show("Error", result.Error, "Error");
+                SetStatus(result.Error ?? "Unknown error occurred", true);
+                _snackbarService.Show("Error", result.Error ?? "Unknown error occurred", "Error");
                 Console.WriteLine($"Error toast shown");
             }
         }, "Enabling mod...");
@@ -256,8 +256,8 @@ public partial class ManageModsViewModel : BaseViewModel
             }
             else
             {
-                SetStatus(result.Error, true);
-                _snackbarService.Show("Error", result.Error, "Error");
+                SetStatus(result.Error ?? "Unknown error occurred", true);
+                _snackbarService.Show("Error", result.Error ?? "Unknown error occurred", "Error");
             }
         }, "Disabling mod...");
     }

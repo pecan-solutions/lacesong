@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace Lacesong.Core.Services;
 
@@ -172,6 +173,7 @@ public static class PlatformDetector
         }
     }
 
+    [SupportedOSPlatform("windows")]
     private static List<string> GetWindowsSteamPaths()
     {
         var paths = new List<string>();

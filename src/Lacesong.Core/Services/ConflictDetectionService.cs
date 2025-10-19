@@ -397,12 +397,12 @@ public class ConflictDetectionService : IConflictDetectionService
         };
     }
 
-    private async Task<ConflictResolution?> GenerateFileConflictResolution(string filePath, List<string> modIds)
+    private Task<ConflictResolution?> GenerateFileConflictResolution(string filePath, List<string> modIds)
     {
         // simple resolution: keep the most recently installed mod
         var latestMod = modIds.Last();
         
-        return new ConflictResolution
+        return Task.FromResult<ConflictResolution?>(new ConflictResolution
         {
             ResolutionType = ResolutionType.Automatic,
             Description = $"Keep file from {latestMod}, disable from others",
@@ -421,12 +421,12 @@ public class ConflictDetectionService : IConflictDetectionService
                     }
                 }
             }
-        };
+        });
     }
 
-    private async Task<ConflictResolution?> GenerateDependencyConflictResolution(ModInfo mod1, ModInfo mod2)
+    private Task<ConflictResolution?> GenerateDependencyConflictResolution(ModInfo mod1, ModInfo mod2)
     {
-        return new ConflictResolution
+        return Task.FromResult<ConflictResolution?>(new ConflictResolution
         {
             ResolutionType = ResolutionType.UserChoice,
             Description = $"Choose which mod to keep: {mod1.Name} or {mod2.Name}",
@@ -440,14 +440,14 @@ public class ConflictDetectionService : IConflictDetectionService
                     Target = "user_choice"
                 }
             }
-        };
+        });
     }
 
-    private async Task<ConflictResolution?> GenerateVersionConflictResolution(List<ModInfo> mods)
+    private Task<ConflictResolution?> GenerateVersionConflictResolution(List<ModInfo> mods)
     {
         var latestMod = mods.OrderByDescending(m => ParseVersion(m.Version)).First();
         
-        return new ConflictResolution
+        return Task.FromResult<ConflictResolution?>(new ConflictResolution
         {
             ResolutionType = ResolutionType.Automatic,
             Description = $"Keep latest version: {latestMod.Version}",
@@ -465,12 +465,12 @@ public class ConflictDetectionService : IConflictDetectionService
                     }
                 }
             }
-        };
+        });
     }
 
-    private async Task<ConflictResolution?> GenerateConfigConflictResolution(string configFile, List<string> modIds)
+    private Task<ConflictResolution?> GenerateConfigConflictResolution(string configFile, List<string> modIds)
     {
-        return new ConflictResolution
+        return Task.FromResult<ConflictResolution?>(new ConflictResolution
         {
             ResolutionType = ResolutionType.Manual,
             Description = "Config files may need manual merging",
@@ -484,10 +484,10 @@ public class ConflictDetectionService : IConflictDetectionService
                     Target = configFile
                 }
             }
-        };
+        });
     }
 
-    private async Task<List<ConflictResolution>> GetFileConflictResolutions(ModConflict conflict)
+    private Task<List<ConflictResolution>> GetFileConflictResolutions(ModConflict conflict)
     {
         var resolutions = new List<ConflictResolution>();
         
@@ -517,10 +517,10 @@ public class ConflictDetectionService : IConflictDetectionService
             Actions = new List<ResolutionAction>()
         });
 
-        return resolutions;
+        return Task.FromResult(resolutions);
     }
 
-    private async Task<List<ConflictResolution>> GetDependencyConflictResolutions(ModConflict conflict)
+    private Task<List<ConflictResolution>> GetDependencyConflictResolutions(ModConflict conflict)
     {
         var resolutions = new List<ConflictResolution>();
         
@@ -540,10 +540,10 @@ public class ConflictDetectionService : IConflictDetectionService
             }
         });
 
-        return resolutions;
+        return Task.FromResult(resolutions);
     }
 
-    private async Task<List<ConflictResolution>> GetVersionConflictResolutions(ModConflict conflict)
+    private Task<List<ConflictResolution>> GetVersionConflictResolutions(ModConflict conflict)
     {
         var resolutions = new List<ConflictResolution>();
         
@@ -563,10 +563,10 @@ public class ConflictDetectionService : IConflictDetectionService
             }
         });
 
-        return resolutions;
+        return Task.FromResult(resolutions);
     }
 
-    private async Task<List<ConflictResolution>> GetLoadOrderConflictResolutions(ModConflict conflict)
+    private Task<List<ConflictResolution>> GetLoadOrderConflictResolutions(ModConflict conflict)
     {
         var resolutions = new List<ConflictResolution>();
         
@@ -586,10 +586,10 @@ public class ConflictDetectionService : IConflictDetectionService
             }
         });
 
-        return resolutions;
+        return Task.FromResult(resolutions);
     }
 
-    private async Task<List<ConflictResolution>> GetConfigConflictResolutions(ModConflict conflict)
+    private Task<List<ConflictResolution>> GetConfigConflictResolutions(ModConflict conflict)
     {
         var resolutions = new List<ConflictResolution>();
         
@@ -609,7 +609,7 @@ public class ConflictDetectionService : IConflictDetectionService
             }
         });
 
-        return resolutions;
+        return Task.FromResult(resolutions);
     }
 
     private async Task<OperationResult> ExecuteResolutionAction(ResolutionAction action, ModConflict conflict, GameInstallation gameInstall)
@@ -638,37 +638,37 @@ public class ConflictDetectionService : IConflictDetectionService
         }
     }
 
-    private async Task<OperationResult> ExecuteRenameFile(ResolutionAction action, ModConflict conflict, GameInstallation gameInstall)
+    private Task<OperationResult> ExecuteRenameFile(ResolutionAction action, ModConflict conflict, GameInstallation gameInstall)
     {
         // implementation for renaming conflicting files
-        return OperationResult.SuccessResult("File renamed successfully");
+        return Task.FromResult(OperationResult.SuccessResult("File renamed successfully"));
     }
 
-    private async Task<OperationResult> ExecuteDisableMod(ResolutionAction action, ModConflict conflict, GameInstallation gameInstall)
+    private Task<OperationResult> ExecuteDisableMod(ResolutionAction action, ModConflict conflict, GameInstallation gameInstall)
     {
         // implementation for disabling conflicting mods
-        return OperationResult.SuccessResult("Mod disabled successfully");
+        return Task.FromResult(OperationResult.SuccessResult("Mod disabled successfully"));
     }
 
-    private async Task<OperationResult> ExecuteDeleteFile(ResolutionAction action, ModConflict conflict, GameInstallation gameInstall)
+    private Task<OperationResult> ExecuteDeleteFile(ResolutionAction action, ModConflict conflict, GameInstallation gameInstall)
     {
         // implementation for deleting conflicting files
-        return OperationResult.SuccessResult("File deleted successfully");
+        return Task.FromResult(OperationResult.SuccessResult("File deleted successfully"));
     }
 
-    private async Task<OperationResult> ExecuteChangeLoadOrder(ResolutionAction action, ModConflict conflict, GameInstallation gameInstall)
+    private Task<OperationResult> ExecuteChangeLoadOrder(ResolutionAction action, ModConflict conflict, GameInstallation gameInstall)
     {
         // implementation for changing load order
-        return OperationResult.SuccessResult("Load order changed successfully");
+        return Task.FromResult(OperationResult.SuccessResult("Load order changed successfully"));
     }
 
-    private async Task<OperationResult> ExecuteMergeConfig(ResolutionAction action, ModConflict conflict, GameInstallation gameInstall)
+    private Task<OperationResult> ExecuteMergeConfig(ResolutionAction action, ModConflict conflict, GameInstallation gameInstall)
     {
         // implementation for merging config files
-        return OperationResult.SuccessResult("Config merged successfully");
+        return Task.FromResult(OperationResult.SuccessResult("Config merged successfully"));
     }
 
-    private async Task<ValidationResult> ValidateResolutionAction(ResolutionAction action, ModConflict conflict)
+    private Task<ValidationResult> ValidateResolutionAction(ResolutionAction action, ModConflict conflict)
     {
         try
         {
@@ -679,46 +679,46 @@ public class ConflictDetectionService : IConflictDetectionService
                 case ActionType.DeleteFile:
                     if (string.IsNullOrEmpty(action.Target))
                     {
-                        return new ValidationResult
+                        return Task.FromResult(new ValidationResult
                         {
                             Type = ValidationType.Dependency,
                             Passed = false,
                             Message = "File action requires a target file path",
                             Timestamp = DateTime.UtcNow
-                        };
+                        });
                     }
                     break;
                 case ActionType.DisableMod:
                     if (string.IsNullOrEmpty(action.Target) || action.Target == "user_choice")
                     {
-                        return new ValidationResult
+                        return Task.FromResult(new ValidationResult
                         {
                             Type = ValidationType.Dependency,
                             Passed = false,
                             Message = "Disable mod action requires a specific mod target",
                             Timestamp = DateTime.UtcNow
-                        };
+                        });
                     }
                     break;
             }
 
-            return new ValidationResult
+            return Task.FromResult(new ValidationResult
             {
                 Type = ValidationType.Dependency,
                 Passed = true,
                 Message = "Action validation successful",
                 Timestamp = DateTime.UtcNow
-            };
+            });
         }
         catch (Exception ex)
         {
-            return new ValidationResult
+            return Task.FromResult(new ValidationResult
             {
                 Type = ValidationType.Dependency,
                 Passed = false,
                 Message = $"Validation failed: {ex.Message}",
                 Timestamp = DateTime.UtcNow
-            };
+            });
         }
     }
 

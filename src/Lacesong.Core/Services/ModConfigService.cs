@@ -354,7 +354,7 @@ public class ModConfigService : IModConfigService
         }
     }
 
-    private async Task<string> MergeJsonConfig(string oldContent, string newContent)
+    private Task<string> MergeJsonConfig(string oldContent, string newContent)
     {
         try
         {
@@ -363,12 +363,12 @@ public class ModConfigService : IModConfigService
 
             var mergedJson = MergeJsonElements(oldJson, newJson);
             
-            return JsonSerializer.Serialize(mergedJson, new JsonSerializerOptions { WriteIndented = true });
+            return Task.FromResult(JsonSerializer.Serialize(mergedJson, new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error merging JSON config: {ex.Message}");
-            return newContent; // fallback to new content
+            return Task.FromResult(newContent); // fallback to new content
         }
     }
 
@@ -379,14 +379,14 @@ public class ModConfigService : IModConfigService
         return newElement; // for now, prefer new values
     }
 
-    private async Task<string> MergeYamlConfig(string oldContent, string newContent)
+    private Task<string> MergeYamlConfig(string oldContent, string newContent)
     {
         // yaml merging is complex, for now just return old content if it was user-modified
         // in a full implementation, you'd use a YAML library like YamlDotNet
-        return oldContent; // fallback to old content
+        return Task.FromResult(oldContent); // fallback to old content
     }
 
-    private async Task<string> MergeIniConfig(string oldContent, string newContent)
+    private Task<string> MergeIniConfig(string oldContent, string newContent)
     {
         try
         {
@@ -417,12 +417,12 @@ public class ModConfigService : IModConfigService
                 }
             }
 
-            return string.Join('\n', mergedLines);
+            return Task.FromResult(string.Join('\n', mergedLines));
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error merging INI config: {ex.Message}");
-            return newContent; // fallback to new content
+            return Task.FromResult(newContent); // fallback to new content
         }
     }
 
@@ -498,11 +498,11 @@ public class ModConfigService : IModConfigService
         return mergedLines;
     }
 
-    private async Task<string> MergeXmlConfig(string oldContent, string newContent)
+    private Task<string> MergeXmlConfig(string oldContent, string newContent)
     {
         // XML merging is complex, for now just return old content if it was user-modified
         // in a full implementation, you'd use XML libraries for proper merging
-        return oldContent; // fallback to old content
+        return Task.FromResult(oldContent); // fallback to old content
     }
 
     private string GetConfigTargetPath(ModConfig config, GameInstallation gameInstall)

@@ -147,7 +147,7 @@ public class DependencyResolver : IDependencyResolver
         }
     }
 
-    private async Task<(string? BepInExVersion, string? RequiredVersion, string? InstalledVersion, bool IsCompatible)> CheckBepInExCompatibility(ModInfo modInfo, GameInstallation gameInstall)
+    private Task<(string? BepInExVersion, string? RequiredVersion, string? InstalledVersion, bool IsCompatible)> CheckBepInExCompatibility(ModInfo modInfo, GameInstallation gameInstall)
     {
         try
         {
@@ -157,21 +157,21 @@ public class DependencyResolver : IDependencyResolver
             if (string.IsNullOrEmpty(requiredVersion))
             {
                 // no specific requirement - assume compatible with any version
-                return (installedVersion ?? "Not Installed", null, installedVersion, true);
+                return Task.FromResult<(string?, string?, string?, bool)>((installedVersion ?? "Not Installed", null, installedVersion, true));
             }
 
             if (string.IsNullOrEmpty(installedVersion))
             {
                 // bepinex not installed - still return a version string for consistency
-                return ("Not Installed", requiredVersion, null, false);
+                return Task.FromResult<(string?, string?, string?, bool)>(("Not Installed", requiredVersion, null, false));
             }
 
             var isCompatible = IsVersionCompatible(installedVersion, requiredVersion);
-            return (installedVersion, requiredVersion, installedVersion, isCompatible);
+            return Task.FromResult<(string?, string?, string?, bool)>((installedVersion, requiredVersion, installedVersion, isCompatible));
         }
         catch
         {
-            return ("Unknown", null, null, false);
+            return Task.FromResult<(string?, string?, string?, bool)>(("Unknown", null, null, false));
         }
     }
 
@@ -335,20 +335,20 @@ public class DependencyResolver : IDependencyResolver
         return conflicts;
     }
 
-    private async Task<OperationResult> InstallDependency(ModDependency dependency, GameInstallation gameInstall)
+    private Task<OperationResult> InstallDependency(ModDependency dependency, GameInstallation gameInstall)
     {
         try
         {
             // this is a simplified implementation
             // in practice, this would search mod repositories for the dependency
-            return OperationResult.ErrorResult(
+            return Task.FromResult(OperationResult.ErrorResult(
                 $"Dependency {dependency.Id} not found in available repositories",
                 "Dependency not available"
-            );
+            ));
         }
         catch (Exception ex)
         {
-            return OperationResult.ErrorResult(ex.Message, "Failed to install dependency");
+            return Task.FromResult(OperationResult.ErrorResult(ex.Message, "Failed to install dependency"));
         }
     }
 }

@@ -19,10 +19,10 @@ public class ThunderstoreModIndexService : IModIndexService
     private async Task<List<ThunderstorePackageDto>> GetAllPackages(CancellationToken token = default)
     {
         const string key = "all_packages";
-        if (_cache.TryGetValue(key, out List<ThunderstorePackageDto> cached))
+        if (_cache.TryGetValue(key, out List<ThunderstorePackageDto>? cached))
         {
-            Console.WriteLine($"ThunderstoreModIndexService: GetAllPackages - Returning {cached.Count} cached packages");
-            return cached;
+            Console.WriteLine($"ThunderstoreModIndexService: GetAllPackages - Returning {cached?.Count ?? 0} cached packages");
+            return cached ?? new List<ThunderstorePackageDto>();
         }
 
         Console.WriteLine("ThunderstoreModIndexService: GetAllPackages - Fetching from API");
@@ -63,10 +63,10 @@ public class ThunderstoreModIndexService : IModIndexService
         };
     }
 
-    public async Task<ModIndex?> FetchModIndex(string repositoryUrl)
+    public Task<ModIndex?> FetchModIndex(string repositoryUrl)
     {
         // thunderstore does not provide single index file; return null
-        return null;
+        return Task.FromResult<ModIndex?>(null);
     }
 
     public async Task<ModSearchResults> SearchMods(ModSearchCriteria criteria)

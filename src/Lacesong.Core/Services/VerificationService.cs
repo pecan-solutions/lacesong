@@ -265,19 +265,19 @@ public class VerificationService : IVerificationService
         }
     }
 
-    public async Task<ValidationResult> VerifyPermissions(string filePath, bool requireWrite = false)
+    public Task<ValidationResult> VerifyPermissions(string filePath, bool requireWrite = false)
     {
         try
         {
             if (!File.Exists(filePath))
             {
-                return new ValidationResult
+                return Task.FromResult(new ValidationResult
                 {
                     Type = ValidationType.Permissions,
                     Passed = false,
                     Message = "File does not exist",
                     Details = $"File not found: {filePath}"
-                };
+                });
             }
 
             var fileInfo = new FileInfo(filePath);
@@ -285,13 +285,13 @@ public class VerificationService : IVerificationService
 
             if (directory == null)
             {
-                return new ValidationResult
+                return Task.FromResult(new ValidationResult
                 {
                     Type = ValidationType.Permissions,
                     Passed = false,
                     Message = "Invalid file path",
                     Details = "Cannot determine directory"
-                };
+                });
             }
 
             // check read permissions
@@ -323,23 +323,23 @@ public class VerificationService : IVerificationService
 
             var isValid = canRead && (!requireWrite || canWrite);
 
-            return new ValidationResult
+            return Task.FromResult(new ValidationResult
             {
                 Type = ValidationType.Permissions,
                 Passed = isValid,
                 Message = isValid ? "Permission check passed" : "Permission check failed",
                 Details = $"Read: {canRead}, Write: {canWrite} (Required: {requireWrite})"
-            };
+            });
         }
         catch (Exception ex)
         {
-            return new ValidationResult
+            return Task.FromResult(new ValidationResult
             {
                 Type = ValidationType.Permissions,
                 Passed = false,
                 Message = "Permission check error",
                 Details = ex.Message
-            };
+            });
         }
     }
 }

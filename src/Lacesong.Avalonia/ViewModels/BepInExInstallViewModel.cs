@@ -141,7 +141,7 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
             {
                 _snackbarService.Show(
                     "Installation Failed", 
-                    installResult.Error, 
+                    installResult.Error ?? "Unknown error occurred", 
                     "Error");
             }
         }, "Installing BepInEx...");
@@ -174,7 +174,7 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
             {
                 _snackbarService.Show(
                     "Uninstallation Failed", 
-                    uninstallResult.Error, 
+                    uninstallResult.Error ?? "Unknown error occurred", 
                     "Error");
             }
         }, "Uninstalling BepInEx...");

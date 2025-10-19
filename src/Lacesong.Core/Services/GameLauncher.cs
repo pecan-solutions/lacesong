@@ -46,7 +46,7 @@ public class GameLauncher : IGameLauncher
         
         // ensure mods directory exists even for vanilla launches
         Console.WriteLine($"[DEBUG] Ensuring mods directory exists");
-        ModManager.EnsureModsDirectory(gameInstall);
+        ModManager.EnsureModsDirectory(gameInstall ?? throw new ArgumentNullException(nameof(gameInstall)));
         
         var bepinexPath = Path.Combine(gameInstall.InstallPath, "BepInEx");
         var pluginsPath = Path.Combine(bepinexPath, "plugins");
@@ -114,11 +114,13 @@ public class GameLauncher : IGameLauncher
             var procList = new List<Process>();
 
             // check for run_bepinex.sh script based on executable type, not current platform
-            var executablePath = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
+            var installPath = gameInstall.InstallPath ?? throw new InvalidOperationException("Game installation path is null");
+            var executable = gameInstall.Executable ?? throw new InvalidOperationException("Game installation executable path is null");
+            var executablePath = Path.Combine(installPath, executable);
             if (ExecutableTypeDetector.ShouldUseRunBepInExScript(executablePath))
             {
                 Console.WriteLine($"[DEBUG] Unix executable detected, checking for run_bepinex.sh script");
-                var scriptPath = Path.Combine(gameInstall.InstallPath, "run_bepinex.sh");
+                var scriptPath = Path.Combine(installPath, "run_bepinex.sh");
                 Console.WriteLine($"[DEBUG] Script path: {scriptPath}");
                 Console.WriteLine($"[DEBUG] Script exists: {File.Exists(scriptPath)}");
                 
@@ -148,18 +150,18 @@ public class GameLauncher : IGameLauncher
                             
                             // attach exited event to clean up tracking when script terminates
                             var scriptProcessId = scriptProc.Id;
-                            var installPath = gameInstall.InstallPath;
+                            var scriptInstallPath = gameInstall.InstallPath;
                             EventHandler exitedHandler = (sender, e) =>
                             {
                                 Console.WriteLine($"[DEBUG] Script process {scriptProcessId} exited");
-                                if (_runningProcesses.TryGetValue(installPath, out var processes))
+                                if (_runningProcesses.TryGetValue(scriptInstallPath, out var processes))
                                 {
                                     lock (processes) // ensure thread-safe list operations
                                     {
                                         processes.RemoveAll(p => p.Id == scriptProcessId);
                                         if (processes.Count == 0)
                                         {
-                                            _runningProcesses.TryRemove(installPath, out _);
+                                            _runningProcesses.TryRemove(scriptInstallPath, out _);
                                         }
                                     }
                                 }
@@ -259,18 +261,18 @@ public class GameLauncher : IGameLauncher
                 
                 // attach exited event to clean up tracking when game terminates
                 var gameProcessId = gameProc.Id;
-                var installPath = gameInstall.InstallPath;
+                var gameInstallPath = gameInstall.InstallPath;
                 EventHandler exitedHandler = (sender, e) =>
                 {
                     Console.WriteLine($"[DEBUG] Game process {gameProcessId} exited");
-                    if (_runningProcesses.TryGetValue(installPath, out var processes))
+                    if (_runningProcesses.TryGetValue(gameInstallPath, out var processes))
                     {
                         lock (processes) // ensure thread-safe list operations
                         {
                             processes.RemoveAll(p => p.Id == gameProcessId);
                             if (processes.Count == 0)
                             {
-                                _runningProcesses.TryRemove(installPath, out _);
+                                _runningProcesses.TryRemove(gameInstallPath, out _);
                             }
                         }
                     }

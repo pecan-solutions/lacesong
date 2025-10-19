@@ -575,7 +575,7 @@ public class BepInExManager : IBepInExManager
         }
     }
 
-    private async Task<OperationResult> ExtractBepInEx(string zipPath, string gamePath, IProgress<double>? progress = null)
+    private Task<OperationResult> ExtractBepInEx(string zipPath, string gamePath, IProgress<double>? progress = null)
     {
         try
         {
@@ -647,11 +647,11 @@ public class BepInExManager : IBepInExManager
             // cleanup temp directory
             Directory.Delete(tempExtractPath, true);
 
-            return OperationResult.SuccessResult("BepInEx extracted successfully");
+            return Task.FromResult(OperationResult.SuccessResult("BepInEx extracted successfully"));
         }
         catch (Exception ex)
         {
-            return OperationResult.ErrorResult(ex.Message, "Failed to extract BepInEx");
+            return Task.FromResult(OperationResult.ErrorResult(ex.Message, "Failed to extract BepInEx"));
         }
     }
 
@@ -785,7 +785,7 @@ SkipAssemblyScan = false
         }
     }
 
-    public async Task<OperationResult> CleanupBepInExBackups(GameInstallation gameInstall, int maxBackups = 5, int maxAgeDays = 30)
+    public Task<OperationResult> CleanupBepInExBackups(GameInstallation gameInstall, int maxBackups = 5, int maxAgeDays = 30)
     {
         try
         {
@@ -794,7 +794,7 @@ SkipAssemblyScan = false
             
             if (!Directory.Exists(backupDir))
             {
-                return OperationResult.SuccessResult("No backup directory found - nothing to clean up");
+                return Task.FromResult(OperationResult.SuccessResult("No backup directory found - nothing to clean up"));
             }
 
             var backupFiles = Directory.GetFiles(backupDir, "bepinex_backup_*.zip")
@@ -804,7 +804,7 @@ SkipAssemblyScan = false
 
             if (backupFiles.Count == 0)
             {
-                return OperationResult.SuccessResult("No backup files found - nothing to clean up");
+                return Task.FromResult(OperationResult.SuccessResult("No backup files found - nothing to clean up"));
             }
 
             var filesToDelete = new List<FileInfo>();
@@ -848,7 +848,7 @@ SkipAssemblyScan = false
             var remainingCount = backupFiles.Count - deletedCount;
             var sizeFreedMB = totalSizeToDelete / (1024.0 * 1024.0);
 
-            return OperationResult.SuccessResult(
+            return Task.FromResult(OperationResult.SuccessResult(
                 $"Backup cleanup completed. Deleted {deletedCount} files, freed {sizeFreedMB:F1} MB. {remainingCount} backups remaining.",
                 new BackupCleanupResult 
                 { 
@@ -856,20 +856,20 @@ SkipAssemblyScan = false
                     SizeFreedMB = sizeFreedMB, 
                     RemainingCount = remainingCount 
                 }
-            );
+            ));
         }
         catch (Exception ex)
         {
-            return OperationResult.ErrorResult(ex.Message, "Backup cleanup failed");
+            return Task.FromResult(OperationResult.ErrorResult(ex.Message, "Backup cleanup failed"));
         }
     }
 
-    private async Task CleanupOldBackups(string backupDir)
+    private Task CleanupOldBackups(string backupDir)
     {
         try
         {
             if (!Directory.Exists(backupDir))
-                return;
+                return Task.CompletedTask;
 
             var backupFiles = Directory.GetFiles(backupDir, "bepinex_backup_*.zip")
                 .Select(f => new FileInfo(f))
@@ -916,6 +916,7 @@ SkipAssemblyScan = false
         {
             Console.WriteLine($"Error during backup cleanup: {ex.Message}");
         }
+        return Task.CompletedTask;
     }
 
     private async Task CreateDesktopShortcut(GameInstallation gameInstall)

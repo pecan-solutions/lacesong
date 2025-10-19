@@ -23,7 +23,18 @@ Mod catalog screenshot showing mod management and "Moss Groto" theme.
 
 ### Desktop Application
 
-Desktop application is a work in progress (WIP)
+Lacesong is available as a cross-platform desktop application:
+
+1. **Download**: Get the latest release from [GitHub Releases](https://github.com/pecan-solutions/lacesong/releases)
+2. **Install**: Run the installer for your platform (Windows, macOS, or Linux)
+3. **Launch**: Start Lacesong and follow the setup wizard
+
+### System Requirements
+
+- **Windows**: Windows 10/11 (64-bit)
+- **macOS**: macOS 10.15 or later
+- **Runtime**: .NET 9.0 (included in installer)
+- **Game**: Hollow Knight: Silksong installed
 
 ## Contributing
 

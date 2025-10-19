@@ -17,18 +17,6 @@ public interface IDialogService
     Task ShowMessageDialogAsync(string title, string message);
 }
 
-/// <summary>
-/// interface for logging services
-/// </summary>
-public interface ILoggingService
-{
-    void LogInfo(string message);
-    void LogWarning(string message);
-    void LogError(string message);
-    void LogError(Exception exception);
-    void OpenLogsFolder();
-    void ClearLogs();
-}
 
 /// <summary>
 /// interface for update services

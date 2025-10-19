@@ -109,7 +109,7 @@ public partial class InstalledModsViewModel : BaseViewModel
                 SetStatus($"Installation failed: {result.Error}", true);
                 _snackbarService.Show(
                     "Installation Failed", 
-                    result.Error, 
+                    result.Error ?? "Unknown error occurred", 
                     "Error");
             }
         }, "Installing mod...");
@@ -170,7 +170,7 @@ public partial class InstalledModsViewModel : BaseViewModel
                 SetStatus($"Uninstallation failed: {uninstallResult.Error}", true);
                 _snackbarService.Show(
                     "Uninstallation Failed", 
-                    uninstallResult.Error, 
+                    uninstallResult.Error ?? "Unknown error occurred", 
                     "Error");
             }
         }, "Uninstalling mod...");

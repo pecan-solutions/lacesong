@@ -216,7 +216,7 @@ public class CompatibilityService : ICompatibilityService
         }
     }
 
-    private async Task<CompatibilityCheckResult> CheckGameVersionCompatibility(ModIndexEntry modEntry, string gameVersion)
+    private Task<CompatibilityCheckResult> CheckGameVersionCompatibility(ModIndexEntry modEntry, string gameVersion)
     {
         var result = new CompatibilityCheckResult
         {
@@ -262,10 +262,10 @@ public class CompatibilityService : ICompatibilityService
             result.Notes = "Unable to determine game version compatibility";
         }
 
-        return result;
+        return Task.FromResult(result);
     }
 
-    private async Task<CompatibilityCheckResult> CheckBepInExCompatibility(ModIndexEntry modEntry, string bepinexVersion)
+    private Task<CompatibilityCheckResult> CheckBepInExCompatibility(ModIndexEntry modEntry, string bepinexVersion)
     {
         var result = new CompatibilityCheckResult
         {
@@ -300,7 +300,7 @@ public class CompatibilityService : ICompatibilityService
             result.Notes = "Unable to determine BepInEx compatibility";
         }
 
-        return result;
+        return Task.FromResult(result);
     }
 
     private async Task<CompatibilityCheckResult> CheckDependencyCompatibility(ModInfo mod, GameInstallation gameInstall)

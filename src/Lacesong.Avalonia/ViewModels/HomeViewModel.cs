@@ -246,7 +246,7 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
         {
             await ExecuteAsync(async () =>
             {
-                var result = await _gameLauncher.Stop(CurrentGame);
+                var result = await _gameLauncher.Stop(CurrentGame ?? throw new InvalidOperationException("No game selected"));
                 if (result.Success)
                 {
                     IsGameRunning = false;
@@ -269,7 +269,7 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
             await ExecuteAsync(async () =>
             {
                 Console.WriteLine($"[DEBUG] About to call _gameLauncher.LaunchVanilla with game at: {CurrentGame?.InstallPath}");
-                var result = await _gameLauncher.LaunchVanilla(CurrentGame);
+                var result = await _gameLauncher.LaunchVanilla(CurrentGame ?? throw new InvalidOperationException("No game selected"));
                 Console.WriteLine($"[DEBUG] LaunchVanilla result - Success: {result.Success}, Message: {result.Message}, Error: {result.Error}");
                 
                 if (result.Success)
@@ -291,7 +291,7 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
             Console.WriteLine($"[DEBUG] Game is running in vanilla mode, stopping game");
             await ExecuteAsync(async () =>
             {
-                var result = await _gameLauncher.Stop(CurrentGame);
+                var result = await _gameLauncher.Stop(CurrentGame ?? throw new InvalidOperationException("No game selected"));
                 if (result.Success)
                 {
                     IsGameRunning = false;

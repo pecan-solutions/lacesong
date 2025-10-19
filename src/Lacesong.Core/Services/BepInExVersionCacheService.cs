@@ -1,6 +1,5 @@
 using Lacesong.Core.Interfaces;
 using Lacesong.Core.Models;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace Lacesong.Core.Services;
@@ -10,7 +9,6 @@ namespace Lacesong.Core.Services;
 /// </summary>
 public class BepInExVersionCacheService : IBepInExVersionCacheService
 {
-    private readonly ILogger<BepInExVersionCacheService> _logger;
     private readonly HttpClient _httpClient;
     private BepInExVersionCache? _cachedVersion;
     private readonly object _cacheLock = new object();
@@ -19,9 +17,8 @@ public class BepInExVersionCacheService : IBepInExVersionCacheService
     private static readonly TimeSpan CacheExpiration = TimeSpan.FromHours(12);
     private const string GithubLatestReleaseUrl = "https://api.github.com/repos/BepInEx/BepInEx/releases/latest";
 
-    public BepInExVersionCacheService(ILogger<BepInExVersionCacheService> logger)
+    public BepInExVersionCacheService()
     {
-        _logger = logger;
         _httpClient = new HttpClient();
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Lacesong-ModManager/1.0.0");
         _httpClient.Timeout = TimeSpan.FromSeconds(30);
@@ -34,7 +31,6 @@ public class BepInExVersionCacheService : IBepInExVersionCacheService
             // check if we have valid cached data
             if (_cachedVersion != null && !IsCacheExpired(_cachedVersion))
             {
-                _logger.LogDebug("Using cached BepInEx version: {Version}", _cachedVersion.Version);
                 return _cachedVersion.Version;
             }
         }
@@ -50,7 +46,6 @@ public class BepInExVersionCacheService : IBepInExVersionCacheService
             // check if we have valid cached data
             if (_cachedVersion != null && !IsCacheExpired(_cachedVersion))
             {
-                _logger.LogDebug("Using cached BepInEx version info: {Version}", _cachedVersion.Version);
                 return _cachedVersion.VersionInfo;
             }
         }
@@ -64,7 +59,6 @@ public class BepInExVersionCacheService : IBepInExVersionCacheService
         lock (_cacheLock)
         {
             _cachedVersion = null;
-            _logger.LogInformation("BepInEx version cache invalidated");
         }
     }
 
@@ -80,13 +74,11 @@ public class BepInExVersionCacheService : IBepInExVersionCacheService
     {
         try
         {
-            _logger.LogInformation("Fetching latest BepInEx version from GitHub API");
-            
             using var response = await _httpClient.GetAsync(GithubLatestReleaseUrl);
             
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Failed to fetch latest BepInEx version from GitHub API. Status: {StatusCode}", response.StatusCode);
+                Console.WriteLine($"Failed to fetch latest BepInEx version from GitHub API. Status: {response.StatusCode}");
                 return null;
             }
 
@@ -112,17 +104,17 @@ public class BepInExVersionCacheService : IBepInExVersionCacheService
                         };
                     }
                     
-                    _logger.LogInformation("Successfully fetched and cached latest BepInEx version: {Version}", version);
+                    Console.WriteLine($"Successfully fetched and cached latest BepInEx version: {version}");
                     return version;
                 }
             }
             
-            _logger.LogWarning("No tag_name found in GitHub API response");
+            Console.WriteLine("No tag_name found in GitHub API response");
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching latest BepInEx version from GitHub API");
+            Console.WriteLine($"Error fetching latest BepInEx version from GitHub API: {ex.Message}");
             return null;
         }
     }
@@ -131,13 +123,13 @@ public class BepInExVersionCacheService : IBepInExVersionCacheService
     {
         try
         {
-            _logger.LogInformation("Fetching latest BepInEx version info from GitHub API");
+            Console.WriteLine("Fetching latest BepInEx version info from GitHub API");
             
             using var response = await _httpClient.GetAsync(GithubLatestReleaseUrl);
             
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Failed to fetch latest BepInEx version info from GitHub API. Status: {StatusCode}", response.StatusCode);
+                Console.WriteLine($"Failed to fetch latest BepInEx version info from GitHub API. Status: {response.StatusCode}");
                 return null;
             }
 
@@ -158,14 +150,14 @@ public class BepInExVersionCacheService : IBepInExVersionCacheService
                     };
                 }
                 
-                _logger.LogInformation("Successfully fetched and cached latest BepInEx version info: {Version}", versionInfo.FileVersion);
+                Console.WriteLine($"Successfully fetched and cached latest BepInEx version info: {versionInfo.FileVersion}");
             }
             
             return versionInfo;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching latest BepInEx version info from GitHub API");
+            Console.WriteLine($"Error fetching latest BepInEx version info from GitHub API: {ex.Message}");
             return null;
         }
     }

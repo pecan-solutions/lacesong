@@ -13,14 +13,10 @@ public partial class Settings : ObservableObject
     [ObservableProperty]
     private bool _showAdvancedOptions = false;
 
-    [ObservableProperty]
-    private string _logLevel = "Information";
 
     [ObservableProperty]
     private string _bepinexVersion = "5.4.22";
 
-    [ObservableProperty]
-    private bool _enableTelemetry = false;
 
     [ObservableProperty]
     private string _theme = "The Marrow";

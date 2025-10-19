@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/wwdarrenwei/lacesong.git"
+    "url": "https://github.com/pecan-solutions/lacesong.git"
   },
   "keywords": [
     "mod-manager",
@@ -14,18 +14,20 @@
     "silksong",
     "bepinex",
     "unity",
-    "modding"
+    "modding",
+    "cross-platform",
+    "avalon"
   ],
   "engines": {
     "dotnet": ">=9.0.0"
   },
   "targetFrameworks": [
     "net9.0-windows",
-    "net9.0"
+    "net9.0-macos",
+    "net9.0-linux"
   ],
   "dependencies": {
-    "lacesong.core": "1.0.0",
-    "lacesong.tests": "1.0.0"
+    "lacesong.core": "1.0.0"
   },
   "build": {
     "outputDirectory": "build",
@@ -63,6 +65,23 @@
     "profileManagement": true,
     "modUpdating": true,
     "backupRestore": true,
-    "crossPlatform": true
+    "crossPlatform": true,
+    "avalonUI": true,
+    "thunderstoreIntegration": true,
+    "bepinexManagement": true
+  },
+  "platforms": {
+    "windows": {
+      "minVersion": "10.0.17763",
+      "architectures": ["x64"]
+    },
+    "macos": {
+      "minVersion": "10.15",
+      "architectures": ["arm64", "x64"]
+    },
+    "linux": {
+      "minVersion": "Ubuntu 18.04",
+      "architectures": ["x64"]
+    }
   }
 }

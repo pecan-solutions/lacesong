@@ -6,6 +6,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2025-01-16
+### Added
+- **Complete GitHub issue management system** with comprehensive issue templates
+  - Bug report template with detailed environment information collection
+  - Feature request template with implementation considerations and priority assessment
+  - Specialized mod management issue template for mod-related problems
+  - Issue configuration with community support links and documentation references
+- **Enhanced project documentation and metadata**
+  - Updated manifest.json with complete project information and feature specifications
+  - Comprehensive usage documentation with detailed installation and feature guides
+  - Updated README.md with improved project description and contribution guidelines
+  - Updated LICENSE file with proper Apache 2.0 license terms
+- **Robust application architecture improvements**
+  - Enhanced service layer with improved dependency injection patterns
+  - Refactored ViewModels with better separation of concerns
+  - Improved dialog service implementation with modal overlay support
+  - Enhanced settings management with persistent configuration
+- **Advanced mod management capabilities**
+  - Comprehensive mod installation and uninstallation workflows
+  - Enhanced mod browsing with Thunderstore integration
+  - Improved mod update detection and management
+  - Better conflict detection and dependency resolution
+- **Cross-platform game launcher enhancements**
+  - Improved game detection across Windows, macOS, and Linux
+  - Enhanced BepInEx installation and management
+  - Better process monitoring and game state tracking
+  - Streamlined launch controls with persistent bottom bar
+- **Core service layer improvements**
+  - Enhanced backup management with configurable retention policies
+  - Improved platform detection and compatibility services
+  - Better verification and permission handling
+  - Optimized mod indexing and caching services
+
+### Changed
+- **Application version updated to 1.0.0** marking the first stable release
+- **Improved error handling and user feedback** throughout the application
+- **Enhanced UI consistency** with better styling and user experience
+- **Streamlined service architecture** with better separation of concerns
+- **Updated project metadata** to reflect mature, production-ready status
+
+### Fixed
+- **Resolved various UI inconsistencies** and improved overall user experience
+- **Enhanced mod management reliability** with better error handling
+- **Improved cross-platform compatibility** for game detection and mod installation
+- **Better resource management** and cleanup throughout the application
+
+### Removed
+- **Removed LoggingService.cs** as part of service layer refactoring
+- **Cleaned up obsolete code** and improved code organization
+
 ## [0.7.2] - 2025-10-19
 ### Added
 - BepInEx version caching service to reduce API calls and improve performance

@@ -28,10 +28,10 @@ public class ThunderstoreService : IDisposable
     public async Task<IReadOnlyList<ThunderstorePackageDto>> GetPackagesAsync(int page = 1, CancellationToken token = default)
     {
         var cacheKey = $"packages_page_{page}";
-        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<ThunderstorePackageDto> cached))
+        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<ThunderstorePackageDto>? cached))
         {
-            Console.WriteLine($"ThunderstoreService: GetPackagesAsync - Returning {cached.Count} cached packages for page {page}");
-            return cached;
+            Console.WriteLine($"ThunderstoreService: GetPackagesAsync - Returning {cached?.Count ?? 0} cached packages for page {page}");
+            return cached ?? new List<ThunderstorePackageDto>();
         }
 
         Console.WriteLine($"ThunderstoreService: GetPackagesAsync - Fetching page {page} from API");
@@ -42,7 +42,7 @@ public class ThunderstoreService : IDisposable
             if (_cache.TryGetValue(cacheKey, out cached))
             {
                 Console.WriteLine($"ThunderstoreService: GetPackagesAsync - Found cached data after waiting for page {page}");
-                return cached;
+                return cached ?? new List<ThunderstorePackageDto>();
             }
 
             var url = $"{_baseUrl}/c/hollow-knight-silksong/api/v1/package/?page={page}";
@@ -69,7 +69,7 @@ public class ThunderstoreService : IDisposable
     public async Task<ThunderstorePackageDetailDto?> GetPackageDetailAsync(string ns, string name, bool force = false, CancellationToken token = default)
     {
         var cacheKey = $"pkg_{ns}_{name}";
-        if (!force && _cache.TryGetValue(cacheKey, out ThunderstorePackageDetailDto cachedDto))
+        if (!force && _cache.TryGetValue(cacheKey, out ThunderstorePackageDetailDto? cachedDto))
         {
             return cachedDto;
         }

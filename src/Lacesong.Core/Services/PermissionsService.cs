@@ -212,13 +212,13 @@ public class PermissionsService : IPermissionsService
         }
     }
 
-    private async Task<bool> CanModifyRegistry()
+    private Task<bool> CanModifyRegistry()
     {
         try
         {
             if (!OperatingSystem.IsWindows())
             {
-                return false; // registry only exists on Windows
+                return Task.FromResult(false); // registry only exists on Windows
             }
 
             // test registry write permission
@@ -230,19 +230,19 @@ public class PermissionsService : IPermissionsService
                     var testKey = key.CreateSubKey($"LacesongTest_{Guid.NewGuid()}");
                     testKey?.Close();
                     key.DeleteSubKey(testKey?.Name ?? "", false);
-                    return true;
+                    return Task.FromResult(true);
                 }
             }
             catch
             {
-                return false;
+                return Task.FromResult(false);
             }
 
-            return false;
+            return Task.FromResult(false);
         }
         catch
         {
-            return false;
+            return Task.FromResult(false);
         }
     }
 

@@ -213,21 +213,21 @@ public class BackupManager : IBackupManager
         return backups;
     }
 
-    public async Task<OperationResult> DeleteBackup(string backupPath)
+    public Task<OperationResult> DeleteBackup(string backupPath)
     {
         try
         {
             if (!File.Exists(backupPath))
             {
-                return OperationResult.ErrorResult("Backup file not found", "Backup file does not exist");
+                return Task.FromResult(OperationResult.ErrorResult("Backup file not found", "Backup file does not exist"));
             }
 
             File.Delete(backupPath);
-            return OperationResult.SuccessResult("Backup deleted successfully");
+            return Task.FromResult(OperationResult.SuccessResult("Backup deleted successfully"));
         }
         catch (Exception ex)
         {
-            return OperationResult.ErrorResult(ex.Message, "Failed to delete backup");
+            return Task.FromResult(OperationResult.ErrorResult(ex.Message, "Failed to delete backup"));
         }
     }
 
@@ -240,7 +240,7 @@ public class BackupManager : IBackupManager
         return File.Exists(executablePath);
     }
 
-    private async Task BackupBepInExConfig(GameInstallation gameInstall, string tempBackupDir)
+    private Task BackupBepInExConfig(GameInstallation gameInstall, string tempBackupDir)
     {
         try
         {
@@ -271,9 +271,10 @@ public class BackupManager : IBackupManager
         {
             Console.WriteLine($"Error backing up BepInEx config: {ex.Message}");
         }
+        return Task.CompletedTask;
     }
 
-    private async Task BackupInstalledMods(GameInstallation gameInstall, string tempBackupDir)
+    private Task BackupInstalledMods(GameInstallation gameInstall, string tempBackupDir)
     {
         try
         {
@@ -313,9 +314,10 @@ public class BackupManager : IBackupManager
         {
             Console.WriteLine($"Error backing up installed mods: {ex.Message}");
         }
+        return Task.CompletedTask;
     }
 
-    private async Task BackupModList(GameInstallation gameInstall, string tempBackupDir)
+    private Task BackupModList(GameInstallation gameInstall, string tempBackupDir)
     {
         try
         {
@@ -330,9 +332,10 @@ public class BackupManager : IBackupManager
         {
             Console.WriteLine($"Error backing up mod list: {ex.Message}");
         }
+        return Task.CompletedTask;
     }
 
-    private async Task RestoreBepInExConfig(GameInstallation gameInstall, string tempRestoreDir)
+    private Task RestoreBepInExConfig(GameInstallation gameInstall, string tempRestoreDir)
     {
         try
         {
@@ -363,9 +366,10 @@ public class BackupManager : IBackupManager
         {
             Console.WriteLine($"Error restoring BepInEx config: {ex.Message}");
         }
+        return Task.CompletedTask;
     }
 
-    private async Task RestoreInstalledMods(GameInstallation gameInstall, string tempRestoreDir)
+    private Task RestoreInstalledMods(GameInstallation gameInstall, string tempRestoreDir)
     {
         try
         {
@@ -415,9 +419,10 @@ public class BackupManager : IBackupManager
         {
             Console.WriteLine($"Error restoring installed mods: {ex.Message}");
         }
+        return Task.CompletedTask;
     }
 
-    private async Task RestoreModList(GameInstallation gameInstall, string tempRestoreDir)
+    private Task RestoreModList(GameInstallation gameInstall, string tempRestoreDir)
     {
         try
         {
@@ -432,6 +437,7 @@ public class BackupManager : IBackupManager
         {
             Console.WriteLine($"Error restoring mod list: {ex.Message}");
         }
+        return Task.CompletedTask;
     }
 
     private async Task<BackupInfo?> GetBackupInfo(string backupPath)

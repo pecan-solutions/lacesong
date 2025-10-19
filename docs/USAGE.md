@@ -8,15 +8,17 @@ Lacesong is a cross-platform mod management tool for Unity/Mono games, starting 
 
 ### Prerequisites
 
-- Windows 10/11 (64-bit)
+- Windows 10/11 (64-bit) or macOS 10.15+
 - .NET 9.0 Runtime (included in installer)
 - Hollow Knight: Silksong installed
 
 ### Download and Install
 
-1. Download the latest Lacesong installer from [GitHub Releases](https://github.com/pecansolutions/lacesong/releases)
+1. Download the latest Lacesong installer from [GitHub Releases](https://github.com/pecan-solutions/lacesong/releases)
+   - Windows: Download the `.exe` installer
+   - macOS: Download the `.dmg` installer
 2. Run the installer and follow the setup wizard
-3. Launch Lacesong from the Start Menu or Desktop shortcut
+3. Launch Lacesong from the Start Menu (Windows), Applications folder (macOS), or Desktop shortcut
 
 ## Getting Started
 
@@ -26,29 +28,58 @@ When you first launch Lacesong, it will automatically:
 
 1. **Detect your game installation** - Scans for Hollow Knight: Silksong
 2. **Check for updates** - Verifies you have the latest version
-3. **Navigate to Game Detection** - Shows the detection screen
+3. **Navigate to Home** - Shows the main dashboard
 
-### Game Detection
+## Main Interface
 
-The Game Detection screen helps you locate your Hollow Knight: Silksong installation:
+### Navigation Sidebar
 
-#### Automatic Detection
-- Click **"🔍 Detect Games"** to scan your system
-- Lacesong will check:
-  - Steam Library folders
-  - Epic Games Store installations
-  - GOG Galaxy installations
-  - Xbox Game Pass installations
-  - Common installation paths
+The left sidebar provides quick access to all major features:
 
-#### Manual Selection
-- Click **"📁 Browse for Game"** if automatic detection fails
-- Navigate to your game folder containing `Hollow Knight Silksong.exe`
-- Select the folder and click OK
+- **Home** - Main dashboard with quick actions and game status
+- **Game Detection** - Locate and configure your game installation
+- **Browse Mods** - Discover and install new mods from the community
+- **Installed Mods** - View and manage your currently installed mods
+- **BepInEx Install** - Install and configure the BepInEx mod loader
+- **Manage Mods** - Advanced mod management and configuration
+- **Settings** - Application settings and preferences
 
-#### Proceeding
-- Once a game is detected, it will appear in the list
-- Select your game and click **"Continue"** to proceed to mod management
+### Bottom Bar
+
+The persistent bottom bar provides:
+
+- **Launch Controls** - Launch the game in modded or vanilla mode
+- **Game Status** - Shows current game state and launch options
+- **Split-button Design** - Main launch button with dropdown for mode selection
+
+## Game Detection
+
+### Automatic Detection
+
+Lacesong automatically scans for Hollow Knight: Silksong installations:
+
+- **Steam Library folders** - Common Steam installation paths
+- **GOG Galaxy** - GOG Galaxy installations
+- **Xbox Game Pass** - Xbox Game Pass installations
+- **Common installation paths** - Standard installation directories
+
+### Manual Selection
+
+If automatic detection fails:
+
+1. Navigate to **Game Detection** in the sidebar
+2. Click **"Browse for Game"**
+3. Navigate to your game folder containing the game executable
+   - Windows: `Hollow Knight Silksong.exe`
+   - macOS: `Hollow Knight Silksong.app`
+4. Select the folder and click **"Continue"**
+
+### Game Status
+
+Once detected, the game status will show:
+- Game name and installation path
+- Detection status and configuration options
+- Quick access to re-detect or change installation
 
 ## BepInEx Installation
 
@@ -56,15 +87,13 @@ Before installing mods, you need BepInEx (the mod loader):
 
 ### Installation Process
 
-1. **Navigate to BepInEx Install** - Use the sidebar or main navigation
+1. **Navigate to BepInEx Install** in the sidebar
 2. **Check Status** - The screen shows if BepInEx is already installed
 3. **Configure Options**:
-   - **Version**: Select BepInEx version (default: 5.4.22)
+   - **Version**: Automatically selects the latest compatible version
    - **Force Reinstall**: Check if you want to reinstall over existing installation
    - **Create Backup**: Recommended - backs up existing installation
-   - **Desktop Shortcut**: Optional - creates a shortcut to launch game with BepInEx
-
-4. **Install** - Click **"📥 Install BepInEx"**
+4. **Install** - Click **"Install BepInEx"**
 5. **Wait for Completion** - Installation progress is shown in the status area
 
 ### After Installation
@@ -72,61 +101,90 @@ Before installing mods, you need BepInEx (the mod loader):
 - BepInEx files are installed to your game directory
 - A `BepInEx` folder is created with the mod loader
 - Configuration files are set up automatically
-- You can now install mods
+- You can now install and manage mods
 
 ## Mod Management
 
-The Mod Catalog is where you manage all your mods:
+### Browse Mods
+
+The **Browse Mods** section provides:
+
+- **Search functionality** - Find mods by name, author, or description
+- **Category filtering** - Filter by mod categories
+- **Sorting options** - Sort by popularity, date, name, etc.
+- **Mod details** - View descriptions, screenshots, and installation info
+- **Quick install** - Install mods directly from the browser
 
 ### Installing Mods
 
-#### From File
-1. Click **"📁 Install from File"**
-2. Select a `.zip` file containing the mod
-3. Lacesong will extract and install the mod automatically
+#### From Browse Mods
+1. Navigate to **Browse Mods**
+2. Search or browse for desired mods
+3. Click on a mod to view details
+4. Click **"Install"** to download and install
 
-#### From URL
-1. Click **"🌐 Install from URL"**
-2. Enter the download URL for the mod
-3. Lacesong will download and install the mod
+#### From Home Dashboard
+1. On the **Home** screen, use quick actions:
+   - **"Install Mod from File"** - Select a local `.zip` file
+   - **"Install Mod from URL"** - Enter a download URL
 
 ### Managing Installed Mods
 
-The mod list shows all installed mods with:
-- **Name and Description**
-- **Author and Version**
-- **Status** (Enabled/Disabled)
-- **Installation Date**
+The **Installed Mods** section shows:
+
+- **All installed mods** with status indicators
+- **Mod information** - Name, author, version, installation date
+- **Status indicators**:
+  - **Green Circle** - Mod is enabled and active
+  - **Orange Circle** - Mod is disabled but installed
+  - **Gray Circle** - Mod status unknown
 
 #### Mod Actions
 - **Select a mod** to see details and available actions
-- **✅ Enable** - Activates a disabled mod
-- **❌ Disable** - Deactivates an enabled mod (keeps files)
-- **🗑️ Uninstall** - Removes the mod completely
+- **Enable** - Activates a disabled mod
+- **Disable** - Deactivates an enabled mod (keeps files)
+- **Uninstall** - Removes the mod completely
+- **Update** - Check for and install updates
 
-### Mod Status Indicators
+### Advanced Mod Management
 
-- **Green Circle** - Mod is enabled and active
-- **Orange Circle** - Mod is disabled but installed
-- **Gray Circle** - Mod status unknown
+The **Manage Mods** section provides:
+
+- **Bulk operations** - Enable/disable multiple mods
+- **Dependency management** - Handle mod dependencies
+- **Conflict resolution** - Detect and resolve mod conflicts
+- **Backup and restore** - Create and restore mod configurations
+
+## Game Launching
+
+### Launch Modes
+
+Use the bottom bar launch controls:
+
+- **Launch Modded** - Launches the game with all enabled mods
+- **Launch Vanilla** - Launches the game without any mods
+- **Stop Game** - Stops the currently running game
+
+### Launch Process
+
+1. **Select launch mode** using the split-button dropdown
+2. **Click the main launch button** to start the game
+3. **Monitor game status** in the bottom bar
+4. **Use "Stop" button** to terminate the game if needed
 
 ## Settings
 
-Access settings via the **"⚙️ Settings"** button in the header:
+Access settings via the **Settings** button in the sidebar:
 
 ### General Settings
 - **Auto-check for updates** - Check for Lacesong updates on startup
 - **Create backups before install** - Automatic backups before mod installations
 - **Show advanced options** - Display additional configuration options
-- **Enable telemetry** - Help improve Lacesong (optional)
 
 ### BepInEx Settings
 - **Default Version** - Set the default BepInEx version for new installations
+- **Update checking** - Configure automatic BepInEx update checking
 
-### Logging Settings
-- **Log Level** - Control the verbosity of log messages
-- **Open Logs Folder** - Access log files directly
-- **Clear Logs** - Remove old log files
 
 ### Update Settings
 - **Check for Updates** - Manually check for Lacesong updates
@@ -137,40 +195,37 @@ Access settings via the **"⚙️ Settings"** button in the header:
 - **Import Settings** - Load settings from a file
 - **Reset to Defaults** - Restore all settings to default values
 
-## Logging and Troubleshooting
-
-### Accessing Logs
-
-1. Click **"📁 Open Logs"** in the header
-2. Or go to Settings → Logging → **"📁 Open Logs Folder"**
-
-### Log Files
-
-- **Location**: `%APPDATA%\Lacesong\Logs\`
-- **Format**: `lacesong-YYYY-MM-DD.log`
-- **Content**: Detailed operation logs, errors, and debug information
 
 ### Common Issues
 
 #### Game Not Detected
-- **Solution**: Use manual selection to browse for your game folder
-- **Check**: Ensure `Hollow Knight Silksong.exe` exists in the folder
+- **Solution**: Use manual selection in **Game Detection**
+- **Check**: Ensure the game executable exists in the folder
+- **Verify**: Check file permissions and antivirus settings
 
 #### BepInEx Installation Failed
 - **Check**: Ensure you have write permissions to the game directory
-- **Solution**: Run Lacesong as Administrator
+- **Solution**: Run Lacesong as Administrator (Windows) or with elevated privileges (macOS)
 - **Verify**: Game is not running during installation
+- **Check**: Available disk space and antivirus interference
 
 #### Mod Installation Failed
 - **Check**: Mod file is not corrupted
 - **Verify**: Mod is compatible with current game version
 - **Solution**: Check logs for detailed error information
+- **Try**: Download mod again or from different source
 
 #### Mod Not Working
-- **Verify**: Mod is enabled in the Mod Catalog
-- **Check**: BepInEx is properly installed
+- **Verify**: Mod is enabled in **Installed Mods**
+- **Check**: BepInEx is properly installed via **BepInEx Install**
 - **Solution**: Check game logs in `BepInEx\LogOutput.log`
+- **Try**: Disable other mods to check for conflicts
 
+#### Launch Issues
+- **Check**: Game executable exists and is not corrupted
+- **Verify**: No antivirus blocking the game
+- **Solution**: Try launching vanilla mode first
+- **Check**: File permissions and path length limitations
 
 ## File Structure
 
@@ -178,7 +233,7 @@ After installation, your game directory will contain:
 
 ```
 Hollow Knight Silksong/
-├── Hollow Knight Silksong.exe
+├── Hollow Knight Silksong.exe (Windows) or Hollow Knight Silksong.app (macOS)
 ├── BepInEx/
 │   ├── core/
 │   │   ├── BepInEx.Core.dll
@@ -191,7 +246,7 @@ Hollow Knight Silksong/
 │   │   └── LogOutput.log
 │   └── backups/
 │       └── [backup files]
-├── winhttp.dll
+├── winhttp.dll (Windows only)
 └── doorstop_config.ini
 ```
 
@@ -203,20 +258,23 @@ Hollow Knight Silksong/
 - Stored in `BepInEx/backups/`
 
 ### Manual Backups
-- Use **"📦 Mod Catalog"** → **"🔄 Refresh"** → **"💾 Create Backup"**
+- Use **Manage Mods** → **"Create Backup"**
+- Export settings via **Settings**
 
 ### Restoring Backups
 - Restores entire BepInEx configuration
+- Can restore individual mod configurations
+- Settings can be imported from exported files
 
 ## Updates
 
 ### Automatic Updates
 - Lacesong checks for updates on startup (if enabled)
 - Update notifications appear in the status bar
-- Click **"🔄 Check Updates"** to check manually
+- Click **"Check Updates"** in Settings to check manually
 
 ### Manual Updates
-1. Download latest installer from GitHub Releases
+1. Download latest installer from [GitHub Releases](https://github.com/pecan-solutions/lacesong/releases)
 2. Run installer to update
 3. Settings and configurations are preserved
 
@@ -233,14 +291,13 @@ Hollow Knight Silksong/
 - Backup configurations before making changes
 
 ### Troubleshooting
-- Enable debug logging in Settings
-- Check both Lacesong logs and BepInEx logs
 - Verify game compatibility with mod versions
+- Use **Manage Mods** for conflict detection
 
 ## Support
 
 ### Getting Help
-- Check the [GitHub Issues](https://github.com/YourOrg/Lacesong/issues) page
+- Check the [GitHub Issues](https://github.com/pecan-solutions/lacesong/issues) page
 - Review log files for error details
 - Ensure you're running the latest version
 
@@ -248,15 +305,9 @@ Hollow Knight Silksong/
 When reporting issues, include:
 - Lacesong version
 - Game version
-- Operating system
+- Operating system and version
 - Relevant log files
 - Steps to reproduce the problem
-
-### Contributing
-- Fork the repository
-- Create a feature branch
-- Submit a pull request
-- Follow the contributing guidelines
 
 ## License
 
@@ -268,4 +319,4 @@ Lacesong is not affiliated with Team Cherry or Hollow Knight: Silksong. It is a 
 
 ---
 
-*For more information, visit the [Lacesong GitHub Repository](https://github.com/YourOrg/Lacesong).*
+*For more information, visit the [Lacesong GitHub Repository](https://github.com/pecan-solutions/lacesong).*

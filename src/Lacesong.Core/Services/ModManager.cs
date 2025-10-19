@@ -719,7 +719,7 @@ public class ModManager : IModManager
         Console.WriteLine($"[DEBUG] Game install path: {gameInstall?.InstallPath}");
         Console.WriteLine($"[DEBUG] Game mod directory: {gameInstall?.ModDirectory}");
         
-        var modsRoot = GetModsDirectoryPath(gameInstall);
+        var modsRoot = GetModsDirectoryPath(gameInstall ?? throw new ArgumentNullException(nameof(gameInstall)));
         Console.WriteLine($"[DEBUG] Mods root path: {modsRoot}");
         Console.WriteLine($"[DEBUG] Mods root exists: {Directory.Exists(modsRoot)}");
         
@@ -1061,7 +1061,7 @@ public class ModManager : IModManager
                 throw new InvalidOperationException($"Failed to create junction: {error}");
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // if junction creation fails, fall back to recursive copy
             CopyDirectoryRecursive(targetPath, junctionPath);
@@ -1261,20 +1261,20 @@ public class ModManager : IModManager
         }
     }
 
-    private async Task<ModInfo?> InferModInfo(string extractPath, string? owner = null)
+    private Task<ModInfo?> InferModInfo(string extractPath, string? owner = null)
     {
         try
         {
             // look for dll files to determine mod structure
             var dllFiles = Directory.GetFiles(extractPath, "*.dll", SearchOption.AllDirectories);
             if (dllFiles.Length == 0)
-                return null;
+                return Task.FromResult<ModInfo?>(null);
 
             // use the first dll file name as mod name
             var firstDll = dllFiles[0];
             var modName = Path.GetFileNameWithoutExtension(firstDll);
 
-            return new ModInfo
+            return Task.FromResult<ModInfo?>(new ModInfo
             {
                 Id = modName.ToLowerInvariant().Replace(" ", "-"),
                 Name = modName,
@@ -1282,11 +1282,11 @@ public class ModManager : IModManager
                 Description = "Mod installed from zip file",
                 Author = !string.IsNullOrEmpty(owner) ? owner : "Unknown",
                 Dependencies = new List<string>()
-            };
+            });
         }
         catch
         {
-            return null;
+            return Task.FromResult<ModInfo?>(null);
         }
     }
 
@@ -1603,7 +1603,7 @@ public class ModManager : IModManager
         }
     }
 
-    private async Task<OperationResult> CreateModBackup(ModInfo modInfo, GameInstallation gameInstall)
+    private Task<OperationResult> CreateModBackup(ModInfo modInfo, GameInstallation gameInstall)
     {
         try
         {
@@ -1619,11 +1619,11 @@ public class ModManager : IModManager
                 ZipFile.CreateFromDirectory(modPath, backupPath);
             }
 
-            return OperationResult.SuccessResult("Mod backup created successfully", backupPath);
+            return Task.FromResult(OperationResult.SuccessResult("Mod backup created successfully", backupPath));
         }
         catch (Exception ex)
         {
-            return OperationResult.ErrorResult(ex.Message, "Failed to create mod backup");
+            return Task.FromResult(OperationResult.ErrorResult(ex.Message, "Failed to create mod backup"));
         }
     }
 

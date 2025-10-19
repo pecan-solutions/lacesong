@@ -31,7 +31,7 @@ public partial class GameDetectionView : UserControl
         {
             // At runtime, you would get the ViewModel from your service provider
             // This assumes you have an App.axaml.cs where you configure services.
-            var app = (App)App.Current;
+            var app = (App?)App.Current ?? throw new InvalidOperationException("App.Current is null");
             DataContext = app.Services.GetRequiredService<GameDetectionViewModel>();
         }
     }

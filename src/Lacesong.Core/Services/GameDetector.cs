@@ -110,12 +110,12 @@ public class GameDetector : IGameDetector
         return await Task.FromResult(_supportedGames);
     }
 
-    private async Task<GameInstallation?> DetectFromPath(string path)
+    private Task<GameInstallation?> DetectFromPath(string path)
     {
         try
         {
             if (!Directory.Exists(path))
-                return null;
+                return Task.FromResult<GameInstallation?>(null);
 
             // look for game executables in the directory
             foreach (var game in _supportedGames)
@@ -140,7 +140,7 @@ public class GameDetector : IGameDetector
                             var actualExecutablePath = ExecutableTypeDetector.GetAppBundleExecutablePath(executablePath);
                             if (File.Exists(actualExecutablePath))
                             {
-                                return new GameInstallation
+                                return Task.FromResult<GameInstallation?>(new GameInstallation
                                 {
                                     Name = game.Name,
                                     Id = game.Id,
@@ -154,13 +154,13 @@ public class GameDetector : IGameDetector
                                     ModDirectory = game.ModDirectory,
                                     IsValid = true,
                                     DetectedBy = "Manual Path"
-                                };
+                                });
                             }
                         }
                     }
                     else if (ExecutableTypeDetector.IsValidExecutable(executablePath))
                     {
-                        return new GameInstallation
+                        return Task.FromResult<GameInstallation?>(new GameInstallation
                         {
                             Name = game.Name,
                             Id = game.Id,
@@ -174,7 +174,7 @@ public class GameDetector : IGameDetector
                             ModDirectory = game.ModDirectory,
                             IsValid = true,
                             DetectedBy = "Manual Path"
-                        };
+                        });
                     }
                 }
             }
@@ -185,10 +185,10 @@ public class GameDetector : IGameDetector
             Console.WriteLine($"Error detecting from path {path}: {ex.Message}");
         }
 
-        return null;
+        return Task.FromResult<GameInstallation?>(null);
     }
 
-    private async Task<List<GameInstallation>> DetectFromSteam()
+    private Task<List<GameInstallation>> DetectFromSteam()
     {
         var detectedGames = new List<GameInstallation>();
 
@@ -197,7 +197,7 @@ public class GameDetector : IGameDetector
             // get steam installation paths for current platform
             var steamPaths = PlatformDetector.GetSteamPaths();
             if (steamPaths.Count == 0)
-                return detectedGames;
+                return Task.FromResult(detectedGames);
 
             foreach (var steamPath in steamPaths)
             {
@@ -322,7 +322,7 @@ public class GameDetector : IGameDetector
             Console.WriteLine($"Error detecting Steam games: {ex.Message}");
         }
 
-        return detectedGames;
+        return Task.FromResult(detectedGames);
     }
 
     private async Task<List<GameInstallation>> DetectFromEpic()
@@ -426,7 +426,7 @@ public class GameDetector : IGameDetector
         return detectedGames;
     }
 
-    private async Task<List<GameInstallation>> DetectFromGog()
+    private Task<List<GameInstallation>> DetectFromGog()
     {
         var detectedGames = new List<GameInstallation>();
 
@@ -435,7 +435,7 @@ public class GameDetector : IGameDetector
             // get gog galaxy installation paths for current platform
             var gogPaths = PlatformDetector.GetGogPaths();
             if (gogPaths.Count == 0)
-                return detectedGames;
+                return Task.FromResult(detectedGames);
 
             // build common gog installation paths for current platform
             var commonPaths = new List<string>();
@@ -573,10 +573,10 @@ public class GameDetector : IGameDetector
             Console.WriteLine($"Error detecting GOG games: {ex.Message}");
         }
 
-        return detectedGames;
+        return Task.FromResult(detectedGames);
     }
 
-    private async Task<List<GameInstallation>> DetectFromXbox()
+    private Task<List<GameInstallation>> DetectFromXbox()
     {
         var detectedGames = new List<GameInstallation>();
 
@@ -584,12 +584,12 @@ public class GameDetector : IGameDetector
         {
             // xbox game pass is only available on windows
             if (!PlatformDetector.IsWindows)
-                return detectedGames;
+                return Task.FromResult(detectedGames);
 
             // xbox game pass installation paths
             var xboxPaths = PlatformDetector.GetXboxPaths();
             if (xboxPaths.Count == 0)
-                return detectedGames;
+                return Task.FromResult(detectedGames);
 
             foreach (var xboxPath in xboxPaths)
             {
@@ -686,10 +686,10 @@ public class GameDetector : IGameDetector
             Console.WriteLine($"Error detecting Xbox Game Pass games: {ex.Message}");
         }
 
-        return detectedGames;
+        return Task.FromResult(detectedGames);
     }
 
-    private async Task<List<GameInstallation>> DetectFromCommonPaths()
+    private Task<List<GameInstallation>> DetectFromCommonPaths()
     {
         var detectedGames = new List<GameInstallation>();
 
@@ -789,7 +789,7 @@ public class GameDetector : IGameDetector
             Console.WriteLine($"Error detecting from common paths: {ex.Message}");
         }
 
-        return detectedGames;
+        return Task.FromResult(detectedGames);
     }
 
     private List<GameInstallation> LoadSupportedGames()

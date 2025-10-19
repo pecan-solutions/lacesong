@@ -17,7 +17,7 @@ public class NavigationItem : ObservableObject
 
     public string Label { get; set; } = string.Empty;
     public string Icon { get; set; } = string.Empty;
-    public Type ViewModelType { get; set; }
+    public Type ViewModelType { get; set; } = null!;
     public bool IsActive 
     { 
         get => _isActive; 
@@ -63,11 +63,11 @@ public partial class MainViewModel : BaseViewModel
         NavigationItems = new ObservableCollection<NavigationItem>
         {
             CreateNavItem("Home", "M10 2.5l-8 6v8h6v-6h4v6h6v-8l-8-6z", typeof(HomeViewModel)),
-            CreateNavItem("Game Detection", "M4 8h2v2H4zm4 0h2v2H8zm4 0h2v2h-2zm-8 4h2v2H4zm4 0h2v2H8zm4 0h2v2h-2zM6 4h2v2H6zm4 0h2v2h-2zm4 0h2v2h-2z", typeof(GameDetectionViewModel)),
-            CreateNavItem("Manage Mods", "M4 2h16v2H4zm0 4h10v2H4zm0 4h16v2H4zm0 4h10v2H4zm0 4h16v2H4z", typeof(ManageModsViewModel)),
+            CreateNavItem("Game Detection", "M4,8H8V4A2,2 0 0,1 10,2H14A2,2 0 0,1 16,4V8H20A2,2 0 0,1 22,10V14A2,2 0 0,1 20,16H16V20A2,2 0 0,1 14,22H10A2,2 0 0,1 8,20V16H4A2,2 0 0,1 2,14V10A2,2 0 0,1 4,8Z", typeof(GameDetectionViewModel)),
+            CreateNavItem("Manage Mods", "M20 10.3V8H4V21H11V19.13L19.39 10.74C19.57 10.56 19.78 10.42 20 10.3M15 13H9V11.5C9 11.22 9.22 11 9.5 11H14.5C14.78 11 15 11.22 15 11.5V13M21 7H3V3H21V7M22.85 14.19L21.87 15.17L19.83 13.13L20.81 12.15C21 11.95 21.33 11.95 21.53 12.15L22.85 13.47C23.05 13.67 23.05 14 22.85 14.19M19.13 13.83L21.17 15.87L15.04 22H13V19.96L19.13 13.83Z", typeof(ManageModsViewModel)),
+            CreateNavItem("Browse Mods", "M14.19,14.19L6,18L9.81,9.81L18,6M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,10.9A1.1,1.1 0 0,0 10.9,12A1.1,1.1 0 0,0 12,13.1A1.1,1.1 0 0,0 13.1,12A1.1,1.1 0 0,0 12,10.9Z", typeof(BrowseModsViewModel)),
             CreateNavItem("BepInEx", "M4 4h16v2H4zm0 4h16v2H4zm0 4h16v2H4zm0 4h16v2H4z", typeof(BepInExInstallViewModel)),
-            CreateNavItem("Browse Mods", "M6 2h12v2H6zm0 4h12v2H6zm0 4h12v2H6zm0 4h8v2H6z", typeof(BrowseModsViewModel)),
-            CreateNavItem("Settings", "M9.5 4c-1.4 0-2.5 1.1-2.5 2.5S8.1 9 9.5 9s2.5-1.1 2.5-2.5S10.9 4 9.5 4zm0 1c.8 0 1.5.7 1.5 1.5S10.3 8 9.5 8s-1.5-.7-1.5-1.5S8.7 5 9.5 5zM4.5 9C3.1 9 2 10.1 2 11.5S3.1 14 4.5 14s2.5-1.1 2.5-2.5S5.9 9 4.5 9zm0 1c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5zm10 0c-1.4 0-2.5 1.1-2.5 2.5s1.1 2.5 2.5 2.5 2.5-1.1 2.5-2.5-1.1-2.5-2.5-2.5zm0 1c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5z", typeof(SettingsViewModel))
+            CreateNavItem("Settings", "M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z", typeof(SettingsViewModel))
         };
 
         // Navigate to the home view model on startup

@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using Lacesong.Avalonia.Views;
 using Lacesong.Core.Models;
@@ -20,13 +21,21 @@ public class DialogService : IDialogService
 
     public async Task<string?> ShowFolderDialogAsync(string title)
     {
-        var dialog = new OpenFolderDialog { Title = title };
-        return await dialog.ShowAsync(MainWindow);
+        var storageProvider = MainWindow.StorageProvider;
+        var options = new FolderPickerOpenOptions
+        {
+            Title = title,
+            AllowMultiple = false
+        };
+        
+        var folders = await storageProvider.OpenFolderPickerAsync(options);
+        return folders.FirstOrDefault()?.Path.LocalPath;
     }
 
     public async Task<string?> ShowOpenFileDialogAsync(string title, string filter)
     {
-        var dialog = new OpenFileDialog
+        var storageProvider = MainWindow.StorageProvider;
+        var options = new FilePickerOpenOptions
         {
             Title = title,
             AllowMultiple = false
@@ -35,34 +44,41 @@ public class DialogService : IDialogService
         if (!string.IsNullOrEmpty(filter))
         {
             var filterPattern = filter.Split('|');
-            var fileDialogFilters = new List<FileDialogFilter>();
+            var fileTypes = new List<FilePickerFileType>();
             for (int i = 0; i < filterPattern.Length; i += 2)
             {
-                fileDialogFilters.Add(new FileDialogFilter { Name = filterPattern[i], Extensions = new List<string> { filterPattern[i + 1].Replace("*.", "") } });
+                var extensions = new List<string> { filterPattern[i + 1].Replace("*.", "") };
+                fileTypes.Add(new FilePickerFileType(filterPattern[i]) { Patterns = extensions });
             }
-            dialog.Filters = fileDialogFilters;
+            options.FileTypeFilter = fileTypes;
         }
 
-        var result = await dialog.ShowAsync(MainWindow);
-        return result?.Length > 0 ? result[0] : null;
+        var files = await storageProvider.OpenFilePickerAsync(options);
+        return files.FirstOrDefault()?.Path.LocalPath;
     }
 
     public async Task<string?> ShowSaveFileDialogAsync(string title, string filter)
     {
-        var dialog = new SaveFileDialog { Title = title };
+        var storageProvider = MainWindow.StorageProvider;
+        var options = new FilePickerSaveOptions
+        {
+            Title = title
+        };
 
         if (!string.IsNullOrEmpty(filter))
         {
             var filterPattern = filter.Split('|');
-            var fileDialogFilters = new List<FileDialogFilter>();
+            var fileTypes = new List<FilePickerFileType>();
             for (int i = 0; i < filterPattern.Length; i += 2)
             {
-                fileDialogFilters.Add(new FileDialogFilter { Name = filterPattern[i], Extensions = new List<string> { filterPattern[i + 1].Replace("*.", "") } });
+                var extensions = new List<string> { filterPattern[i + 1].Replace("*.", "") };
+                fileTypes.Add(new FilePickerFileType(filterPattern[i]) { Patterns = extensions });
             }
-            dialog.Filters = fileDialogFilters;
+            options.FileTypeChoices = fileTypes;
         }
 
-        return await dialog.ShowAsync(MainWindow);
+        var file = await storageProvider.SaveFilePickerAsync(options);
+        return file?.Path.LocalPath;
     }
 
     public async Task<string?> ShowInputDialogAsync(string title, string message, string defaultValue = "")
