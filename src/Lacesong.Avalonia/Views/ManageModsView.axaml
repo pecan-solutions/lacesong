@@ -37,7 +37,7 @@
                                 </Border>
                                 
                                 <!-- Name -->
-                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding Name}" Classes="h4" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding DisplayName}" Classes="h4" TextWrapping="Wrap" Margin="0,0,0,4"/>
                                 
                                 <!-- Author and Version -->
                                 <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
@@ -95,7 +95,7 @@
                         </Border>
 
                         <!-- Name -->
-                        <TextBlock Text="{Binding SelectedMod.Name}" Classes="h2"/>
+                        <TextBlock Text="{Binding SelectedMod.DisplayName}" Classes="h2"/>
 
                         <!-- Author -->
                         <TextBlock Classes="h4">

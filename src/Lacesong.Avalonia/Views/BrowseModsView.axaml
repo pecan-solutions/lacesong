@@ -61,7 +61,7 @@
                                 
                                 <!-- Quick Action Buttons -->
                                 <StackPanel Grid.Column="2" Grid.RowSpan="3" VerticalAlignment="Center">
-                                    <ProgressBar Minimum="0" Maximum="1" Height="2" VerticalAlignment="Top" Value="{Binding $parent[UserControl].DataContext.InstallProgress}" Width="24" Margin="0,0,0,2">
+                                    <ProgressBar Minimum="0" Maximum="1" Height="2" VerticalAlignment="Top" Value="{Binding $parent[UserControl].DataContext.InstallProgress}" Width="16" Margin="0,0,0,2">
                                         <ProgressBar.IsVisible>
                                             <MultiBinding Converter="{StaticResource IdMatchConverter}">
                                                 <Binding Path="Id"/>

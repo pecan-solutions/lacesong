@@ -93,24 +93,42 @@ public partial class ManageModsViewModel : BaseViewModel
     [RelayCommand]
     private async Task LoadModsAsync()
     {
+        Console.WriteLine($"=== LOAD MODS ASYNC DEBUG START ===");
+        Console.WriteLine($"LoadModsAsync called");
+        
         if (_gameStateService.CurrentGame == null || string.IsNullOrEmpty(_gameStateService.CurrentGame.InstallPath))
         {
+            Console.WriteLine($"No current game or install path, clearing mods");
             Mods.Clear();
             return;
         }
 
+        Console.WriteLine($"Current game: {_gameStateService.CurrentGame.Name}");
+        Console.WriteLine($"Install path: {_gameStateService.CurrentGame.InstallPath}");
+
         await ExecuteAsync(async () =>
         {
+            Console.WriteLine($"Calling _modManager.GetInstalledMods");
             var installedMods = await _modManager.GetInstalledMods(_gameStateService.CurrentGame);
+            Console.WriteLine($"GetInstalledMods returned {installedMods.Count} mods");
+            
+            // log each mod's status
+            foreach (var mod in installedMods)
+            {
+                Console.WriteLine($"Mod: {mod.Name} (ID: {mod.Id}), IsEnabled: {mod.IsEnabled}");
+            }
             
             Mods.Clear();
-            foreach (var mod in installedMods.OrderBy(m => m.Name))
+            foreach (var mod in installedMods.OrderBy(m => m.DisplayName))
             {
                 Mods.Add(mod);
             }
             
             SetStatus($"Loaded {installedMods.Count} installed mods");
+            Console.WriteLine($"Added {installedMods.Count} mods to UI collection");
         }, "Loading mods...");
+        
+        Console.WriteLine($"=== LOAD MODS ASYNC DEBUG END ===");
     }
 
     private async Task FilterModsAsync()
@@ -130,13 +148,14 @@ public partial class ManageModsViewModel : BaseViewModel
             {
                 filtered = installedMods.Where(m => 
                     m.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    m.DisplayName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                     (m.Author?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                     (m.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false)
                 ).ToList();
             }
             
             Mods.Clear();
-            foreach (var mod in filtered.OrderBy(m => m.Name))
+            foreach (var mod in filtered.OrderBy(m => m.DisplayName))
             {
                 Mods.Add(mod);
             }
@@ -158,7 +177,7 @@ public partial class ManageModsViewModel : BaseViewModel
 
         await ExecuteAsync(async () =>
         {
-            var uninstallResult = await _modManager.UninstallMod(mod.Id, _gameStateService.CurrentGame);
+            var uninstallResult = await _modManager.UninstallMod(mod.DirectoryName ?? mod.Id, _gameStateService.CurrentGame);
             
             if (uninstallResult.Success)
             {
@@ -185,22 +204,39 @@ public partial class ManageModsViewModel : BaseViewModel
     {
         if (mod == null || _gameStateService.CurrentGame == null) return;
 
+        Console.WriteLine($"=== ENABLE MOD ASYNC DEBUG START ===");
+        Console.WriteLine($"EnableModAsync called for mod: {mod.Name} (ID: {mod.Id})");
+        Console.WriteLine($"Current mod IsEnabled: {mod.IsEnabled}");
+        Console.WriteLine($"Game: {_gameStateService.CurrentGame.Name}");
+
         await ExecuteAsync(async () =>
         {
-            var result = await _modManager.EnableMod(mod.Id, _gameStateService.CurrentGame);
+            Console.WriteLine($"Calling _modManager.EnableMod for modId: {mod.Id}");
+            var result = await _modManager.EnableMod(mod.DirectoryName ?? mod.Id, _gameStateService.CurrentGame);
+
+            Console.WriteLine($"EnableMod result - Success: {result.Success}, Message: {result.Message}");
+            if (!string.IsNullOrEmpty(result.Error))
+            {
+                Console.WriteLine($"EnableMod result - Error: {result.Error}");
+            }
 
             if (result.Success)
             {
                 SetStatus($"{mod.Name} enabled");
                 _snackbarService.Show("Success", $"Enabled {mod.Name}.", "Success");
+                Console.WriteLine($"Success toast shown, now calling LoadModsAsync");
                 await LoadModsAsync();
+                Console.WriteLine($"LoadModsAsync completed");
             }
             else
             {
                 SetStatus(result.Error, true);
                 _snackbarService.Show("Error", result.Error, "Error");
+                Console.WriteLine($"Error toast shown");
             }
         }, "Enabling mod...");
+        
+        Console.WriteLine($"=== ENABLE MOD ASYNC DEBUG END ===");
     }
 
     [RelayCommand]
@@ -210,7 +246,7 @@ public partial class ManageModsViewModel : BaseViewModel
 
         await ExecuteAsync(async () =>
         {
-            var result = await _modManager.DisableMod(mod.Id, _gameStateService.CurrentGame);
+            var result = await _modManager.DisableMod(mod.DirectoryName ?? mod.Id, _gameStateService.CurrentGame);
 
             if (result.Success)
             {
