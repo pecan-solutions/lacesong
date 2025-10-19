@@ -74,6 +74,31 @@ public interface IBepInExManager
     /// <param name="gameInstall">game installation to uninstall from</param>
     /// <returns>operation result</returns>
     Task<OperationResult> UninstallBepInEx(GameInstallation gameInstall);
+
+    /// <summary>
+    /// checks for available BepInEx updates
+    /// </summary>
+    /// <param name="gameInstall">game installation to check</param>
+    /// <returns>update information or null if no update available</returns>
+    Task<BepInExUpdate?> CheckForBepInExUpdates(GameInstallation gameInstall);
+
+    /// <summary>
+    /// updates BepInEx to the latest version
+    /// </summary>
+    /// <param name="gameInstall">game installation to update</param>
+    /// <param name="options">update options</param>
+    /// <param name="progress">progress reporter for update process</param>
+    /// <returns>operation result</returns>
+    Task<OperationResult> UpdateBepInEx(GameInstallation gameInstall, BepInExUpdateOptions? options = null, IProgress<double>? progress = null);
+
+    /// <summary>
+    /// cleans up old BepInEx backups to free storage space
+    /// </summary>
+    /// <param name="gameInstall">game installation to clean up backups for</param>
+    /// <param name="maxBackups">maximum number of backups to keep (default: 5)</param>
+    /// <param name="maxAgeDays">maximum age of backups in days (default: 30)</param>
+    /// <returns>operation result with cleanup statistics</returns>
+    Task<OperationResult> CleanupBepInExBackups(GameInstallation gameInstall, int maxBackups = 5, int maxAgeDays = 30);
 }
 
 /// <summary>

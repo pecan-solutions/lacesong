@@ -68,6 +68,11 @@ public class ModInfo
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>
+    /// gets the display name with underscores replaced by spaces
+    /// </summary>
+    public string DisplayName => Name.Replace("_", " ");
+
     [JsonPropertyName("version")]
     public string Version { get; set; } = string.Empty;
 
@@ -142,6 +147,60 @@ public class BepInExInstallOptions
 
     [JsonPropertyName("requireElevation")]
     public bool RequireElevation { get; set; } = false;
+}
+
+/// <summary>
+/// represents BepInEx update information
+/// </summary>
+public class BepInExUpdate
+{
+    [JsonPropertyName("currentVersion")]
+    public string CurrentVersion { get; set; } = string.Empty;
+
+    [JsonPropertyName("latestVersion")]
+    public string LatestVersion { get; set; } = string.Empty;
+
+    [JsonPropertyName("downloadUrl")]
+    public string DownloadUrl { get; set; } = string.Empty;
+
+    [JsonPropertyName("releaseNotes")]
+    public string? ReleaseNotes { get; set; }
+
+    [JsonPropertyName("publishedAt")]
+    public DateTime PublishedAt { get; set; }
+
+    [JsonPropertyName("isPrerelease")]
+    public bool IsPrerelease { get; set; } = false;
+
+    [JsonPropertyName("fileSize")]
+    public long FileSize { get; set; }
+
+    [JsonPropertyName("checksum")]
+    public string? Checksum { get; set; }
+
+    [JsonPropertyName("checksumType")]
+    public string ChecksumType { get; set; } = "SHA256";
+}
+
+/// <summary>
+/// represents BepInEx update options
+/// </summary>
+public class BepInExUpdateOptions
+{
+    [JsonPropertyName("backupExisting")]
+    public bool BackupExisting { get; set; } = true;
+
+    [JsonPropertyName("verifySignature")]
+    public bool VerifySignature { get; set; } = true;
+
+    [JsonPropertyName("verifyChecksum")]
+    public bool VerifyChecksum { get; set; } = true;
+
+    [JsonPropertyName("requireElevation")]
+    public bool RequireElevation { get; set; } = false;
+
+    [JsonPropertyName("notifyOnCompletion")]
+    public bool NotifyOnCompletion { get; set; } = true;
 }
 
 /// <summary>
@@ -1012,4 +1071,19 @@ public enum ActionType
     ChangeLoadOrder,
     MergeConfig,
     SkipInstallation
+}
+
+/// <summary>
+/// represents the result of a backup cleanup operation
+/// </summary>
+public class BackupCleanupResult
+{
+    [JsonPropertyName("deletedCount")]
+    public int DeletedCount { get; set; }
+
+    [JsonPropertyName("sizeFreedMB")]
+    public double SizeFreedMB { get; set; }
+
+    [JsonPropertyName("remainingCount")]
+    public int RemainingCount { get; set; }
 }
