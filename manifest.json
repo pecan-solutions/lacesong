@@ -25,7 +25,6 @@
   ],
   "dependencies": {
     "lacesong.core": "1.0.0",
-    "lacesong.cli": "1.0.0",
     "lacesong.tests": "1.0.0"
   },
   "build": {
@@ -65,19 +64,5 @@
     "modUpdating": true,
     "backupRestore": true,
     "crossPlatform": true
-  },
-  "cli": {
-    "executable": "modman.exe",
-    "commands": [
-      "install-bepinex",
-      "install-mod",
-      "uninstall-mod",
-      "enable-mod",
-      "disable-mod",
-      "list-mods",
-      "backup",
-      "restore",
-      "detect-game"
-    ]
   }
 }

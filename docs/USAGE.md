@@ -171,42 +171,6 @@ Access settings via the **"⚙️ Settings"** button in the header:
 - **Check**: BepInEx is properly installed
 - **Solution**: Check game logs in `BepInEx\LogOutput.log`
 
-## Command Line Interface
-
-Lacesong also includes a command-line interface for advanced users:
-
-### Basic Commands
-
-```bash
-# Detect game installation
-lacesong detect-game
-
-# Install BepInEx
-lacesong install-bepinex --version 5.4.22 --backup
-
-# Install a mod
-lacesong install-mod "path/to/mod.zip"
-
-# List installed mods
-lacesong list-mods
-
-# Enable/disable mod
-lacesong enable-mod "mod-id"
-lacesong disable-mod "mod-id"
-
-# Create backup
-lacesong backup "backup-name"
-
-# Restore backup
-lacesong restore "backup-file.lcb"
-```
-
-### Command Options
-
-- `--path` - Specify game installation path
-- `--version` - Set BepInEx version
-- `--force` - Force reinstall
-- `--backup` - Create backup before operation
 
 ## File Structure
 
@@ -240,10 +204,8 @@ Hollow Knight Silksong/
 
 ### Manual Backups
 - Use **"📦 Mod Catalog"** → **"🔄 Refresh"** → **"💾 Create Backup"**
-- Or CLI: `lacesong backup "backup-name"`
 
 ### Restoring Backups
-- Use CLI: `lacesong restore "backup-file.lcb"`
 - Restores entire BepInEx configuration
 
 ## Updates

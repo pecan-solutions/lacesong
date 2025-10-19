@@ -72,7 +72,6 @@ dotnet test
 lacesong/
 ├── src/
 │   ├── Lacesong.Core/          # core business logic, platform-agnostic
-│   ├── Lacesong.CLI/           # command-line interface
 │   ├── Lacesong.Avalonia/      # cross-platform ui (primary)
 │   └── Lacesong.WPF/           # windows-specific ui (legacy)
 ├── tests/
@@ -519,10 +518,6 @@ Include:
 - Views (XAML)
 - Platform-specific services
 
-**Lacesong.CLI**
-- Command-line interface
-- CLI-specific commands
-- Uses Core services
 
 ### Key Services
 

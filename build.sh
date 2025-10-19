@@ -19,9 +19,6 @@ dotnet restore Lacesong.sln
 echo "Building Core library..."
 dotnet build src/Lacesong.Core/Lacesong.Core.csproj --configuration Release --no-restore
 
-# Build CLI application (cross-platform)
-echo "Building CLI application..."
-dotnet build src/Lacesong.CLI/Lacesong.CLI.csproj --configuration Release --no-restore
 
 # Build WPF application (Windows-specific)
 echo "Building WPF application..."
@@ -40,14 +37,6 @@ dotnet publish src/Lacesong.WPF/Lacesong.WPF.csproj \
     --output ./dist/Lacesong.WPF \
     --no-build
 
-# Publish CLI application
-echo "Publishing CLI application..."
-dotnet publish src/Lacesong.CLI/Lacesong.CLI.csproj \
-    --configuration Release \
-    --runtime win-x64 \
-    --self-contained true \
-    --output ./dist/Lacesong.CLI \
-    --no-build
 
 # Create distribution packages
 echo "Creating distribution packages..."
@@ -56,12 +45,6 @@ echo "Creating distribution packages..."
 mkdir -p ./dist/installer
 cp -r ./dist/Lacesong.WPF/* ./dist/installer/
 
-# Create CLI package
-mkdir -p ./dist/cli-package
-cp -r ./dist/Lacesong.CLI/* ./dist/cli-package/
-cp README.md ./dist/cli-package/
-cp USAGE.md ./dist/cli-package/
-cp LICENSE ./dist/cli-package/
 
 # Create zip packages
 echo "Creating zip packages..."
@@ -70,8 +53,6 @@ cd ./dist
 # WPF Application Package
 zip -r Lacesong-WPF-$(date +%Y%m%d).zip installer/
 
-# CLI Package
-zip -r Lacesong-CLI-$(date +%Y%m%d).zip cli-package/
 
 cd ..
 
@@ -79,6 +60,5 @@ echo "Build completed successfully!"
 echo ""
 echo "Distribution files created in ./dist/:"
 echo "   - Lacesong-WPF-$(date +%Y%m%d).zip (WPF Application)"
-echo "   - Lacesong-CLI-$(date +%Y%m%d).zip (CLI Package)"
 echo ""
 echo "Ready for distribution!"

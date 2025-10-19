@@ -29,14 +29,6 @@ dotnet publish src/Lacesong.WPF/Lacesong.WPF.csproj ^
     --output ./dist/Lacesong.WPF ^
     --no-build
 
-REM Publish CLI application
-echo Publishing CLI application...
-dotnet publish src/Lacesong.CLI/Lacesong.CLI.csproj ^
-    --configuration Release ^
-    --runtime win-x64 ^
-    --self-contained true ^
-    --output ./dist/Lacesong.CLI ^
-    --no-build
 
 REM Create distribution packages
 echo Creating distribution packages...
@@ -45,12 +37,6 @@ REM Create WPF installer directory
 if not exist ./dist/installer mkdir ./dist/installer
 xcopy /E /I ./dist/Lacesong.WPF ./dist/installer
 
-REM Create CLI package
-if not exist ./dist/cli-package mkdir ./dist/cli-package
-xcopy /E /I ./dist/Lacesong.CLI ./dist/cli-package
-copy README.md ./dist/cli-package/
-copy USAGE.md ./dist/cli-package/
-copy LICENSE ./dist/cli-package/
 
 REM Create zip packages
 echo Creating zip packages...
@@ -59,8 +45,6 @@ cd ./dist
 REM WPF Application Package
 powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Path installer -DestinationPath Lacesong-WPF-%date:~-4,4%%date:~-10,2%%date:~-7,2%.zip"
 
-REM CLI Package
-powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Path cli-package -DestinationPath Lacesong-CLI-%date:~-4,4%%date:~-10,2%%date:~-7,2%.zip"
 
 cd ..
 
@@ -68,6 +52,5 @@ echo Build completed successfully!
 echo.
 echo Distribution files created in ./dist/:
 echo    - Lacesong-WPF-%date:~-4,4%%date:~-10,2%%date:~-7,2%.zip (WPF Application)
-echo    - Lacesong-CLI-%date:~-4,4%%date:~-10,2%%date:~-7,2%.zip (CLI Package)
 echo.
 echo Ready for distribution!

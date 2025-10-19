@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lacesong.Core", "src\Lacesong.Core\Lacesong.Core.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lacesong.CLI", "src\Lacesong.CLI\Lacesong.CLI.csproj", "{E6A59578-0360-2FB7-BADA-FF28B6FA2021}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lacesong.Tests", "tests\Lacesong.Tests\Lacesong.Tests.csproj", "{5FA6584A-7236-1192-697B-CF2D4449029D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lacesong.WPF", "src\Lacesong.WPF\Lacesong.WPF.csproj", "{B4051582-F6B8-BAC4-ADE6-E64FAFD16ACC}"
@@ -39,14 +37,6 @@ Global
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x64.Build.0 = Release|Any CPU
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x86.ActiveCfg = Release|Any CPU
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x86.Build.0 = Release|Any CPU
-		{E6A59578-0360-2FB7-BADA-FF28B6FA2021}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{E6A59578-0360-2FB7-BADA-FF28B6FA2021}.Debug|x64.Build.0 = Debug|Any CPU
-		{E6A59578-0360-2FB7-BADA-FF28B6FA2021}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{E6A59578-0360-2FB7-BADA-FF28B6FA2021}.Debug|x86.Build.0 = Debug|Any CPU
-		{E6A59578-0360-2FB7-BADA-FF28B6FA2021}.Release|x64.ActiveCfg = Release|Any CPU
-		{E6A59578-0360-2FB7-BADA-FF28B6FA2021}.Release|x64.Build.0 = Release|Any CPU
-		{E6A59578-0360-2FB7-BADA-FF28B6FA2021}.Release|x86.ActiveCfg = Release|Any CPU
-		{E6A59578-0360-2FB7-BADA-FF28B6FA2021}.Release|x86.Build.0 = Release|Any CPU
 		{5FA6584A-7236-1192-697B-CF2D4449029D}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{5FA6584A-7236-1192-697B-CF2D4449029D}.Debug|x64.Build.0 = Debug|Any CPU
 		{5FA6584A-7236-1192-697B-CF2D4449029D}.Debug|x86.ActiveCfg = Debug|Any CPU
