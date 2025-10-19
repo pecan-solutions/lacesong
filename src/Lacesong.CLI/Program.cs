@@ -324,6 +324,18 @@ class Program
             await HandleRestoreFromPoint(gameDetector, backupManager, restorePointFile, path);
         }, restorePointFileArgument, restoreFromPointPathOption);
 
+        // cleanup-bepinex-backups command
+        var cleanupBackupsCommand = new Command("cleanup-bepinex-backups", "Clean up old BepInEx backups to free storage space");
+        var maxBackupsOption = new Option<int>("--max-backups", () => 5, "Maximum number of backups to keep");
+        var maxAgeDaysOption = new Option<int>("--max-age-days", () => 30, "Maximum age of backups in days");
+        cleanupBackupsCommand.AddOption(pathOption);
+        cleanupBackupsCommand.AddOption(maxBackupsOption);
+        cleanupBackupsCommand.AddOption(maxAgeDaysOption);
+        cleanupBackupsCommand.SetHandler(async (string? path, int maxBackups, int maxAgeDays) =>
+        {
+            await HandleCleanupBepInExBackups(bepinexManager, gameDetector, path, maxBackups, maxAgeDays);
+        }, pathOption, maxBackupsOption, maxAgeDaysOption);
+
         // add all commands to root command
         rootCommand.AddCommand(installBepInExCommand);
         rootCommand.AddCommand(installModCommand);
@@ -347,6 +359,7 @@ class Program
         rootCommand.AddCommand(createRestorePointCommand);
         rootCommand.AddCommand(listRestorePointsCommand);
         rootCommand.AddCommand(restoreFromPointCommand);
+        rootCommand.AddCommand(cleanupBackupsCommand);
 
         // execute the command
         return await rootCommand.InvokeAsync(args);
@@ -1254,6 +1267,44 @@ class Program
             Console.WriteLine($"Target: {gameInstall.Name} at {gameInstall.InstallPath}");
             
             var result = await backupManager.RestoreBackup(restorePointFile, gameInstall);
+            
+            if (result.Success)
+            {
+                Console.WriteLine($"✓ {result.Message}");
+            }
+            else
+            {
+                Console.WriteLine($"✗ Error: {result.Message}");
+                if (!string.IsNullOrEmpty(result.Error))
+                {
+                    Console.WriteLine($"Details: {result.Error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    private static async Task HandleCleanupBepInExBackups(IBepInExManager bepinexManager, IGameDetector gameDetector, 
+        string? path, int maxBackups, int maxAgeDays)
+    {
+        try
+        {
+            Console.WriteLine("Detecting game installation...");
+            var gameInstall = await gameDetector.DetectGameInstall(path);
+            
+            if (gameInstall == null)
+            {
+                Console.WriteLine("Error: Could not detect game installation. Please specify --path or ensure the game is installed.");
+                return;
+            }
+
+            Console.WriteLine($"Detected game: {gameInstall.Name} at {gameInstall.InstallPath}");
+            Console.WriteLine($"Cleaning up BepInEx backups (keeping {maxBackups} most recent, removing backups older than {maxAgeDays} days)...");
+
+            var result = await bepinexManager.CleanupBepInExBackups(gameInstall, maxBackups, maxAgeDays);
             
             if (result.Success)
             {
