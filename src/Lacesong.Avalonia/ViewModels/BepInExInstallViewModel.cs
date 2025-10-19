@@ -6,8 +6,6 @@ using Lacesong.Avalonia.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Lacesong.Avalonia.ViewModels;
@@ -15,10 +13,10 @@ namespace Lacesong.Avalonia.ViewModels;
 public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
 {
     private readonly IBepInExManager _bepinexManager;
+    private readonly IBepInExVersionCacheService _versionCacheService;
     private readonly IDialogService _dialogService;
     private readonly ISnackbarService _snackbarService;
     private readonly IGameStateService _gameStateService;
-    private readonly HttpClient _httpClient;
     private bool _disposed;
 
     [ObservableProperty]
@@ -47,20 +45,22 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
     [ObservableProperty]
     private string _installationStatus = "Ready";
 
+    [ObservableProperty]
+    private bool _isRefreshingVersion;
+
     public BepInExInstallViewModel(
         ILogger<BepInExInstallViewModel> logger,
         IBepInExManager bepinexManager,
+        IBepInExVersionCacheService versionCacheService,
         IDialogService dialogService,
         ISnackbarService snackbarService,
         IGameStateService gameStateService) : base(logger)
     {
         _bepinexManager = bepinexManager;
+        _versionCacheService = versionCacheService;
         _dialogService = dialogService;
         _snackbarService = snackbarService;
         _gameStateService = gameStateService;
-        
-        _httpClient = new HttpClient();
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "Lacesong-ModManager/1.0.0");
         
         _gameInstallation = _gameStateService.CurrentGame;
         _gameStateService.GameStateChanged += OnGameStateChanged;
@@ -190,31 +190,53 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
         return GameInstallation != null && IsBepInExInstalled;
     }
 
+    [RelayCommand]
+    private async Task RefreshVersion()
+    {
+        if (IsRefreshingVersion) return;
+
+        IsRefreshingVersion = true;
+        try
+        {
+            // invalidate cache to force fresh fetch
+            _versionCacheService.InvalidateCache();
+            
+            // fetch latest version
+            await FetchLatestBepInExVersion();
+            
+            _snackbarService.Show(
+                "Version Refreshed", 
+                "BepInEx version information has been refreshed.", 
+                "Success");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error refreshing BepInEx version");
+            _snackbarService.Show(
+                "Refresh Failed", 
+                "Failed to refresh BepInEx version information.", 
+                "Error");
+        }
+        finally
+        {
+            IsRefreshingVersion = false;
+        }
+    }
+
     private async Task FetchLatestBepInExVersion()
     {
         try
         {
-            using var response = await _httpClient.GetAsync("https://api.github.com/repos/BepInEx/BepInEx/releases/latest");
+            var latestVersion = await _versionCacheService.GetLatestVersionAsync();
             
-            if (!response.IsSuccessStatusCode)
+            if (!string.IsNullOrEmpty(latestVersion))
             {
-                Logger.LogWarning("Failed to fetch latest BepInEx version from GitHub API");
-                return;
+                LatestVersion = latestVersion;
+                Logger.LogInformation($"Latest BepInEx version: {LatestVersion}");
             }
-
-            var json = await response.Content.ReadAsStringAsync();
-            using var document = JsonDocument.Parse(json);
-            
-            if (document.RootElement.TryGetProperty("tag_name", out var tagNameElement))
+            else
             {
-                var tagName = tagNameElement.GetString();
-                if (!string.IsNullOrEmpty(tagName))
-                {
-                    // remove 'v' prefix if present (e.g., "v5.4.23.4" -> "5.4.23.4")
-                    LatestVersion = tagName.TrimStart('v');
-                    
-                    Logger.LogInformation($"Latest BepInEx version: {LatestVersion}");
-                }
+                Logger.LogWarning("Failed to fetch latest BepInEx version from cache service");
             }
         }
         catch (Exception ex)
@@ -228,7 +250,6 @@ public partial class BepInExInstallViewModel : BaseViewModel, IDisposable
         if (_disposed) return;
         
         _gameStateService.GameStateChanged -= OnGameStateChanged;
-        _httpClient?.Dispose();
         _disposed = true;
     }
 }

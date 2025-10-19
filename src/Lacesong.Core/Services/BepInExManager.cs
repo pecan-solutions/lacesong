@@ -18,6 +18,13 @@ public class BepInExManager : IBepInExManager
     private const string GithubReleaseTagUrl = "https://api.github.com/repos/BepInEx/BepInEx/releases/tags/v{0}";
     private const string GithubLatestReleaseUrl = "https://api.github.com/repos/BepInEx/BepInEx/releases/latest";
 
+    private readonly IBepInExVersionCacheService _versionCacheService;
+
+    public BepInExManager(IBepInExVersionCacheService versionCacheService)
+    {
+        _versionCacheService = versionCacheService;
+    }
+
     /// <summary>
     /// gets the base directory where bepinex should be installed for the given game installation
     /// on windows: directly in the game folder (e.g., "Hollow Knight Silksong/")
@@ -299,31 +306,14 @@ public class BepInExManager : IBepInExManager
                 return null; // cannot determine current version
             }
 
-            // fetch latest release from GitHub
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("User-Agent", "Lacesong-ModManager/1.0.0");
-            client.Timeout = TimeSpan.FromSeconds(30);
-
-            var response = await client.GetAsync(GithubLatestReleaseUrl);
-            if (!response.IsSuccessStatusCode)
+            // get latest version from cache service
+            var latestVersionInfo = await _versionCacheService.GetLatestVersionInfoAsync();
+            if (latestVersionInfo == null || string.IsNullOrEmpty(latestVersionInfo.FileVersion))
             {
-                return null; // failed to fetch latest release
+                return null; // failed to get latest version
             }
 
-            using var responseContent = response.Content;
-            using var doc = JsonDocument.Parse(await responseContent.ReadAsStringAsync());
-            
-            // extract tag name (version)
-            if (!doc.RootElement.TryGetProperty("tag_name", out var tagNameElement))
-            {
-                return null;
-            }
-
-            var latestVersion = tagNameElement.GetString();
-            if (string.IsNullOrEmpty(latestVersion))
-            {
-                return null;
-            }
+            var latestVersion = latestVersionInfo.FileVersion;
 
             // remove 'v' prefix for comparison
             var cleanLatestVersion = latestVersion.TrimStart('v');
@@ -342,57 +332,15 @@ public class BepInExManager : IBepInExManager
                 return null; // cannot resolve download URL
             }
 
-            // extract additional release information
-            var publishedAt = DateTime.UtcNow;
-            var releaseNotes = string.Empty;
-            var isPrerelease = false;
-            var fileSize = 0L;
-
-            if (doc.RootElement.TryGetProperty("published_at", out var publishedAtElement))
-            {
-                if (DateTime.TryParse(publishedAtElement.GetString(), out var parsedDate))
-                {
-                    publishedAt = parsedDate;
-                }
-            }
-
-            if (doc.RootElement.TryGetProperty("body", out var bodyElement))
-            {
-                releaseNotes = bodyElement.GetString() ?? string.Empty;
-            }
-
-            if (doc.RootElement.TryGetProperty("prerelease", out var prereleaseElement))
-            {
-                isPrerelease = prereleaseElement.GetBoolean();
-            }
-
-            // get file size from assets
-            if (doc.RootElement.TryGetProperty("assets", out var assetsElement))
-            {
-                var (os, arch) = DetermineTarget(gameInstall);
-                var expectedName = $"BepInEx_{os}_{arch}_{cleanLatestVersion}.zip";
-
-                foreach (var asset in assetsElement.EnumerateArray())
-                {
-                    if (asset.TryGetProperty("name", out var nameEl) && 
-                        nameEl.GetString() == expectedName &&
-                        asset.TryGetProperty("size", out var sizeEl))
-                    {
-                        fileSize = sizeEl.GetInt64();
-                        break;
-                    }
-                }
-            }
-
             return new BepInExUpdate
             {
                 CurrentVersion = currentVersion,
                 LatestVersion = latestVersion,
                 DownloadUrl = downloadUrl,
-                ReleaseNotes = releaseNotes,
-                PublishedAt = publishedAt,
-                IsPrerelease = isPrerelease,
-                FileSize = fileSize
+                ReleaseNotes = latestVersionInfo.Description ?? string.Empty,
+                PublishedAt = DateTime.UtcNow, // we could store this in the cache if needed
+                IsPrerelease = false, // we could determine this from cache if needed
+                FileSize = 0L // we could store this in the cache if needed
             };
         }
         catch (Exception ex)

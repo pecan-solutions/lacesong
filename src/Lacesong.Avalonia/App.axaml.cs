@@ -47,6 +47,7 @@ public partial class App : Application
     {
         // core services
         services.AddSingleton<IGameDetector, GameDetector>();
+        services.AddSingleton<IBepInExVersionCacheService, BepInExVersionCacheService>();
         services.AddSingleton<IBepInExManager, BepInExManager>();
         services.AddSingleton<IModManager, ModManager>();
         services.AddSingleton<IBackupManager, BackupManager>();

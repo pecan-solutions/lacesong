@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2025-10-19
+### Added
+- BepInEx version caching service to reduce API calls and improve performance
+- Input dialog implementation with modal overlay and URL input functionality
+- Version refresh functionality for BepInEx installation view
+
+### Changed
+- Refactored BepInEx version fetching to use centralized caching service
+- Improved dialog service with proper modal implementation
+- Enhanced BepInEx installation view model with dependency injection
+
+### Fixed
+- Reduced unnecessary GitHub API calls for BepInEx version checking
+- Improved application performance with cached version information
+
 ## [0.7.1] - 2025-10-19
 ### Added
 - Bottom bar with persistent launch controls and logo branding

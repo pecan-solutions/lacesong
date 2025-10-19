@@ -655,3 +655,32 @@ public interface IGameLauncher
     /// </summary>
     bool IsRunning(GameInstallation gameInstall);
 }
+
+/// <summary>
+/// interface for caching bepinex version information to avoid frequent api calls
+/// </summary>
+public interface IBepInExVersionCacheService
+{
+    /// <summary>
+    /// gets the latest bepinex version from cache or api
+    /// </summary>
+    /// <returns>latest version string or null if unavailable</returns>
+    Task<string?> GetLatestVersionAsync();
+
+    /// <summary>
+    /// gets detailed latest bepinex version information from cache or api
+    /// </summary>
+    /// <returns>version info or null if unavailable</returns>
+    Task<BepInExVersionInfo?> GetLatestVersionInfoAsync();
+
+    /// <summary>
+    /// invalidates the current cache, forcing next call to fetch from api
+    /// </summary>
+    void InvalidateCache();
+
+    /// <summary>
+    /// checks if the current cache is valid and not expired
+    /// </summary>
+    /// <returns>true if cache is valid, false otherwise</returns>
+    bool IsCacheValid();
+}

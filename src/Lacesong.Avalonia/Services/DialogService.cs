@@ -67,8 +67,129 @@ public class DialogService : IDialogService
 
     public async Task<string?> ShowInputDialogAsync(string title, string message, string defaultValue = "")
     {
-        // TODO: Implement input dialog using Avalonia controls
-        return await Task.FromResult<string?>(null);
+        var tcs = new TaskCompletionSource<string?>();
+
+        var overlay = new Grid
+        {
+            Background = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0)),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+
+        var modalContent = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)),
+            CornerRadius = new CornerRadius(12),
+            BorderThickness = new Thickness(1),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(80, 80, 80)),
+            Padding = new Thickness(24),
+            MinWidth = 400,
+            MaxWidth = 500,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var contentStack = new StackPanel { Spacing = 16 };
+
+        var titleText = new TextBlock
+        {
+            Text = title,
+            FontSize = 18,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = Brushes.White,
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+
+        var messageText = new TextBlock
+        {
+            Text = message,
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+
+        var inputTextBox = new TextBox
+        {
+            Text = defaultValue,
+            Watermark = "https://example.com/mod.zip",
+            Width = 350
+        };
+
+        var warningText = new TextBlock
+        {
+            Text = "Warning: Do not input links you do not trust.",
+            Foreground = new SolidColorBrush(Color.FromRgb(205, 92, 92)), // Desaturated red
+            FontSize = 12,
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+
+        var buttonPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Spacing = 12,
+            Margin = new Thickness(0, 16, 0, 0)
+        };
+
+        var installButton = new Button
+        {
+            Content = "Install",
+            Width = 100,
+            Height = 36,
+            FontSize = 14,
+            FontWeight = FontWeight.Medium
+        };
+        installButton.Classes.Add("primary");
+
+        var cancelButton = new Button
+        {
+            Content = "Cancel",
+            Width = 100,
+            Height = 36,
+            FontSize = 14,
+            FontWeight = FontWeight.Medium
+        };
+        
+        buttonPanel.Children.Add(installButton);
+        buttonPanel.Children.Add(cancelButton);
+
+        contentStack.Children.Add(titleText);
+        contentStack.Children.Add(messageText);
+        contentStack.Children.Add(inputTextBox);
+        contentStack.Children.Add(warningText);
+        contentStack.Children.Add(buttonPanel);
+
+        modalContent.Child = contentStack;
+        overlay.Children.Add(modalContent);
+
+        Panel? mainPanel = null;
+        if (MainWindow.Content is Panel panel)
+        {
+            mainPanel = panel;
+            mainPanel.Children.Add(overlay);
+        }
+
+        void CloseDialog(string? result)
+        {
+            if (mainPanel != null)
+            {
+                mainPanel.Children.Remove(overlay);
+            }
+            tcs.SetResult(result);
+        }
+
+        installButton.Click += (s, e) => CloseDialog(inputTextBox.Text);
+        cancelButton.Click += (s, e) => CloseDialog(null);
+        overlay.PointerPressed += (s, e) =>
+        {
+            if (e.Source == overlay)
+            {
+                CloseDialog(null);
+            }
+        };
+
+        return await tcs.Task;
     }
 
     public async Task<bool> ShowConfirmationDialogAsync(string title, string message)
