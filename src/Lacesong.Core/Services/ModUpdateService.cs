@@ -82,11 +82,15 @@ public class ModUpdateService : IModUpdateService
                 var backupResult = await _backupManager.CreateBackup(gameInstall, $"update_{update.ModId}_{update.CurrentVersion}_to_{update.AvailableVersion}");
                 if (!backupResult.Success)
                 {
-                    return OperationResult.ErrorResult($"Failed to create backup: {backupResult.Error}", "Backup creation failed");
+                    // log the backup failure but continue with update
+                    Console.WriteLine($"Warning: Mod backup creation failed: {backupResult.Error}. Continuing with update without backup.");
                 }
-                // store backup path for possible rollback
-                var backupPath = backupResult.Data as string;
-                settings.PendingBackupPath = backupPath;
+                else
+                {
+                    // store backup path for possible rollback
+                    var backupPath = backupResult.Data as string;
+                    settings.PendingBackupPath = backupPath;
+                }
             }
 
             // backup configs if preservation is enabled

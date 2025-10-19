@@ -194,32 +194,68 @@ public class ModManager : IModManager
     {
         try
         {
+            Console.WriteLine($"=== ENABLE MOD DEBUG START ===");
+            Console.WriteLine($"EnableMod called for modId: {modId}");
+            Console.WriteLine($"Game install path: {gameInstall.InstallPath}");
+            
             var modInfo = await GetModInfo(modId, gameInstall);
             if (modInfo == null)
             {
+                Console.WriteLine($"ERROR: Mod not found for modId: {modId}");
                 return OperationResult.ErrorResult("Mod not found", "Mod does not exist");
             }
 
+            Console.WriteLine($"Mod found - Name: {modInfo.Name}, Current IsEnabled: {modInfo.IsEnabled}");
+            Console.WriteLine($"Mod DirectoryName: {modInfo.DirectoryName}");
+
             if (modInfo.IsEnabled)
             {
+                Console.WriteLine($"Mod is already enabled, returning success");
                 return OperationResult.SuccessResult("Mod is already enabled");
             }
 
+            // ensure mod id is set before enabling (fixes symlink issues)
+            var ensureIdResult = await EnsureModIdIsSet(modId, gameInstall);
+            if (!ensureIdResult.Success)
+            {
+                Console.WriteLine($"ERROR: Failed to ensure mod ID is set: {ensureIdResult.Error}");
+                return ensureIdResult;
+            }
+
             // create plugin mirror using symbolic links instead of copying or renaming originals
-            var folder = modInfo.DirectoryName ?? CleanModNameForFolder(modInfo.Name);
+            var folder = modInfo.DirectoryName ?? modId;
             var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), folder);
+            Console.WriteLine($"Mod folder: {folder}");
+            Console.WriteLine($"Mod path: {modPath}");
+            Console.WriteLine($"Mod path exists: {Directory.Exists(modPath)}");
+            
             if (Directory.Exists(modPath))
             {
+                Console.WriteLine($"Creating plugin mirror for folder: {folder}");
                 MirrorPluginDlls(folder, modPath, gameInstall);
+                
+                // verify mirror was created
+                var pluginMirrorPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", folder);
+                Console.WriteLine($"Plugin mirror path: {pluginMirrorPath}");
+                Console.WriteLine($"Plugin mirror exists after creation: {Directory.Exists(pluginMirrorPath)}");
             }
 
             // update mod status
+            Console.WriteLine($"Updating mod status to enabled for modId: {modInfo.Id}");
             await UpdateModStatus(modInfo.Id, true, gameInstall);
+            Console.WriteLine($"Mod status update completed");
 
+            // verify the status was updated
+            var verifyModInfo = await GetModInfo(modId, gameInstall);
+            Console.WriteLine($"Verification - Mod IsEnabled after update: {verifyModInfo?.IsEnabled}");
+
+            Console.WriteLine($"=== ENABLE MOD DEBUG END ===");
             return OperationResult.SuccessResult($"Mod '{modInfo.Name}' enabled successfully");
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"ERROR in EnableMod: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             return OperationResult.ErrorResult(ex.Message, "Failed to enable mod");
         }
     }
@@ -228,32 +264,63 @@ public class ModManager : IModManager
     {
         try
         {
+            Console.WriteLine($"=== DISABLE MOD DEBUG START ===");
+            Console.WriteLine($"DisableMod called for modId: {modId}");
+            Console.WriteLine($"Game install path: {gameInstall.InstallPath}");
+            
             var modInfo = await GetModInfo(modId, gameInstall);
             if (modInfo == null)
             {
+                Console.WriteLine($"ERROR: Mod not found for modId: {modId}");
                 return OperationResult.ErrorResult("Mod not found", "Mod does not exist");
             }
 
+            Console.WriteLine($"Mod found - Name: {modInfo.Name}, Current IsEnabled: {modInfo.IsEnabled}");
+            Console.WriteLine($"Mod DirectoryName: {modInfo.DirectoryName}");
+
             if (!modInfo.IsEnabled)
             {
+                Console.WriteLine($"Mod is already disabled, returning success");
                 return OperationResult.SuccessResult("Mod is already disabled");
             }
 
+            // ensure mod id is set before disabling (fixes symlink issues)
+            var ensureIdResult = await EnsureModIdIsSet(modId, gameInstall);
+            if (!ensureIdResult.Success)
+            {
+                Console.WriteLine($"ERROR: Failed to ensure mod ID is set: {ensureIdResult.Error}");
+                return ensureIdResult;
+            }
+
             // clear plugin mirror to disable without touching original files
-            var folder = modInfo.DirectoryName ?? CleanModNameForFolder(modInfo.Name);
+            var folder = modInfo.DirectoryName ?? modId;
             var pluginsRoot = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", folder);
+            Console.WriteLine($"Plugin mirror path: {pluginsRoot}");
+            Console.WriteLine($"Plugin mirror exists before deletion: {Directory.Exists(pluginsRoot)}");
+            
             if (Directory.Exists(pluginsRoot))
             {
+                Console.WriteLine($"Deleting plugin mirror directory");
                 Directory.Delete(pluginsRoot, true);
+                Console.WriteLine($"Plugin mirror deleted");
             }
 
             // update mod status
+            Console.WriteLine($"Updating mod status to disabled for modId: {modInfo.Id}");
             await UpdateModStatus(modInfo.Id, false, gameInstall);
+            Console.WriteLine($"Mod status update completed");
 
+            // verify the status was updated
+            var verifyModInfo = await GetModInfo(modId, gameInstall);
+            Console.WriteLine($"Verification - Mod IsEnabled after update: {verifyModInfo?.IsEnabled}");
+
+            Console.WriteLine($"=== DISABLE MOD DEBUG END ===");
             return OperationResult.SuccessResult($"Mod '{modInfo.Name}' disabled successfully");
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"ERROR in DisableMod: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             return OperationResult.ErrorResult(ex.Message, "Failed to disable mod");
         }
     }
@@ -355,34 +422,91 @@ public class ModManager : IModManager
     {
         try
         {
+            Console.WriteLine($"=== GET MOD INFO DEBUG START ===");
+            Console.WriteLine($"GetModInfo called for modId: {modId}");
+            Console.WriteLine($"Game install path: {gameInstall.InstallPath}");
+            
             var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modId);
+            Console.WriteLine($"Mod path: {modPath}");
+            Console.WriteLine($"Mod path exists: {Directory.Exists(modPath)}");
+            
             if (!Directory.Exists(modPath))
+            {
+                Console.WriteLine($"Mod path does not exist, returning null");
                 return null;
+            }
 
             // gather plugin dlls inside the mod directory; these remain even when the mod is disabled because we mirror via symlinks.
             var dllFiles = Directory.GetFiles(modPath, "*.dll", SearchOption.AllDirectories);
+            Console.WriteLine($"Found {dllFiles.Length} DLL files in mod directory");
 
             // if no dlls exist at all this is not a valid mod folder
             if (dllFiles.Length == 0)
+            {
+                Console.WriteLine($"No DLL files found, returning null");
                 return null;
+            }
 
             // determine enabled status by checking if the plugin mirror exists within BepInEx/plugins/<modId>
             // note: plugin mirror uses the same folder name as the mod directory (cleaned name)
-            var pluginMirrorPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", modId);
+            var folderName = Path.GetFileName(modPath);
+            var pluginMirrorPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "plugins", folderName);
             var isEnabled = Directory.Exists(pluginMirrorPath);
+            Console.WriteLine($"Plugin mirror path: {pluginMirrorPath}");
+            Console.WriteLine($"Plugin mirror exists: {isEnabled}");
+            Console.WriteLine($"Plugin mirror directory check result: {isEnabled}");
 
             // look for modinfo.json first (primary source)
             var modInfoPath = Path.Combine(modPath, ModInfoFileName);
+            Console.WriteLine($"ModInfo file path: {modInfoPath}");
+            Console.WriteLine($"ModInfo file exists: {File.Exists(modInfoPath)}");
+            
             if (File.Exists(modInfoPath))
             {
+                Console.WriteLine($"Loading modinfo.json");
                 var json = await File.ReadAllTextAsync(modInfoPath);
                 try
                 {
                     var modInfo = JsonSerializer.Deserialize<ModInfo>(json);
                     if (modInfo != null)
                     {
-                        modInfo.IsEnabled = isEnabled;
+                        Console.WriteLine($"ModInfo loaded from JSON - Original IsEnabled: {modInfo.IsEnabled}");
+                        Console.WriteLine($"ModInfo loaded from JSON - ID: '{modInfo.Id}', Name: '{modInfo.Name}'");
+
+                        // self-heal missing or mismatched id fields
+                        if (string.IsNullOrWhiteSpace(modInfo.Id) || !string.Equals(modInfo.Id, folderName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            Console.WriteLine($"Mod ID is missing or mismatched (current: '{modInfo.Id}', folder: '{folderName}'), overriding with folder name");
+                            modInfo.Id = folderName;
+
+                            // write correction back to modinfo.json
+                            var correctedJson = JsonSerializer.Serialize(modInfo, new JsonSerializerOptions { WriteIndented = true });
+                            await File.WriteAllTextAsync(modInfoPath, correctedJson);
+                            Console.WriteLine("Saved corrected modinfo.json with synced ID");
+                        }
+
+                        // ensure mod id is set before proceeding (already handled above, keep for clarity)
+                        if (string.IsNullOrWhiteSpace(modInfo.Id))
+                        {
+                            // should not reach here, but fallback to generated id from name
+                            var generatedId = modInfo.Name.Replace(" ", "-");
+                            modInfo.Id = generatedId;
+                        }
+                        
+                        // get the correct enabled status from mods_list.json using the corrected ID
+                        var correctEnabledStatus = await GetModEnabledStatusFromList(modInfo.Id, gameInstall, modInfo.IsEnabled);
+                        Console.WriteLine($"Correct enabled status from mods_list.json: {correctEnabledStatus}");
+                        modInfo.IsEnabled = correctEnabledStatus;
                         modInfo.IsInstalled = true;
+                        
+                        Console.WriteLine($"Final ModInfo - Name: {modInfo.Name}, ID: '{modInfo.Id}', IsEnabled: {modInfo.IsEnabled}");
+                        
+                        // ensure directory name is set so callers can correctly reference the mod folder
+                        if (string.IsNullOrWhiteSpace(modInfo.DirectoryName))
+                        {
+                            modInfo.DirectoryName = Path.GetFileName(modPath);
+                            Console.WriteLine($"Set ModInfo.DirectoryName to '{modInfo.DirectoryName}'");
+                        }
                         
                         // set icon path if not already set
                         if (string.IsNullOrEmpty(modInfo.IconPath))
@@ -411,17 +535,36 @@ public class ModManager : IModManager
 
             // fallback to manifest.json if modinfo.json not found or failed to parse
             var manifestPath = Path.Combine(modPath, "manifest.json");
+            Console.WriteLine($"Manifest file path: {manifestPath}");
+            Console.WriteLine($"Manifest file exists: {File.Exists(manifestPath)}");
+            
             if (File.Exists(manifestPath))
             {
+                Console.WriteLine($"Loading manifest.json");
                 try
                 {
                     var manifestJson = await File.ReadAllTextAsync(manifestPath);
                     var manifest = JsonSerializer.Deserialize<JsonElement>(manifestJson);
 
+                    // check mods_list.json for the correct enabled status first
+                    var correctEnabledStatus = await GetModEnabledStatusFromList(modId, gameInstall, isEnabled);
+                    Console.WriteLine($"Correct enabled status from mods_list.json (manifest fallback): {correctEnabledStatus}");
+
+                    var modName = manifest.TryGetProperty("name", out var nameEl) ? (nameEl.GetString() ?? Path.GetFileName(modPath)).Replace("_", " ") : Path.GetFileName(modPath).Replace("_", " ");
+                    var manifestModId = manifest.TryGetProperty("id", out var idEl) ? idEl.GetString() ?? Path.GetFileName(modPath) : Path.GetFileName(modPath);
+                    
+                    // ensure mod id is set - if empty, generate from name
+                    if (string.IsNullOrWhiteSpace(manifestModId))
+                    {
+                        Console.WriteLine($"Manifest mod ID is empty, generating from name");
+                        manifestModId = modName.Replace(" ", "-");
+                        Console.WriteLine($"Generated ID from manifest: '{manifestModId}'");
+                    }
+                    
                     var modInfo = new ModInfo
                     {
-                        Id = manifest.TryGetProperty("id", out var idEl) ? idEl.GetString() ?? Path.GetFileName(modPath) : Path.GetFileName(modPath),
-                        Name = manifest.TryGetProperty("name", out var nameEl) ? (nameEl.GetString() ?? Path.GetFileName(modPath)).Replace("_", " ") : Path.GetFileName(modPath).Replace("_", " "),
+                        Id = manifestModId,
+                        Name = modName,
                         Description = manifest.TryGetProperty("description", out var descEl) ? descEl.GetString() ?? string.Empty : string.Empty,
                         Version = manifest.TryGetProperty("version", out var verEl) ? verEl.GetString() ?? "1.0.0" : 
                                  (manifest.TryGetProperty("version_number", out var verAlt) ? verAlt.GetString() ?? "1.0.0" : "1.0.0"),
@@ -432,9 +575,16 @@ public class ModManager : IModManager
                         Tags = manifest.TryGetProperty("tags", out var tagsEl) && tagsEl.ValueKind == JsonValueKind.Array ?
                             tagsEl.EnumerateArray().Select(x => x.GetString() ?? string.Empty).Where(x => !string.IsNullOrEmpty(x)).ToList() : new List<string>(),
                         IsInstalled = true,
-                        IsEnabled = isEnabled,
+                        IsEnabled = correctEnabledStatus,
                         DirectoryName = Path.GetFileName(modPath)
                     };
+
+                    // safety: ensure directory name is not empty
+                    if (string.IsNullOrWhiteSpace(modInfo.DirectoryName))
+                    {
+                        modInfo.DirectoryName = Path.GetFileName(modPath);
+                        Console.WriteLine($"Set fallback ModInfo.DirectoryName to '{modInfo.DirectoryName}'");
+                    }
 
                     // icon detection
                     var iconPath = manifest.TryGetProperty("icon", out var iconEl) ? iconEl.GetString() : null;
@@ -635,6 +785,90 @@ public class ModManager : IModManager
     }
 
     /// <summary>
+    /// ensures that the mod has a valid ID by checking modinfo.json and setting it from name if empty
+    /// </summary>
+    private async Task<OperationResult> EnsureModIdIsSet(string modId, GameInstallation gameInstall)
+    {
+        try
+        {
+            Console.WriteLine($"=== ENSURE MOD ID DEBUG START ===");
+            Console.WriteLine($"EnsureModIdIsSet called for modId: {modId}");
+            
+            var modPath = Path.Combine(GetModsDirectoryPath(gameInstall), modId);
+            Console.WriteLine($"Mod path: {modPath}");
+            
+            if (!Directory.Exists(modPath))
+            {
+                Console.WriteLine($"Mod path does not exist");
+                return OperationResult.ErrorResult("Mod directory not found", "Mod directory does not exist");
+            }
+
+            var modInfoPath = Path.Combine(modPath, ModInfoFileName);
+            Console.WriteLine($"ModInfo file path: {modInfoPath}");
+            Console.WriteLine($"ModInfo file exists: {File.Exists(modInfoPath)}");
+            
+            if (!File.Exists(modInfoPath))
+            {
+                Console.WriteLine($"ModInfo file does not exist, skipping ID check");
+                return OperationResult.SuccessResult("No modinfo.json found, skipping ID check");
+            }
+
+            // read and parse modinfo.json
+            var json = await File.ReadAllTextAsync(modInfoPath);
+            Console.WriteLine($"ModInfo JSON content: {json}");
+            
+            try
+            {
+                var modInfo = JsonSerializer.Deserialize<ModInfo>(json);
+                if (modInfo == null)
+                {
+                    Console.WriteLine($"Failed to deserialize modinfo.json");
+                    return OperationResult.ErrorResult("Failed to parse modinfo.json", "Invalid JSON format");
+                }
+
+                Console.WriteLine($"Current mod ID: '{modInfo.Id}'");
+                Console.WriteLine($"Current mod name: '{modInfo.Name}'");
+
+                var folderName = Path.GetFileName(modPath);
+
+                // if ID is empty or mismatched, correct it to folder name
+                if (string.IsNullOrWhiteSpace(modInfo.Id) || !string.Equals(modInfo.Id, folderName, StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine($"Mod ID is empty or mismatched (current: '{modInfo.Id}', folder: '{folderName}') - overriding");
+                    modInfo.Id = folderName;
+
+                    // write the updated modinfo.json back to file
+                    var updatedJson = JsonSerializer.Serialize(modInfo, new JsonSerializerOptions { WriteIndented = true });
+                    await File.WriteAllTextAsync(modInfoPath, updatedJson);
+
+                    Console.WriteLine("Successfully saved corrected modinfo.json");
+                    return OperationResult.SuccessResult("Synced mod ID to folder name");
+                }
+                else
+                {
+                    Console.WriteLine("Mod ID already matches folder name");
+                    return OperationResult.SuccessResult("Mod ID is consistent");
+                }
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"Error deserializing modinfo.json: {ex.Message}");
+                return OperationResult.ErrorResult($"Failed to parse modinfo.json: {ex.Message}", "Invalid JSON format");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in EnsureModIdIsSet: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            return OperationResult.ErrorResult(ex.Message, "Failed to ensure mod ID is set");
+        }
+        finally
+        {
+            Console.WriteLine($"=== ENSURE MOD ID DEBUG END ===");
+        }
+    }
+
+    /// <summary>
     /// extracts the mod name from manifest json to use as fallback when id is not available
     /// </summary>
     private static string ExtractModNameFromManifest(string manifestJson)
@@ -726,36 +960,8 @@ public class ModManager : IModManager
             Directory.Delete(pluginsRoot, true);
         }
 
-        Directory.CreateDirectory(pluginsRoot);
-
-        // symlink all dll files
-        var dllFiles = Directory.GetFiles(modsPath, "*.dll", SearchOption.AllDirectories);
-        foreach (var dll in dllFiles)
-        {
-            var linkPath = Path.Combine(pluginsRoot, Path.GetFileName(dll));
-            CreateSymbolicLinkForFile(linkPath, dll);
-        }
-
-        // symlink all directories (for assets like textures, sounds, etc.)
-        var directories = Directory.GetDirectories(modsPath);
-        foreach (var dir in directories)
-        {
-            var dirName = Path.GetFileName(dir);
-            var linkPath = Path.Combine(pluginsRoot, dirName);
-            CreateSymbolicLinkForDirectory(linkPath, dir);
-        }
-
-        // also symlink any files in the root mod directory that aren't dlls
-        var rootFiles = Directory.GetFiles(modsPath)
-            .Where(f => !f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-        
-        foreach (var file in rootFiles)
-        {
-            var fileName = Path.GetFileName(file);
-            var linkPath = Path.Combine(pluginsRoot, fileName);
-            CreateSymbolicLinkForFile(linkPath, file);
-        }
+        // symlink the entire mod folder instead of individual files
+        CreateSymbolicLinkForDirectory(pluginsRoot, modsPath);
     }
 
     /// <summary>
@@ -1295,27 +1501,75 @@ public class ModManager : IModManager
     {
         try
         {
+            Console.WriteLine($"=== UPDATE MOD STATUS DEBUG START ===");
+            Console.WriteLine($"UpdateModStatus called for modId: {modId}, isEnabled: {isEnabled}");
+            Console.WriteLine($"Game install path: {gameInstall.InstallPath}");
+            
             var modsListPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "mods_list.json");
+            Console.WriteLine($"Mods list path: {modsListPath}");
+            Console.WriteLine($"Mods list file exists: {File.Exists(modsListPath)}");
+            
             if (!File.Exists(modsListPath))
-                return;
+            {
+                Console.WriteLine($"Mods list file does not exist, creating it");
+                var emptyMods = new List<ModInfo>();
+                var emptyJson = JsonSerializer.Serialize(emptyMods, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(modsListPath, emptyJson);
+                Console.WriteLine($"Created empty mods list file");
+            }
 
             var json = await File.ReadAllTextAsync(modsListPath);
+            Console.WriteLine($"Current mods list JSON length: {json.Length}");
+            Console.WriteLine($"Current mods list JSON: {json}");
+            
             var mods = JsonSerializer.Deserialize<List<ModInfo>>(json) ?? new List<ModInfo>();
+            Console.WriteLine($"Deserialized {mods.Count} mods from list");
 
             // update mod status
-            var mod = mods.FirstOrDefault(m => m.Id == modId);
+            var mod = mods.FirstOrDefault(m => m.Id == modId || (!string.IsNullOrWhiteSpace(m.DirectoryName) && m.DirectoryName == modId));
             if (mod != null)
             {
+                Console.WriteLine($"Found mod in list - Name: {mod.Name}, Current IsEnabled: {mod.IsEnabled}");
                 mod.IsEnabled = isEnabled;
+                Console.WriteLine($"Updated mod IsEnabled to: {mod.IsEnabled}");
             }
+            else
+            {
+                Console.WriteLine($"Mod not found in mods list, adding new entry");
+                // if mod not found, we need to get its info and add it
+                var modInfo = await GetModInfo(modId, gameInstall);
+                if (modInfo != null)
+                {
+                    modInfo.IsEnabled = isEnabled;
+                    mods.Add(modInfo);
+                    Console.WriteLine($"Added mod to list - Name: {modInfo.Name}, IsEnabled: {modInfo.IsEnabled}");
+                }
+                else
+                {
+                    Console.WriteLine($"ERROR: Could not get mod info for {modId}");
+                }
+            }
+
+            // ensure duplicates (id vs directoryname) are removed keeping latest
+            mods = mods
+                .GroupBy(m => m.Id)
+                .Select(g => g.First())
+                .ToList();
 
             // save updated list
             var updatedJson = JsonSerializer.Serialize(mods, new JsonSerializerOptions { WriteIndented = true });
+            Console.WriteLine($"Updated JSON length: {updatedJson.Length}");
+            Console.WriteLine($"Updated JSON: {updatedJson}");
+            
             await File.WriteAllTextAsync(modsListPath, updatedJson);
+            Console.WriteLine($"Saved updated mods list to file");
+            
+            Console.WriteLine($"=== UPDATE MOD STATUS DEBUG END ===");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error updating mod status: {ex.Message}");
+            Console.WriteLine($"ERROR in UpdateModStatus: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
     }
 
@@ -1374,6 +1628,59 @@ public class ModManager : IModManager
         catch (Exception ex)
         {
             return OperationResult.ErrorResult(ex.Message, "download failed");
+        }
+    }
+
+    /// <summary>
+    /// gets the enabled status for a mod from mods_list.json, falling back to plugin mirror check
+    /// </summary>
+    private async Task<bool> GetModEnabledStatusFromList(string modId, GameInstallation gameInstall, bool fallbackStatus)
+    {
+        try
+        {
+            Console.WriteLine($"=== GET MOD ENABLED STATUS FROM LIST DEBUG START ===");
+            Console.WriteLine($"GetModEnabledStatusFromList called for modId: {modId}, fallbackStatus: {fallbackStatus}");
+            
+            var modsListPath = Path.Combine(gameInstall.InstallPath, "BepInEx", "mods_list.json");
+            Console.WriteLine($"Mods list path: {modsListPath}");
+            Console.WriteLine($"Mods list file exists: {File.Exists(modsListPath)}");
+            
+            if (!File.Exists(modsListPath))
+            {
+                Console.WriteLine($"Mods list file does not exist, returning fallback status: {fallbackStatus}");
+                return fallbackStatus;
+            }
+
+            var json = await File.ReadAllTextAsync(modsListPath);
+            Console.WriteLine($"Mods list JSON length: {json.Length}");
+            Console.WriteLine($"Mods list JSON: {json}");
+            
+            var mods = JsonSerializer.Deserialize<List<ModInfo>>(json) ?? new List<ModInfo>();
+            Console.WriteLine($"Deserialized {mods.Count} mods from list");
+
+            var mod = mods.FirstOrDefault(m => m.Id == modId || (!string.IsNullOrWhiteSpace(m.DirectoryName) && m.DirectoryName == modId));
+            if (mod != null)
+            {
+                Console.WriteLine($"Found mod in list - Name: {mod.Name}, IsEnabled: {mod.IsEnabled}");
+                Console.WriteLine($"Returning status from list: {mod.IsEnabled}");
+                return mod.IsEnabled;
+            }
+            else
+            {
+                Console.WriteLine($"Mod not found in list, returning fallback status: {fallbackStatus}");
+                return fallbackStatus;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR in GetModEnabledStatusFromList: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            Console.WriteLine($"Returning fallback status: {fallbackStatus}");
+            return fallbackStatus;
+        }
+        finally
+        {
+            Console.WriteLine($"=== GET MOD ENABLED STATUS FROM LIST DEBUG END ===");
         }
     }
 }
