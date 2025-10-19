@@ -77,5 +77,6 @@ public interface IGameStateService
     GameInstallation CurrentGame { get; }
     bool IsGameDetected { get; }
     event Action GameStateChanged;
+    event Action<BepInExUpdate>? OnBepInExUpdateAvailable;
     void SetCurrentGame(GameInstallation game);
 }

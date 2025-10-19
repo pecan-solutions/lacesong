@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Lacesong.Core.Models;
 using Lacesong.Core.Services;
 using System;
+using System.Threading.Tasks;
 using Lacesong.Core.Interfaces;
 
 namespace Lacesong.Avalonia.Services;
@@ -9,10 +10,12 @@ namespace Lacesong.Avalonia.Services;
 public partial class GameStateService : ObservableObject, IGameStateService
 {
     private readonly IModUpdateService _updateService;
+    private readonly IBepInExManager _bepInExManager;
 
-    public GameStateService(IModUpdateService updateService)
+    public GameStateService(IModUpdateService updateService, IBepInExManager bepInExManager)
     {
         _updateService = updateService;
+        _bepInExManager = bepInExManager;
     }
 
     [ObservableProperty]
@@ -31,12 +34,59 @@ public partial class GameStateService : ObservableObject, IGameStateService
         if (!string.IsNullOrEmpty(game.InstallPath))
         {
             ModManager.EnsureModsDirectory(game);
-            // run startup update check (non-forced, uses cache)
+            
+            // run startup update checks (non-forced, uses cache)
             _ = _updateService.CheckForUpdates(game);
             await _updateService.ScheduleUpdateChecks(game);
+            
+            // check for BepInEx updates in the background
+            _ = CheckForBepInExUpdatesAsync(game);
+            
+            // cleanup old backups in the background
+            _ = CleanupOldBackupsAsync(game);
         }
         
         GameStateChanged?.Invoke();
         OnPropertyChanged(nameof(IsGameDetected));
     }
+
+    private async Task CheckForBepInExUpdatesAsync(GameInstallation game)
+    {
+        try
+        {
+            var update = await _bepInExManager.CheckForBepInExUpdates(game);
+            if (update != null)
+            {
+                // notify user about available BepInEx update
+                OnBepInExUpdateAvailable?.Invoke(update);
+            }
+        }
+        catch (Exception ex)
+        {
+            // log error but don't throw - this is a background check
+            Console.WriteLine($"Error checking for BepInEx updates: {ex.Message}");
+        }
+    }
+
+    private async Task CleanupOldBackupsAsync(GameInstallation game)
+    {
+        try
+        {
+            var result = await _bepInExManager.CleanupBepInExBackups(game);
+            if (result.Success && result.Data is BackupCleanupResult data)
+            {
+                // only log if we actually cleaned up something
+                if (data.DeletedCount > 0)
+                {
+                    Console.WriteLine($"Startup backup cleanup: {result.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during startup backup cleanup: {ex.Message}");
+        }
+    }
+
+    public event Action<BepInExUpdate>? OnBepInExUpdateAvailable;
 }

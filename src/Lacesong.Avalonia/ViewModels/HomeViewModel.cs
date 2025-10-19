@@ -19,6 +19,8 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
     private readonly IModManager _modManager;
     private readonly IDialogService _dialogService;
     private readonly IGameLauncher _gameLauncher;
+    private readonly IBepInExManager _bepInExManager;
+    private readonly ISnackbarService _snackbarService;
 
     // process monitoring
     private CancellationTokenSource? _processMonitoringCts;
@@ -72,7 +74,9 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
         IGameDetector gameDetector,
         IModManager modManager,
         IDialogService dialogService,
-        IGameLauncher gameLauncher) : base(logger)
+        IGameLauncher gameLauncher,
+        IBepInExManager bepInExManager,
+        ISnackbarService snackbarService) : base(logger)
     {
         _navigationService = navigationService;
         _gameStateService = gameStateService;
@@ -80,8 +84,11 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
         _modManager = modManager;
         _dialogService = dialogService;
         _gameLauncher = gameLauncher;
+        _bepInExManager = bepInExManager;
+        _snackbarService = snackbarService;
 
         _gameStateService.GameStateChanged += OnGameStateChanged;
+        _gameStateService.OnBepInExUpdateAvailable += OnBepInExUpdateAvailable;
         
         _ = InitialGameDetectionAsync();
     }
@@ -381,11 +388,102 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
         }, "Installing mod from URL...");
     }
 
+    private async void OnBepInExUpdateAvailable(BepInExUpdate update)
+    {
+        // show notification about available BepInEx update
+        _snackbarService.Show(
+            "BepInEx Update Available", 
+            $"BepInEx {update.LatestVersion} is available (current: {update.CurrentVersion})", 
+            "Information", 
+            "🔄", 
+            TimeSpan.FromSeconds(10)
+        );
+
+        // automatically trigger the update with progress reporting
+        await ExecuteAsync(async () =>
+        {
+            var progress = new Progress<double>(progressValue =>
+            {
+                var percentage = (int)(progressValue * 100);
+                SetStatus($"Updating BepInEx... {percentage}%");
+            });
+
+            var result = await _bepInExManager.UpdateBepInEx(CurrentGame, null, progress);
+            if (result.Success)
+            {
+                SetStatus($"BepInEx updated successfully: {result.Message}");
+                _snackbarService.Show("BepInEx Updated", "BepInEx has been updated successfully", "Success", "✅");
+            }
+            else
+            {
+                SetStatus($"BepInEx update failed: {result.Message}");
+                _snackbarService.Show("Update Failed", result.Message, "Error", "❌");
+            }
+        }, "Updating BepInEx...");
+    }
+
+    [RelayCommand]
+    private async Task UpdateBepInEx()
+    {
+        if (!IsGameDetected)
+        {
+            SetStatus("Please detect a game first.");
+            return;
+        }
+
+        await ExecuteAsync(async () =>
+        {
+            var progress = new Progress<double>(progressValue =>
+            {
+                var percentage = (int)(progressValue * 100);
+                SetStatus($"Updating BepInEx... {percentage}%");
+            });
+
+            var result = await _bepInExManager.UpdateBepInEx(CurrentGame, null, progress);
+            if (result.Success)
+            {
+                SetStatus($"BepInEx updated successfully: {result.Message}");
+                _snackbarService.Show("BepInEx Updated", "BepInEx has been updated successfully", "Success", "✅");
+            }
+            else
+            {
+                SetStatus($"BepInEx update failed: {result.Message}");
+                _snackbarService.Show("Update Failed", result.Message, "Error", "❌");
+            }
+        }, "Updating BepInEx...");
+    }
+
+    [RelayCommand]
+    private async Task CleanupBepInExBackups()
+    {
+        if (!IsGameDetected)
+        {
+            SetStatus("Please detect a game first.");
+            return;
+        }
+
+        await ExecuteAsync(async () =>
+        {
+            var result = await _bepInExManager.CleanupBepInExBackups(CurrentGame);
+            if (result.Success)
+            {
+                SetStatus($"Backup cleanup completed: {result.Message}");
+                _snackbarService.Show("Backup Cleanup", "Old backups have been cleaned up successfully", "Success", "🗑️");
+            }
+            else
+            {
+                SetStatus($"Backup cleanup failed: {result.Message}");
+                _snackbarService.Show("Cleanup Failed", result.Message, "Error", "❌");
+            }
+        }, "Cleaning up old backups...");
+    }
+
     public void Dispose()
     {
         if (_disposed) return;
         
         _gameStateService.GameStateChanged -= OnGameStateChanged;
+        _gameStateService.OnBepInExUpdateAvailable -= OnBepInExUpdateAvailable;
         StopProcessMonitoring();
         _disposed = true;
     }
