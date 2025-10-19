@@ -5,11 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.7.1] - 2025-10-19
 ### Added
-- Add mod profiles for dynamic and quick mod loading
+- Bottom bar with persistent launch controls and logo branding
+- Split-button design for launch mode selection (Modded/Vanilla)
+- Preferred launch mode setting with persistence
+- Enhanced game state monitoring with process tracking
+- Dynamic launch button states (Launch/Stop) with contextual text
 
 ### Changed
-- Adjust the launch options to be in a bar at the top.
+- Move launch functionality from HomeView to persistent bottom bar
+- Update MainWindow layout to use DockPanel with bottom bar
+- Improve launch button states with dynamic text based on game status
+
+### Fixed
+- Enhanced UI consistency with branded bottom bar
+- Better launch control accessibility with persistent placement
 
 ## [0.7.0] - 2025-10-19
 ### Removed
