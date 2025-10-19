@@ -3,6 +3,7 @@ using Lacesong.Core.Models;
 using System.IO.Compression;
 using System.Text.Json;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace Lacesong.Core.Services;
 
@@ -15,6 +16,7 @@ public class BepInExManager : IBepInExManager
     private const string BepInExCoreDll = "BepInEx/core/BepInEx.Core.dll";
     private const string BepInExLoaderDll = "BepInEx/core/BepInEx.dll";
     private const string GithubReleaseTagUrl = "https://api.github.com/repos/BepInEx/BepInEx/releases/tags/v{0}";
+    private const string GithubLatestReleaseUrl = "https://api.github.com/repos/BepInEx/BepInEx/releases/latest";
 
     /// <summary>
     /// gets the base directory where bepinex should be installed for the given game installation
@@ -52,7 +54,8 @@ public class BepInExManager : IBepInExManager
                 var backupResult = await CreateBackup(gameInstall);
                 if (!backupResult.Success)
                 {
-                    return OperationResult.ErrorResult($"Failed to create backup: {backupResult.Error}", "Backup creation failed");
+                    // log the backup failure but continue with installation
+                    Console.WriteLine($"Warning: Backup creation failed: {backupResult.Error}. Continuing with installation without backup.");
                 }
             }
 
@@ -244,7 +247,8 @@ public class BepInExManager : IBepInExManager
             var backupResult = await CreateBackup(gameInstall);
             if (!backupResult.Success)
             {
-                return OperationResult.ErrorResult($"Failed to create backup: {backupResult.Error}", "Backup creation failed");
+                // log the backup failure but continue with uninstallation
+                Console.WriteLine($"Warning: Backup creation failed: {backupResult.Error}. Continuing with uninstallation without backup.");
             }
 
             var baseDir = GetBepInExBaseDirectory(gameInstall);
@@ -275,6 +279,238 @@ public class BepInExManager : IBepInExManager
         catch (Exception ex)
         {
             return OperationResult.ErrorResult(ex.Message, "BepInEx uninstallation failed");
+        }
+    }
+
+    public async Task<BepInExUpdate?> CheckForBepInExUpdates(GameInstallation gameInstall)
+    {
+        try
+        {
+            // check if BepInEx is installed
+            if (!IsBepInExInstalled(gameInstall))
+            {
+                return null; // no update available if not installed
+            }
+
+            // get current version
+            var currentVersion = GetInstalledBepInExVersion(gameInstall);
+            if (string.IsNullOrEmpty(currentVersion))
+            {
+                return null; // cannot determine current version
+            }
+
+            // fetch latest release from GitHub
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "Lacesong-ModManager/1.0.0");
+            client.Timeout = TimeSpan.FromSeconds(30);
+
+            var response = await client.GetAsync(GithubLatestReleaseUrl);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null; // failed to fetch latest release
+            }
+
+            using var responseContent = response.Content;
+            using var doc = JsonDocument.Parse(await responseContent.ReadAsStringAsync());
+            
+            // extract tag name (version)
+            if (!doc.RootElement.TryGetProperty("tag_name", out var tagNameElement))
+            {
+                return null;
+            }
+
+            var latestVersion = tagNameElement.GetString();
+            if (string.IsNullOrEmpty(latestVersion))
+            {
+                return null;
+            }
+
+            // remove 'v' prefix for comparison
+            var cleanLatestVersion = latestVersion.TrimStart('v');
+            var cleanCurrentVersion = currentVersion.TrimStart('v');
+
+            // compare versions
+            if (!IsNewerVersion(cleanLatestVersion, cleanCurrentVersion))
+            {
+                return null; // no update available
+            }
+
+            // get download URL for the platform
+            var downloadUrl = await ResolveAssetUrl(cleanLatestVersion, gameInstall);
+            if (string.IsNullOrEmpty(downloadUrl))
+            {
+                return null; // cannot resolve download URL
+            }
+
+            // extract additional release information
+            var publishedAt = DateTime.UtcNow;
+            var releaseNotes = string.Empty;
+            var isPrerelease = false;
+            var fileSize = 0L;
+
+            if (doc.RootElement.TryGetProperty("published_at", out var publishedAtElement))
+            {
+                if (DateTime.TryParse(publishedAtElement.GetString(), out var parsedDate))
+                {
+                    publishedAt = parsedDate;
+                }
+            }
+
+            if (doc.RootElement.TryGetProperty("body", out var bodyElement))
+            {
+                releaseNotes = bodyElement.GetString() ?? string.Empty;
+            }
+
+            if (doc.RootElement.TryGetProperty("prerelease", out var prereleaseElement))
+            {
+                isPrerelease = prereleaseElement.GetBoolean();
+            }
+
+            // get file size from assets
+            if (doc.RootElement.TryGetProperty("assets", out var assetsElement))
+            {
+                var (os, arch) = DetermineTarget(gameInstall);
+                var expectedName = $"BepInEx_{os}_{arch}_{cleanLatestVersion}.zip";
+
+                foreach (var asset in assetsElement.EnumerateArray())
+                {
+                    if (asset.TryGetProperty("name", out var nameEl) && 
+                        nameEl.GetString() == expectedName &&
+                        asset.TryGetProperty("size", out var sizeEl))
+                    {
+                        fileSize = sizeEl.GetInt64();
+                        break;
+                    }
+                }
+            }
+
+            return new BepInExUpdate
+            {
+                CurrentVersion = currentVersion,
+                LatestVersion = latestVersion,
+                DownloadUrl = downloadUrl,
+                ReleaseNotes = releaseNotes,
+                PublishedAt = publishedAt,
+                IsPrerelease = isPrerelease,
+                FileSize = fileSize
+            };
+        }
+        catch (Exception ex)
+        {
+            // log error but don't throw - this is a background check
+            Console.WriteLine($"Error checking for BepInEx updates: {ex.Message}");
+            return null;
+        }
+    }
+
+    public async Task<OperationResult> UpdateBepInEx(GameInstallation gameInstall, BepInExUpdateOptions? options = null, IProgress<double>? progress = null)
+    {
+        try
+        {
+            options ??= new BepInExUpdateOptions();
+            progress?.Report(0.1);
+
+            // check for available update
+            var update = await CheckForBepInExUpdates(gameInstall);
+            if (update == null)
+            {
+                return OperationResult.ErrorResult("No BepInEx update available", "Update check failed");
+            }
+
+            progress?.Report(0.2);
+
+            // create backup if requested
+            if (options.BackupExisting)
+            {
+                var backupResult = await CreateBackup(gameInstall);
+                if (!backupResult.Success)
+                {
+                    // log the backup failure but continue with update
+                    Console.WriteLine($"Warning: Backup creation failed: {backupResult.Error}. Continuing with update without backup.");
+                }
+            }
+
+            progress?.Report(0.3);
+
+            // download the update
+            var downloadResult = await DownloadBepInEx(update.LatestVersion.TrimStart('v'), gameInstall, progress);
+            if (!downloadResult.Success)
+            {
+                return OperationResult.ErrorResult($"Failed to download BepInEx update: {downloadResult.Error}", "Download failed");
+            }
+
+            progress?.Report(0.7);
+
+            var tempZipPath = downloadResult.Data as string;
+            if (string.IsNullOrEmpty(tempZipPath))
+            {
+                return OperationResult.ErrorResult("Download result did not contain zip path", "Invalid download result");
+            }
+
+            // extract the update
+            var baseDir = GetBepInExBaseDirectory(gameInstall);
+            var extractResult = await ExtractBepInEx(tempZipPath, baseDir, progress);
+            if (!extractResult.Success)
+            {
+                return OperationResult.ErrorResult($"Failed to extract BepInEx update: {extractResult.Error}", "Extraction failed");
+            }
+
+            progress?.Report(0.9);
+
+            // configure BepInEx
+            var configResult = await ConfigureBepInEx(gameInstall);
+            if (!configResult.Success)
+            {
+                return OperationResult.ErrorResult($"Failed to configure BepInEx: {configResult.Error}", "Configuration failed");
+            }
+
+            // cleanup temp files
+            try
+            {
+                File.Delete(tempZipPath);
+            }
+            catch
+            {
+                // ignore cleanup errors
+            }
+
+            progress?.Report(1.0);
+
+            return OperationResult.SuccessResult($"BepInEx updated successfully from {update.CurrentVersion} to {update.LatestVersion}");
+        }
+        catch (Exception ex)
+        {
+            return OperationResult.ErrorResult(ex.Message, "BepInEx update failed");
+        }
+    }
+
+    private bool IsNewerVersion(string latestVersion, string currentVersion)
+    {
+        try
+        {
+            // simple version comparison - assumes semantic versioning
+            var latestParts = latestVersion.Split('.').Select(int.Parse).ToArray();
+            var currentParts = currentVersion.Split('.').Select(int.Parse).ToArray();
+
+            // pad arrays to same length
+            var maxLength = Math.Max(latestParts.Length, currentParts.Length);
+            Array.Resize(ref latestParts, maxLength);
+            Array.Resize(ref currentParts, maxLength);
+
+            for (int i = 0; i < maxLength; i++)
+            {
+                if (latestParts[i] > currentParts[i])
+                    return true;
+                if (latestParts[i] < currentParts[i])
+                    return false;
+            }
+
+            return false; // versions are equal
+        }
+        catch
+        {
+            // if version parsing fails, assume no update available
+            return false;
         }
     }
 
@@ -343,7 +579,7 @@ public class BepInExManager : IBepInExManager
         }
     }
 
-    private async Task<OperationResult> DownloadBepInEx(string version, GameInstallation gi)
+    private async Task<OperationResult> DownloadBepInEx(string version, GameInstallation gi, IProgress<double>? progress = null)
     {
         try
         {
@@ -361,9 +597,27 @@ public class BepInExManager : IBepInExManager
             using var response = await client.GetAsync(assetUrl);
             response.EnsureSuccessStatusCode();
             
+            var totalBytes = response.Content.Headers.ContentLength ?? 0;
+            var downloadedBytes = 0L;
+            
             using var responseContent = response.Content;
-            var data = await responseContent.ReadAsByteArrayAsync();
-            await File.WriteAllBytesAsync(tempZip, data);
+            using var stream = await responseContent.ReadAsStreamAsync();
+            using var fileStream = new FileStream(tempZip, FileMode.Create, FileAccess.Write);
+            
+            var buffer = new byte[8192];
+            int bytesRead;
+            
+            while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            {
+                await fileStream.WriteAsync(buffer, 0, bytesRead);
+                downloadedBytes += bytesRead;
+                
+                if (totalBytes > 0)
+                {
+                    var downloadProgress = (double)downloadedBytes / totalBytes * 0.4; // 40% of total progress
+                    progress?.Report(0.3 + downloadProgress);
+                }
+            }
 
             return OperationResult.SuccessResult("Downloaded BepInEx", tempZip);
         }
@@ -373,7 +627,7 @@ public class BepInExManager : IBepInExManager
         }
     }
 
-    private async Task<OperationResult> ExtractBepInEx(string zipPath, string gamePath)
+    private async Task<OperationResult> ExtractBepInEx(string zipPath, string gamePath, IProgress<double>? progress = null)
     {
         try
         {
@@ -383,9 +637,34 @@ public class BepInExManager : IBepInExManager
             // extract to temp directory first
             ZipFile.ExtractToDirectory(zipPath, tempExtractPath);
 
-            // move files to game directory atomically
+            // get all files and directories from the extracted content
             var extractedFiles = Directory.GetFiles(tempExtractPath, "*", SearchOption.AllDirectories);
             var extractedDirs = Directory.GetDirectories(tempExtractPath, "*", SearchOption.AllDirectories);
+
+            // first, remove existing BepInEx files to ensure clean replacement
+            var existingBepInExPath = Path.Combine(gamePath, "BepInEx");
+            if (Directory.Exists(existingBepInExPath))
+            {
+                Directory.Delete(existingBepInExPath, true);
+            }
+
+            // remove other BepInEx-related files that might exist
+            var bepinexFiles = new[] { "winhttp.dll", "doorstop_config.ini", "libdoorstop.dylib", "run_bepinex.sh" };
+            foreach (var file in bepinexFiles)
+            {
+                var filePath = Path.Combine(gamePath, file);
+                if (File.Exists(filePath))
+                {
+                    try
+                    {
+                        File.Delete(filePath);
+                    }
+                    catch
+                    {
+                        // ignore if file is in use or can't be deleted
+                    }
+                }
+            }
 
             // create directories first
             foreach (var dir in extractedDirs)
@@ -395,20 +674,26 @@ public class BepInExManager : IBepInExManager
                 Directory.CreateDirectory(targetPath);
             }
 
-            // copy files
-            foreach (var file in extractedFiles)
+            // copy files, ensuring they replace existing ones
+            var totalFiles = extractedFiles.Length;
+            for (int i = 0; i < extractedFiles.Length; i++)
             {
+                var file = extractedFiles[i];
                 var relativePath = Path.GetRelativePath(tempExtractPath, file);
                 var targetPath = Path.Combine(gamePath, relativePath);
                 
-                // ensure target directory exists
                 var targetDir = Path.GetDirectoryName(targetPath);
                 if (!string.IsNullOrEmpty(targetDir))
                 {
                     Directory.CreateDirectory(targetDir);
                 }
 
+                // copy with overwrite to replace existing files
                 File.Copy(file, targetPath, true);
+                
+                // report progress for extraction (20% of total progress)
+                var extractionProgress = (double)(i + 1) / totalFiles * 0.2;
+                progress?.Report(0.7 + extractionProgress);
             }
 
             // cleanup temp directory
@@ -472,7 +757,7 @@ SkipAssemblyScan = false
                             {
                                 var replacement = exeType == ExecutableType.macOS
                                     ? "executable_name=\"Hollow Knight Silksong.app\""
-                                    : "executable_name=\"\"";
+                                    : "executable_name=\"Hollow Knight Silksong\"";
                                 lines[i] = replacement;
                                 break;
                             }
@@ -505,23 +790,183 @@ SkipAssemblyScan = false
         try
         {
             var baseDir = GetBepInExBaseDirectory(gameInstall);
+            var bepinexPath = Path.Combine(baseDir, "BepInEx");
+            
+            // check if BepInEx directory exists - if not, no backup needed
+            if (!Directory.Exists(bepinexPath))
+            {
+                return OperationResult.SuccessResult("No existing BepInEx installation to backup", null);
+            }
+
+            // ensure we can write to the game directory
             var backupDir = Path.Combine(baseDir, "BepInEx", "backups");
-            Directory.CreateDirectory(backupDir);
+            try
+            {
+                Directory.CreateDirectory(backupDir);
+            }
+            catch (Exception ex)
+            {
+                // if we can't create backup directory, try using temp directory instead
+                var tempBackupDir = Path.Combine(Path.GetTempPath(), "lacesong_bepinex_backups");
+                try
+                {
+                    Directory.CreateDirectory(tempBackupDir);
+                    backupDir = tempBackupDir;
+                }
+                catch (Exception tempEx)
+                {
+                    // if we can't even create temp backup directory, fail gracefully
+                    return OperationResult.ErrorResult($"Unable to create backup directory: {ex.Message}. Temp directory also failed: {tempEx.Message}", "Backup directory creation failed");
+                }
+            }
 
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             var backupPath = Path.Combine(backupDir, $"bepinex_backup_{timestamp}.zip");
 
-            var bepinexPath = Path.Combine(baseDir, "BepInEx");
-            if (Directory.Exists(bepinexPath))
-            {
-                ZipFile.CreateFromDirectory(bepinexPath, backupPath);
-            }
+            // create the backup archive
+            ZipFile.CreateFromDirectory(bepinexPath, backupPath);
+
+            // cleanup old backups to prevent storage bloat
+            await CleanupOldBackups(backupDir);
 
             return OperationResult.SuccessResult("Backup created successfully", backupPath);
         }
         catch (Exception ex)
         {
             return OperationResult.ErrorResult(ex.Message, "Failed to create backup");
+        }
+    }
+
+    public async Task<OperationResult> CleanupBepInExBackups(GameInstallation gameInstall, int maxBackups = 5, int maxAgeDays = 30)
+    {
+        try
+        {
+            var baseDir = GetBepInExBaseDirectory(gameInstall);
+            var backupDir = Path.Combine(baseDir, "BepInEx", "backups");
+            
+            if (!Directory.Exists(backupDir))
+            {
+                return OperationResult.SuccessResult("No backup directory found - nothing to clean up");
+            }
+
+            var backupFiles = Directory.GetFiles(backupDir, "bepinex_backup_*.zip")
+                .Select(f => new FileInfo(f))
+                .OrderByDescending(f => f.CreationTime)
+                .ToList();
+
+            if (backupFiles.Count == 0)
+            {
+                return OperationResult.SuccessResult("No backup files found - nothing to clean up");
+            }
+
+            var filesToDelete = new List<FileInfo>();
+            var totalSizeToDelete = 0L;
+
+            // find files to delete based on count limit
+            if (backupFiles.Count > maxBackups)
+            {
+                var excessFiles = backupFiles.Skip(maxBackups);
+                filesToDelete.AddRange(excessFiles);
+            }
+
+            // find files to delete based on age limit
+            var cutoffDate = DateTime.Now.AddDays(-maxAgeDays);
+            var oldFiles = backupFiles.Where(f => f.CreationTime < cutoffDate).ToList();
+            
+            foreach (var file in oldFiles)
+            {
+                if (!filesToDelete.Contains(file))
+                {
+                    filesToDelete.Add(file);
+                }
+            }
+
+            // delete files
+            var deletedCount = 0;
+            foreach (var file in filesToDelete)
+            {
+                try
+                {
+                    totalSizeToDelete += file.Length;
+                    File.Delete(file.FullName);
+                    deletedCount++;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to delete backup {file.Name}: {ex.Message}");
+                }
+            }
+
+            var remainingCount = backupFiles.Count - deletedCount;
+            var sizeFreedMB = totalSizeToDelete / (1024.0 * 1024.0);
+
+            return OperationResult.SuccessResult(
+                $"Backup cleanup completed. Deleted {deletedCount} files, freed {sizeFreedMB:F1} MB. {remainingCount} backups remaining.",
+                new BackupCleanupResult 
+                { 
+                    DeletedCount = deletedCount, 
+                    SizeFreedMB = sizeFreedMB, 
+                    RemainingCount = remainingCount 
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            return OperationResult.ErrorResult(ex.Message, "Backup cleanup failed");
+        }
+    }
+
+    private async Task CleanupOldBackups(string backupDir)
+    {
+        try
+        {
+            if (!Directory.Exists(backupDir))
+                return;
+
+            var backupFiles = Directory.GetFiles(backupDir, "bepinex_backup_*.zip")
+                .Select(f => new FileInfo(f))
+                .OrderByDescending(f => f.CreationTime)
+                .ToList();
+
+            // keep only the 5 most recent backups
+            const int maxBackups = 5;
+            if (backupFiles.Count > maxBackups)
+            {
+                var filesToDelete = backupFiles.Skip(maxBackups);
+                foreach (var file in filesToDelete)
+                {
+                    try
+                    {
+                        File.Delete(file.FullName);
+                        Console.WriteLine($"Cleaned up old backup: {file.Name}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed to delete old backup {file.Name}: {ex.Message}");
+                    }
+                }
+            }
+
+            // also clean up backups older than 30 days
+            var cutoffDate = DateTime.Now.AddDays(-30);
+            var oldBackups = backupFiles.Where(f => f.CreationTime < cutoffDate).ToList();
+            
+            foreach (var file in oldBackups)
+            {
+                try
+                {
+                    File.Delete(file.FullName);
+                    Console.WriteLine($"Cleaned up old backup (30+ days): {file.Name}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to delete old backup {file.Name}: {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during backup cleanup: {ex.Message}");
         }
     }
 
