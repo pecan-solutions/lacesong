@@ -51,7 +51,7 @@ Quick start: Open issues for bugs or features, submit PRs for improvements. All 
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
+Apache 2.0 License - See [LICENSE](LICENSE) for details.
 
 ## Disclaimer
 
