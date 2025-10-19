@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Reflection;
 using Lacesong.Avalonia.Models;
 using Microsoft.Extensions.Logging;
 
@@ -40,11 +41,15 @@ public class SettingsService : ISettingsService
                 _logger.LogInformation("Settings file not found. Using default settings.");
                 CurrentSettings = new Settings();
             }
+            
+            // always update the current version from assembly
+            CurrentSettings.CurrentVersion = GetCurrentVersion();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load settings. Using default settings.");
             CurrentSettings = new Settings();
+            CurrentSettings.CurrentVersion = GetCurrentVersion();
         }
     }
 
@@ -66,7 +71,14 @@ public class SettingsService : ISettingsService
     public void ResetToDefaults()
     {
         CurrentSettings = new Settings();
+        CurrentSettings.CurrentVersion = GetCurrentVersion();
         SaveSettings();
         _logger.LogInformation("Settings have been reset to defaults.");
+    }
+
+    private string GetCurrentVersion()
+    {
+        var version = Assembly.GetExecutingAssembly().GetName().Version;
+        return $"{version?.Major}.{version?.Minor}.{version?.Build}";
     }
 }

@@ -11,11 +11,13 @@ public partial class GameStateService : ObservableObject, IGameStateService
 {
     private readonly IModUpdateService _updateService;
     private readonly IBepInExManager _bepInExManager;
+    private readonly ILacesongVersionService _lacesongVersionService;
 
-    public GameStateService(IModUpdateService updateService, IBepInExManager bepInExManager)
+    public GameStateService(IModUpdateService updateService, IBepInExManager bepInExManager, ILacesongVersionService lacesongVersionService)
     {
         _updateService = updateService;
         _bepInExManager = bepInExManager;
+        _lacesongVersionService = lacesongVersionService;
     }
 
     [ObservableProperty]
@@ -41,6 +43,9 @@ public partial class GameStateService : ObservableObject, IGameStateService
             
             // check for BepInEx updates in the background
             _ = CheckForBepInExUpdatesAsync(game);
+            
+            // check for Lacesong updates in the background
+            _ = CheckForLacesongUpdatesAsync();
             
             // cleanup old backups in the background
             _ = CleanupOldBackupsAsync(game);
@@ -68,6 +73,24 @@ public partial class GameStateService : ObservableObject, IGameStateService
         }
     }
 
+    private async Task CheckForLacesongUpdatesAsync()
+    {
+        try
+        {
+            var versionInfo = await _lacesongVersionService.CheckForUpdatesAsync();
+            if (versionInfo.IsUpdateAvailable)
+            {
+                // notify user about available Lacesong update
+                OnLacesongUpdateAvailable?.Invoke(versionInfo);
+            }
+        }
+        catch (Exception ex)
+        {
+            // log error but don't throw - this is a background check
+            Console.WriteLine($"Error checking for Lacesong updates: {ex.Message}");
+        }
+    }
+
     private async Task CleanupOldBackupsAsync(GameInstallation game)
     {
         try
@@ -89,4 +112,5 @@ public partial class GameStateService : ObservableObject, IGameStateService
     }
 
     public event Action<BepInExUpdate>? OnBepInExUpdateAvailable;
+    public event Action<LacesongVersionInfo>? OnLacesongUpdateAvailable;
 }

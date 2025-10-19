@@ -7,7 +7,7 @@
     <ApplicationManifest Condition="'$(OS)' == 'Windows_NT'">app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>false</SelfContained>
+    <SelfContained>true</SelfContained>
     <RollForward>LatestMinor</RollForward>
     <!-- compatibility settings for .net 9 -->
     <EnableDefaultCompileItems>true</EnableDefaultCompileItems>

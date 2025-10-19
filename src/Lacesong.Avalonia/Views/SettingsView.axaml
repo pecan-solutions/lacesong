@@ -41,11 +41,14 @@
                 </Border>
 
 
-                <!-- Action Buttons -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,16,0,0">
-                    <Button Content="Check for Mod Updates" Command="{Binding CheckModUpdatesCommand}"/>
-                    <Button Content="Reset to Defaults" Command="{Binding ResetToDefaultsCommand}"/>
-                    <Button Content="Save Settings" Command="{Binding SaveSettingsCommand}" Classes="primary"/>
+                <!-- Action Buttons and Version -->
+                <StackPanel Spacing="12" Margin="0,16,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                        <Button Content="Check for Mod Updates" Command="{Binding CheckModUpdatesCommand}"/>
+                        <Button Content="Reset to Defaults" Command="{Binding ResetToDefaultsCommand}"/>
+                        <Button Content="Save Settings" Command="{Binding SaveSettingsCommand}" Classes="primary"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding CurrentSettings.CurrentVersion, StringFormat='Current Version: {0}'}" Classes="body" HorizontalAlignment="Right" Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

@@ -66,5 +66,27 @@ public interface IGameStateService
     bool IsGameDetected { get; }
     event Action GameStateChanged;
     event Action<BepInExUpdate>? OnBepInExUpdateAvailable;
+    event Action<LacesongVersionInfo>? OnLacesongUpdateAvailable;
     void SetCurrentGame(GameInstallation game);
+}
+
+/// <summary>
+/// service for checking lacesong version updates
+/// </summary>
+public interface ILacesongVersionService
+{
+    Task<LacesongVersionInfo> CheckForUpdatesAsync();
+}
+
+/// <summary>
+/// lacesong version information
+/// </summary>
+public class LacesongVersionInfo
+{
+    public bool IsUpdateAvailable { get; set; }
+    public string CurrentVersion { get; set; } = string.Empty;
+    public string LatestVersion { get; set; } = string.Empty;
+    public string DownloadUrl { get; set; } = string.Empty;
+    public string ReleaseNotes { get; set; } = string.Empty;
+    public DateTime ReleaseDate { get; set; }
 }

@@ -89,6 +89,7 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
 
         _gameStateService.GameStateChanged += OnGameStateChanged;
         _gameStateService.OnBepInExUpdateAvailable += OnBepInExUpdateAvailable;
+        _gameStateService.OnLacesongUpdateAvailable += OnLacesongUpdateAvailable;
         
         _ = InitialGameDetectionAsync();
     }
@@ -422,6 +423,18 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
         }, "Updating BepInEx...");
     }
 
+    private void OnLacesongUpdateAvailable(LacesongVersionInfo versionInfo)
+    {
+        // show notification about available Lacesong update (non-persistent, once per startup)
+        _snackbarService.Show(
+            "Lacesong Update Available", 
+            $"Lacesong {versionInfo.LatestVersion} is available (current: {versionInfo.CurrentVersion})", 
+            "Information", 
+            "🔄", 
+            TimeSpan.FromSeconds(8)
+        );
+    }
+
     [RelayCommand]
     private async Task UpdateBepInEx()
     {
@@ -484,6 +497,7 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
         
         _gameStateService.GameStateChanged -= OnGameStateChanged;
         _gameStateService.OnBepInExUpdateAvailable -= OnBepInExUpdateAvailable;
+        _gameStateService.OnLacesongUpdateAvailable -= OnLacesongUpdateAvailable;
         StopProcessMonitoring();
         _disposed = true;
     }

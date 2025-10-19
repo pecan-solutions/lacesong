@@ -23,4 +23,7 @@ public partial class Settings : ObservableObject
 
     [ObservableProperty]
     private string _preferredLaunchMode = "Modded";
+
+    [ObservableProperty]
+    private string _currentVersion = "1.0.0";
 }

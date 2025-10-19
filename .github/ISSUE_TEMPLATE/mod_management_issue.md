@@ -53,7 +53,7 @@ What actually happened?
 ## System Information
 - **Lacesong Version**: [e.g. 1.0.0]
 - **Operating System**: [e.g. Windows 11, macOS 13.0, Ubuntu 22.04]
-- **Game Version**: [e.g. Hollow Knight: Silksong v1.0.0]
+- **Game Version**: [e.g. Hollow Knight: Silksong v1.0.28954]
 - **BepInEx Version**: [e.g. 5.4.22]
 
 ## Installed Mods

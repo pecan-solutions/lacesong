@@ -40,6 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved platform detection and compatibility services
   - Better verification and permission handling
   - Optimized mod indexing and caching services
+- **Lacesong version checking and update system**
+  - New LacesongVersionService for checking application updates via GitHub API
+  - Automatic version checking on game detection with user notifications
+  - Enhanced update information display in settings view
+  - Background update checking with proper error handling
+  - Version comparison logic for determining update availability
+  - Integration with existing notification system for update alerts
 
 ### Changed
 - **Application version updated to 1.0.0** marking the first stable release

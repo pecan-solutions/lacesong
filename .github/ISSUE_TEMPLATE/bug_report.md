@@ -25,7 +25,7 @@ If applicable, add screenshots to help explain your problem.
 ## Environment Information
 **Please complete the following information:**
 
-- **Lacesong Version**: [e.g. 1.0.0]
+- **Lacesong Version**: [e.g. 1.0.0, found at the bottom of the settings page]
 - **Operating System**: [e.g. Windows 11, macOS 15.0]
 - **Architecture**: [e.g. x64, ARM64]
 - **Game Version**: [e.g. Hollow Knight: Silksong v1.0.28954]

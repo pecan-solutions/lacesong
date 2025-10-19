@@ -65,6 +65,7 @@ public partial class App : Application
 
         // avalonia services
         services.AddSingleton<IUpdateService, Services.UpdateService>();
+        services.AddSingleton<ILacesongVersionService, Services.LacesongVersionService>();
         services.AddSingleton<IDialogService, Services.DialogService>();
         services.AddSingleton<IContentDialogService, Services.ContentDialogService>();
         services.AddSingleton<INavigationService, Services.NavigationService>();
