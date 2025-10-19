@@ -11,6 +11,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Adjust the launch options to be in a bar at the top.
 
+## [0.7.0] - 2025-10-19
+### Removed
+- Removed CLI functionality from the application
+- Simplified application architecture by removing command-line interface
+
+### Changed
+- Streamlined application to focus on GUI-only experience
+- Reduced application complexity and maintenance overhead
+
+## [0.6.0] - 2025-10-19
+### Added
+- CLI command for BepInEx backup cleanup with configurable retention policies
+- Support for max-backups and max-age-days parameters in backup cleanup
+- Enhanced mod display names with better formatting (underscores replaced with spaces)
+- Improved mod loading with comprehensive debug output
+- Better progress reporting for BepInEx operations
+
+### Changed
+- Enhanced mod management reliability with improved error handling
+- Updated UI to use DisplayName property for consistent mod name formatting
+- Improved mod enable/disable operations with better directory name handling
+- Adjusted progress bar width for better visual consistency
+
+### Fixed
+- Improved mod management reliability and debug logging
+- Enhanced mod loading performance with better error reporting
+- Fixed mod enable/disable operations to use proper directory names
+
+## [0.5.0] - 2025-10-19
+### Added
+- Comprehensive BepInEx update checking and management functionality
+- GitHub API integration for automatic latest release detection
+- BepInExUpdate, BepInExUpdateOptions, and BackupCleanupResult models
+- Automatic update checking with progress reporting
+- Backup cleanup functionality with configurable retention policies
+- Version comparison and asset URL resolution for updates
+- Enhanced backup creation with fallback to temp directory
+- Cross-platform BepInEx update support
+
+### Changed
+- Extended IBepInExManager interface with update and cleanup methods
+- Enhanced BepInEx installation process with better backup handling
+- Improved backup creation to handle permission issues gracefully
+- Updated mod management to use DisplayName property for better UI consistency
+
+### Fixed
+- Enhanced BepInEx installation reliability with better error handling
+- Improved backup creation to handle directory permission issues
+- Better cleanup of temporary files during BepInEx operations
+
 ## [0.4.0] - 2025-10-18
 ### Added
 - Auto-update BepInEx functionality with automatic latest version detection
