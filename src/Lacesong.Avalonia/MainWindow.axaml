@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
         xmlns:converters="clr-namespace:Lacesong.Avalonia.Converters"
+        xmlns:views="clr-namespace:Lacesong.Avalonia.Views"
         mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="720"
         x:Class="Lacesong.Avalonia.MainWindow"
         x:DataType="vm:MainViewModel"
@@ -16,7 +17,10 @@
         Foreground="{DynamicResource PrimaryTextBrush}">
 
     <Panel>
-        <Grid>
+        <DockPanel>
+            <!-- Bottom Bar -->
+            <views:BottomBarView DockPanel.Dock="Bottom" DataContext="{Binding BottomBar}"/>
+
             <!-- Main Content Area -->
             <Grid ColumnDefinitions="260,*">
                 <!-- Sidebar -->
@@ -43,6 +47,6 @@
                 <!-- Content -->
                 <ContentControl Grid.Column="1" Margin="24" Content="{Binding CurrentViewModel}" />
             </Grid>
-        </Grid>
+        </DockPanel>
     </Panel>
 </Window>

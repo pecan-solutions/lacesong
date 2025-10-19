@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Lacesong.Avalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="60"
+             x:Class="Lacesong.Avalonia.Views.BottomBarView"
+             x:DataType="vm:BottomBarViewModel">
+    <Border Classes="bottom-bar" Padding="12,0" VerticalAlignment="Center">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+            <!-- Left Section -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Image Source="/Assets/logo.png" Width="32" Height="32" />
+                <TextBlock Text="Lacesong" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Right Section -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <Grid ColumnDefinitions="*,Auto">
+                    <!-- Main Launch Button -->
+                    <Button Grid.Column="0"
+                            Command="{Binding LaunchCommand}"
+                            Classes="primary split-button-main"
+                            Classes.stop="{Binding IsGameRunning}"
+                            MinWidth="140">
+                        <TextBlock Text="{Binding LaunchButtonText}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"/>
+                    </Button>
+                    
+                    <!-- Dropdown Arrow Button -->
+                    <Button Grid.Column="1"
+                            Classes="primary split-button-dropdown"
+                            Classes.stop="{Binding IsGameRunning}"
+                            Width="32">
+                        <PathIcon Data="M7 10l5 5 5-5z"
+                                  Width="12" 
+                                  Height="12"
+                                  VerticalAlignment="Center"/>
+                        <Button.Flyout>
+                            <MenuFlyout Placement="TopEdgeAlignedLeft">
+                                <MenuItem Header="Launch Modded" 
+                                          Command="{Binding SetLaunchModeCommand}"
+                                          CommandParameter="Modded"/>
+                                <MenuItem Header="Launch Vanilla" 
+                                          Command="{Binding SetLaunchModeCommand}"
+                                          CommandParameter="Vanilla"/>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </Grid>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

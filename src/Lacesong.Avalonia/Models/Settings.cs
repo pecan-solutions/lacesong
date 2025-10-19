@@ -24,4 +24,7 @@ public partial class Settings : ObservableObject
 
     [ObservableProperty]
     private string _theme = "The Marrow";
+
+    [ObservableProperty]
+    private string _preferredLaunchMode = "Modded";
 }

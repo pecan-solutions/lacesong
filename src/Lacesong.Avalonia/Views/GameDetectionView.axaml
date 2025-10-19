@@ -59,7 +59,7 @@
                                  MinHeight="100">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel>
+                                    <StackPanel Margin="12,8">
                                         <TextBlock Text="{Binding Name}" Classes="bodyStrong"/>
                                         <TextBlock Text="{Binding InstallPath}" Classes="smallFaded"
                                                    TextWrapping="Wrap" Margin="0,4,0,4"/>

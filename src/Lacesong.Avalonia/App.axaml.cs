@@ -87,6 +87,7 @@ public partial class App : Application
 
         // view models
         services.AddSingleton<ViewModels.MainViewModel>();
+        services.AddSingleton<ViewModels.BottomBarViewModel>();
         services.AddTransient<ViewModels.HomeViewModel>();
         services.AddTransient<ViewModels.GameDetectionViewModel>();
         services.AddTransient<ViewModels.ManageModsViewModel>();

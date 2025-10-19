@@ -48,13 +48,17 @@ public partial class MainViewModel : BaseViewModel
     public bool IsGameDetected => _gameStateService.IsGameDetected;
     public string GameDetectionStatus => IsGameDetected ? $"Game: {CurrentGame.Name} - {CurrentGame.InstallPath}" : "Game not detected";
 
-    public MainViewModel(ILogger<MainViewModel> logger, INavigationService navigationService, IGameStateService gameStateService) : base(logger)
+    public BottomBarViewModel BottomBar { get; }
+
+    public MainViewModel(ILogger<MainViewModel> logger, INavigationService navigationService, IGameStateService gameStateService, BottomBarViewModel bottomBarViewModel) : base(logger)
     {
         _navigationService = navigationService;
         _navigationService.CurrentViewModelChanged += OnCurrentViewModelChanged;
         
         _gameStateService = gameStateService;
         _gameStateService.GameStateChanged += OnGameStateChanged;
+
+        BottomBar = bottomBarViewModel;
 
         NavigationItems = new ObservableCollection<NavigationItem>
         {

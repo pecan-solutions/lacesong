@@ -41,6 +41,7 @@
     <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{DynamicResource TertiaryColor}" />
     <SolidColorBrush x:Key="CardBackgroundBrush" Color="{DynamicResource SurfaceColor}" />
     <SolidColorBrush x:Key="StatusBackgroundBrush" Color="{DynamicResource TertiaryColor}" />
+    <SolidColorBrush x:Key="BottomBarBackgroundBrush" Color="{DynamicResource TertiaryColor}" />
 
     <SolidColorBrush x:Key="GlassBorderBrush" Color="{StaticResource GlassStrokeColor}" />
 

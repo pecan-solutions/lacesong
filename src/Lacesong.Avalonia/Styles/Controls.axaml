@@ -57,6 +57,49 @@
         <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHoverBrush}"/>
     </Style>
 
+    <Style Selector="Button.split-button-main">
+        <Setter Property="Padding" Value="12,10,8,10"/>
+        <Setter Property="CornerRadius" Value="6,0,0,6"/>
+        <Setter Property="Height" Value="40"/>
+    </Style>
+
+    <Style Selector="Button.split-button-dropdown">
+        <Setter Property="Padding" Value="8,10,12,10"/>
+        <Setter Property="CornerRadius" Value="0,6,6,0"/>
+        <Setter Property="Margin" Value="-1,0,0,0"/>
+        <Setter Property="Height" Value="40"/>
+    </Style>
+
+    <Style Selector="Button.split-button-main TextBlock">
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+    </Style>
+
+    <Style Selector="Button.split-button-dropdown PathIcon">
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="Opacity" Value="0.8"/>
+    </Style>
+
+    <Style Selector="Button.split-button-dropdown:hover PathIcon">
+        <Setter Property="Opacity" Value="1.0"/>
+    </Style>
+
+    <!-- Stop button styles (when game is running) -->
+    <Style Selector="Button.split-button-main.stop">
+        <Setter Property="Background" Value="#4A90E2"/>
+    </Style>
+
+    <Style Selector="Button.split-button-main.stop:hover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#5BA0F2"/>
+    </Style>
+
+    <Style Selector="Button.split-button-dropdown.stop">
+        <Setter Property="Background" Value="#4A90E2"/>
+    </Style>
+
+    <Style Selector="Button.split-button-dropdown.stop:hover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#5BA0F2"/>
+    </Style>
+
     <Style Selector="Button.danger">
         <Setter Property="Background" Value="#A84848"/>
         <Setter Property="Foreground" Value="#FFE8E8"/>
@@ -151,6 +194,13 @@
 
     <Style Selector="Button.navButton.active:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
+    </Style>
+
+    <Style Selector="Border.bottom-bar">
+        <Setter Property="Background" Value="{DynamicResource BottomBarBackgroundBrush}" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+        <Setter Property="MinHeight" Value="60" />
     </Style>
 
     <Style Selector="Border.card">
