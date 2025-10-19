@@ -120,8 +120,25 @@ public class ModManager : IModManager
                     return installResult;
                 }
 
+                progress?.Report(0.9);
+                Console.WriteLine("ModManager: Progress at 90% - enabling mod");
+
+                // ---------------- auto-enable mod ----------------
+                Console.WriteLine($"ModManager: Auto-enabling mod '{modInfo.Name}' after installation");
+                var enableResult = await EnableMod(modInfo.Id, gameInstall);
+                if (!enableResult.Success)
+                {
+                    Console.WriteLine($"ModManager: Auto-enable failed: {enableResult.Error}");
+                    // don't fail the installation if auto-enable fails, just log it
+                    Console.WriteLine($"ModManager: Installation succeeded but mod '{modInfo.Name}' could not be auto-enabled");
+                }
+                else
+                {
+                    Console.WriteLine($"ModManager: Mod '{modInfo.Name}' auto-enabled successfully");
+                }
+
                 progress?.Report(1);
-                return OperationResult.SuccessResult($"Mod '{modInfo.Name}' installed successfully", modInfo);
+                return OperationResult.SuccessResult($"Mod '{modInfo.Name}' installed and enabled successfully", modInfo);
             }
             finally
             {
@@ -1396,6 +1413,19 @@ public class ModManager : IModManager
             var modInfoJson = JsonSerializer.Serialize(modInfo, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(modInfoPath, modInfoJson);
             Console.WriteLine("ModManager: Mod info saved successfully");
+
+            // ensure mod ID is set to directory name (fixes ID mismatch issues)
+            Console.WriteLine($"ModManager: Ensuring mod ID is set to directory name: {folderName}");
+            var ensureIdResult = await EnsureModIdIsSet(folderName, gameInstall);
+            if (!ensureIdResult.Success)
+            {
+                Console.WriteLine($"ModManager: Warning - Failed to ensure mod ID is set: {ensureIdResult.Error}");
+                // don't fail installation for this, just log the warning
+            }
+            else
+            {
+                Console.WriteLine("ModManager: Mod ID successfully ensured");
+            }
 
             // add to mods list
             Console.WriteLine("ModManager: Adding mod to installed mods list");

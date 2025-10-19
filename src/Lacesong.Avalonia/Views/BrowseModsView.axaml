@@ -60,8 +60,9 @@
                                 </StackPanel>
                                 
                                 <!-- Quick Action Buttons -->
-                                <StackPanel Grid.Column="2" Grid.RowSpan="3" VerticalAlignment="Center">
-                                    <ProgressBar Minimum="0" Maximum="1" Height="2" VerticalAlignment="Top" Value="{Binding $parent[UserControl].DataContext.InstallProgress}" Width="16" Margin="0,0,0,2">
+                                <Border Grid.Column="2" Grid.RowSpan="3" VerticalAlignment="Center" HorizontalAlignment="Right" Width="32">
+                                    <StackPanel>
+                                        <ProgressBar Minimum="0" Maximum="1" Height="2" VerticalAlignment="Top" Value="{Binding $parent[UserControl].DataContext.InstallProgress}" Width="8" Margin="0,0,0,2" HorizontalAlignment="Center">
                                         <ProgressBar.IsVisible>
                                             <MultiBinding Converter="{StaticResource IdMatchConverter}">
                                                 <Binding Path="Id"/>
@@ -109,7 +110,8 @@
                                         </Button.IsEnabled>
                                         <PathIcon Data="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4zM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9z" Width="16" Height="16"/>
                                     </Button>
-                                </StackPanel>
+                                    </StackPanel>
+                                </Border>
                             </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
