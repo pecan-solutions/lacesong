@@ -45,9 +45,8 @@ Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Code style guidelines and conventions
 - Testing requirements
 - Pull request process
-- Commit message guidelines
 
-Quick start: Open issues for bugs or features, submit PRs for improvements. All contributions should include tests and follow existing code style.
+Quick start: Open issues for bugs or features, submit PRs for improvements. All contributions should include tests.
 
 ## License
 
@@ -58,6 +57,9 @@ Apache 2.0 License - See [LICENSE](LICENSE) for details.
 Lacesong is a community-driven tool, not affiliated with Team Cherry or Hollow Knight: Silksong. Use at your own risk.
 
 ## Credits
+
+<details>
+    <summary>Expand</summary>
 
 - [wdarrenww](https://github.com/wdarrenww) (Darren Wei) - Creator of Lacesong, Lead Developer, Planner/PM
 
@@ -70,6 +72,8 @@ Lacesong is a community-driven tool, not affiliated with Team Cherry or Hollow K
 - Joseph - Developer, Avalonia UI
 
 - Sylvie - Developer, Avalonia UI and Mod Logic
+
+</details>
 
 Thanks in advance to all future contributors!
 
