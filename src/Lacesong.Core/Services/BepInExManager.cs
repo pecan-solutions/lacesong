@@ -94,6 +94,8 @@ public class BepInExManager : IBepInExManager
                 return OperationResult.ErrorResult($"Failed to configure BepInEx: {configResult.Error}", "Configuration failed");
             }
 
+            await EnsureMacDoorstop(gameInstall);
+
             // create desktop shortcut if requested
             if (options.CreateDesktopShortcut)
             {
@@ -411,6 +413,8 @@ public class BepInExManager : IBepInExManager
             {
                 return OperationResult.ErrorResult($"Failed to configure BepInEx: {configResult.Error}", "Configuration failed");
             }
+
+            await EnsureMacDoorstop(gameInstall);
 
             // cleanup temp files
             try
@@ -782,6 +786,144 @@ SkipAssemblyScan = false
         catch (Exception ex)
         {
             return OperationResult.ErrorResult(ex.Message, "Failed to create backup");
+        }
+    }
+
+    private async Task<OperationResult> InstallLatestDoorstopForMac(GameInstallation gameInstall)
+    {
+        try
+        {
+            var baseDir = GetBepInExBaseDirectory(gameInstall);
+
+            // query github releases for unity doorstop and find latest macos asset
+            var releasesUrl = "https://api.github.com/repos/NeighTools/UnityDoorstop/releases";
+            using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+            client.DefaultRequestHeaders.Add("User-Agent", "Lacesong-ModManager/1.0.0");
+
+            using var resp = await client.GetAsync(releasesUrl);
+            if (!resp.IsSuccessStatusCode)
+            {
+                return OperationResult.ErrorResult("failed to query UnityDoorstop releases");
+            }
+
+            var json = await resp.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+
+            string? assetUrl = null;
+            string? assetName = null;
+
+            foreach (var release in doc.RootElement.EnumerateArray())
+            {
+                if (release.TryGetProperty("prerelease", out var pre) && pre.GetBoolean())
+                {
+                    continue;
+                }
+                if (!release.TryGetProperty("assets", out var assetsEl))
+                {
+                    continue;
+                }
+                foreach (var asset in assetsEl.EnumerateArray())
+                {
+                    if (!asset.TryGetProperty("name", out var nameEl)) continue;
+                    var name = nameEl.GetString() ?? string.Empty;
+                    if (!name.StartsWith("doorstop_macos_release_", StringComparison.OrdinalIgnoreCase) || !name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+                    if (asset.TryGetProperty("browser_download_url", out var urlEl))
+                    {
+                        assetUrl = urlEl.GetString();
+                        assetName = name;
+                        break;
+                    }
+                }
+                if (!string.IsNullOrEmpty(assetUrl)) break;
+            }
+
+            if (string.IsNullOrEmpty(assetUrl))
+            {
+                return OperationResult.ErrorResult("could not find macOS UnityDoorstop asset");
+            }
+
+            // download asset to temp
+            var tempPath = Path.GetTempFileName();
+            var tempZip = Path.ChangeExtension(tempPath, ".zip");
+            File.Delete(tempPath);
+
+            using (var dl = await client.GetAsync(assetUrl))
+            {
+                dl.EnsureSuccessStatusCode();
+                await using var s = await dl.Content.ReadAsStreamAsync();
+                await using var f = new FileStream(tempZip, FileMode.Create, FileAccess.Write);
+                await s.CopyToAsync(f);
+            }
+
+            // extract, locate dylib, and replace into game directory
+            var tempExtract = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempExtract);
+            ZipFile.ExtractToDirectory(tempZip, tempExtract);
+
+            // common layout: <extract>/x64/libdoorstop.dylib; fallback to search if not present
+            var candidate = Path.Combine(tempExtract, "x64", "libdoorstop.dylib");
+            if (!File.Exists(candidate))
+            {
+                var found = Directory.GetFiles(tempExtract, "libdoorstop.dylib", SearchOption.AllDirectories).FirstOrDefault();
+                candidate = found ?? candidate;
+            }
+
+            if (!File.Exists(candidate))
+            {
+                // cleanup before returning
+                try { Directory.Delete(tempExtract, true); } catch { }
+                try { File.Delete(tempZip); } catch { }
+                return OperationResult.ErrorResult("libdoorstop.dylib not found in downloaded archive");
+            }
+
+            var dest = Path.Combine(baseDir, "libdoorstop.dylib");
+            try
+            {
+                if (File.Exists(dest))
+                {
+                    File.Delete(dest);
+                }
+            }
+            catch { /* ignore inability to delete; copy will overwrite below */ }
+
+            // ensure destination directory exists (it should be baseDir)
+            Directory.CreateDirectory(baseDir);
+            File.Copy(candidate, dest, true);
+
+            // cleanup temp artifacts
+            try { Directory.Delete(tempExtract, true); } catch { }
+            try { File.Delete(tempZip); } catch { }
+
+            return OperationResult.SuccessResult($"installed latest libdoorstop.dylib from {assetName ?? "UnityDoorstop"}");
+        }
+        catch (Exception ex)
+        {
+            return OperationResult.ErrorResult(ex.Message, "failed to install libdoorstop.dylib");
+        }
+    }
+
+    private async Task EnsureMacDoorstop(GameInstallation gameInstall)
+    {
+        // on macos .app targets, fetch and install latest libdoorstop.dylib from unity doorstop
+        try
+        {
+            var exePathForTarget = Path.Combine(gameInstall.InstallPath, gameInstall.Executable);
+            var exeTypeForTarget = ExecutableTypeDetector.GetExecutableType(exePathForTarget);
+            if (exeTypeForTarget == ExecutableType.macOS)
+            {
+                var doorstopResult = await InstallLatestDoorstopForMac(gameInstall);
+                if (!doorstopResult.Success)
+                {
+                    Console.WriteLine($"warning: failed to install latest libdoorstop.dylib: {doorstopResult.Error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"warning: unexpected error during libdoorstop installation: {ex.Message}");
         }
     }
 

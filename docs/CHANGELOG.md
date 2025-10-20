@@ -8,7 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Profile management
 
-## [1.0.0] - 2025-01-16
+## [1.0.1] - 2025-10-20
+### Added
+- Automatic installation of latest macOS Doorstop library (`libdoorstop.dylib`) during BepInEx setup
+  - Fetches latest stable `UnityDoorstop` release via GitHub API and installs into BepInEx directory
+
+### Changed
+- BepInEx setup/update now ensures Doorstop presence on macOS targets detected via executable type
+
+### Fixed
+- Improved reliability of macOS BepInEx injection by keeping Doorstop up to date and present
+
+## [1.0.0] - 2025-10-20
 ### Added
 - **Complete GitHub issue management system** with comprehensive issue templates
   - Bug report template with detailed environment information collection
