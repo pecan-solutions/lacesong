@@ -87,6 +87,16 @@ public partial class BottomBarViewModel : BaseViewModel, IDisposable, IAsyncDisp
     private void OnGameStateChanged()
     {
         LaunchCommand.NotifyCanExecuteChanged();
+        
+        // start process monitoring when game is detected
+        if (_gameStateService.IsGameDetected)
+        {
+            StartProcessMonitoring();
+        }
+        else
+        {
+            StopProcessMonitoring();
+        }
     }
 
     private void StartProcessMonitoring()
@@ -105,20 +115,19 @@ public partial class BottomBarViewModel : BaseViewModel, IDisposable, IAsyncDisp
                 {
                     await Task.Delay(1000, _processMonitoringCts.Token);
 
-                    // check IsGameRunning inside the loop to avoid race condition
-                    if (!IsGameRunning)
-                    {
-                        break;
-                    }
-
-                    if (!_gameLauncher.IsRunning(_gameStateService.CurrentGame))
+                    var isCurrentlyRunning = _gameLauncher.IsRunning(_gameStateService.CurrentGame);
+                    
+                    // update IsGameRunning if the state has changed
+                    if (IsGameRunning != isCurrentlyRunning)
                     {
                         Dispatcher.UIThread.Post(() =>
                         {
-                            IsGameRunning = false;
-                            ActiveLaunchMode = LaunchMode.Modded; // Or some 'None' state
+                            IsGameRunning = isCurrentlyRunning;
+                            if (!isCurrentlyRunning)
+                            {
+                                ActiveLaunchMode = LaunchMode.Modded; // reset to default when game stops
+                            }
                         });
-                        break;
                     }
                 }
             }

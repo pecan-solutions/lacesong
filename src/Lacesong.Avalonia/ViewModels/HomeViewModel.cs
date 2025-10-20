@@ -125,6 +125,16 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
         OnPropertyChanged(nameof(SelectGameButtonText));
         
         UpdateGameStatusText();
+        
+        // start process monitoring when game is detected
+        if (IsGameDetected)
+        {
+            StartProcessMonitoring();
+        }
+        else
+        {
+            StopProcessMonitoring();
+        }
     }
 
     private void UpdateGameStatusText()
@@ -144,7 +154,7 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
         // stop any existing monitoring
         StopProcessMonitoring();
 
-        if (!IsGameDetected || !IsGameRunning)
+        if (!IsGameDetected)
             return;
 
         _processMonitoringCts = new CancellationTokenSource();
@@ -156,18 +166,25 @@ public partial class HomeViewModel : BaseViewModel, IDisposable
                 {
                     await Task.Delay(1000, _processMonitoringCts.Token); // check every second
 
-                    // check if game is still running
-                    if (!_gameLauncher.IsRunning(CurrentGame))
+                    var isCurrentlyRunning = _gameLauncher.IsRunning(CurrentGame);
+                    
+                    // update IsGameRunning if the state has changed
+                    if (IsGameRunning != isCurrentlyRunning)
                     {
-                        // game process has exited, update ui state
                         // marshal to ui thread using dispatcher
                         Dispatcher.UIThread.Post(() =>
                         {
-                            IsGameRunning = false;
-                            ActiveMode = LaunchMode.None;
-                            SetStatus("Game exited.");
+                            IsGameRunning = isCurrentlyRunning;
+                            if (!isCurrentlyRunning)
+                            {
+                                ActiveMode = LaunchMode.None;
+                                SetStatus("Game exited.");
+                            }
+                            else
+                            {
+                                SetStatus("Game is running.");
+                            }
                         });
-                        break;
                     }
                 }
             }

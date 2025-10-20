@@ -371,7 +371,30 @@ public class GameLauncher : IGameLauncher
 
     public async Task<OperationResult> Stop(GameInstallation gameInstall)
     {
-        if (!_runningProcesses.TryRemove(gameInstall.InstallPath, out var procs) || procs.Count == 0)
+        var procs = new List<Process>();
+        
+        // first try to get tracked processes
+        if (_runningProcesses.TryRemove(gameInstall.InstallPath, out var trackedProcs))
+        {
+            procs.AddRange(trackedProcs);
+        }
+        
+        // if no tracked processes, try to find running processes by name
+        if (procs.Count == 0)
+        {
+            try
+            {
+                var executableName = Path.GetFileNameWithoutExtension(gameInstall.Executable);
+                var runningProcesses = Process.GetProcessesByName(executableName);
+                procs.AddRange(runningProcesses);
+            }
+            catch (Exception ex)
+            {
+                return OperationResult.ErrorResult($"failed to find running processes: {ex.Message}", "stop failed");
+            }
+        }
+        
+        if (procs.Count == 0)
         {
             return OperationResult.ErrorResult("game not running", "stop failed");
         }
@@ -381,59 +404,56 @@ public class GameLauncher : IGameLauncher
         var processesToWaitFor = new List<(Process process, bool needsGracefulWait, bool needsKillWait)>();
 
         // first pass: collect processes and attempt graceful shutdown
-        lock (procs) // ensure thread-safe access to process list
+        foreach (var p in procs)
         {
-            foreach (var p in procs)
+            try
             {
-                try
+                if (p.HasExited)
                 {
-                    if (p.HasExited)
-                    {
-                        p.Dispose();
-                        continue;
-                    }
-
-                    bool gracefulShutdownSucceeded = false;
-
-                    // try graceful shutdown first (close main window)
-                    if (OperatingSystem.IsWindows() && !p.MainWindowHandle.Equals(IntPtr.Zero))
-                    {
-                        try
-                        {
-                            gracefulShutdownSucceeded = p.CloseMainWindow();
-                        }
-                        catch (Exception ex)
-                        {
-                            // fall through to kill if close main window fails
-                            failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): CloseMainWindow failed - {ex.Message}");
-                        }
-                    }
-
-                    // collect processes that need async waiting
-                    if (gracefulShutdownSucceeded)
-                    {
-                        processesToWaitFor.Add((p, true, false));
-                    }
-                    else
-                    {
-                        // will need to kill and wait
-                        processesToWaitFor.Add((p, false, true));
-                    }
+                    p.Dispose();
+                    continue;
                 }
-                catch (Exception ex)
+
+                bool gracefulShutdownSucceeded = false;
+
+                // try graceful shutdown first (close main window)
+                if (OperatingSystem.IsWindows() && !p.MainWindowHandle.Equals(IntPtr.Zero))
                 {
-                    failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): Unexpected error - {ex.Message}");
                     try
                     {
-                        p.Dispose();
+                        gracefulShutdownSucceeded = p.CloseMainWindow();
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // ignore disposal errors
+                        // fall through to kill if close main window fails
+                        failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): CloseMainWindow failed - {ex.Message}");
                     }
                 }
+
+                // collect processes that need async waiting
+                if (gracefulShutdownSucceeded)
+                {
+                    processesToWaitFor.Add((p, true, false));
+                }
+                else
+                {
+                    // will need to kill and wait
+                    processesToWaitFor.Add((p, false, true));
+                }
             }
-        } // end lock block
+            catch (Exception ex)
+            {
+                failedProcesses.Add($"{p.ProcessName} (PID: {p.Id}): Unexpected error - {ex.Message}");
+                try
+                {
+                    p.Dispose();
+                }
+                catch
+                {
+                    // ignore disposal errors
+                }
+            }
+        }
 
         // second pass: perform async operations outside the lock
         foreach (var (process, needsGracefulWait, initialNeedsKillWait) in processesToWaitFor)
@@ -520,58 +540,86 @@ public class GameLauncher : IGameLauncher
 
     public bool IsRunning(GameInstallation gameInstall)
     {
-        if (!_runningProcesses.TryGetValue(gameInstall.InstallPath, out var processes))
+        // first check if we have tracked processes that are still running
+        if (_runningProcesses.TryGetValue(gameInstall.InstallPath, out var processes))
         {
-            return false;
+            lock (processes) // ensure thread-safe access to process list
+            {
+                var aliveProcesses = new List<Process>();
+                
+                foreach (var process in processes)
+                {
+                    try
+                    {
+                        // refresh process info to get current state
+                        process.Refresh();
+                        
+                        if (!process.HasExited)
+                        {
+                            aliveProcesses.Add(process);
+                        }
+                        else
+                        {
+                            // dispose dead process to prevent handle leaks
+                            process.Dispose();
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // if we can't access the process (e.g., access denied), treat as dead
+                        try
+                        {
+                            process.Dispose();
+                        }
+                        catch
+                        {
+                            // ignore disposal errors
+                        }
+                    }
+                }
+                
+                // update the process list with only alive processes
+                processes.Clear();
+                processes.AddRange(aliveProcesses);
+                
+                // if no alive processes remain, remove the entry from the dictionary
+                if (processes.Count == 0)
+                {
+                    _runningProcesses.TryRemove(gameInstall.InstallPath, out _);
+                }
+                else
+                {
+                    // we found running tracked processes
+                    return true;
+                }
+            }
         }
 
-        lock (processes) // ensure thread-safe access to process list
+        // if no tracked processes are running, check for any running processes with the game executable name
+        try
         {
-            var aliveProcesses = new List<Process>();
+            var executableName = Path.GetFileNameWithoutExtension(gameInstall.Executable);
+            var runningProcesses = Process.GetProcessesByName(executableName);
             
-            foreach (var process in processes)
+            // dispose the process objects to prevent handle leaks
+            foreach (var process in runningProcesses)
             {
                 try
                 {
-                    // refresh process info to get current state
-                    process.Refresh();
-                    
-                    if (!process.HasExited)
-                    {
-                        aliveProcesses.Add(process);
-                    }
-                    else
-                    {
-                        // dispose dead process to prevent handle leaks
-                        process.Dispose();
-                    }
+                    process.Dispose();
                 }
-                catch (Exception)
+                catch
                 {
-                    // if we can't access the process (e.g., access denied), treat as dead
-                    try
-                    {
-                        process.Dispose();
-                    }
-                    catch
-                    {
-                        // ignore disposal errors
-                    }
+                    // ignore disposal errors
                 }
             }
             
-            // update the process list with only alive processes
-            processes.Clear();
-            processes.AddRange(aliveProcesses);
-            
-            // if no alive processes remain, remove the entry from the dictionary
-            if (processes.Count == 0)
-            {
-                _runningProcesses.TryRemove(gameInstall.InstallPath, out _);
-                return false;
-            }
-            
-            return true;
+            return runningProcesses.Length > 0;
+        }
+        catch (Exception)
+        {
+            // if we can't enumerate processes (e.g., access denied), assume not running
+            return false;
         }
     }
 }

@@ -8,6 +8,7 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
+    <ApplicationIcon>Assets/appicon.ico</ApplicationIcon>
     <RollForward>LatestMinor</RollForward>
     <!-- compatibility settings for .net 9 -->
     <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
