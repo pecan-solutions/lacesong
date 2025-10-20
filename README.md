@@ -29,13 +29,6 @@ Lacesong is available as a cross-platform desktop application:
 2. **Install**: Run the installer for your platform (Windows, macOS, or Linux)
 3. **Launch**: Start Lacesong and follow the setup wizard
 
-### System Requirements
-
-- **Windows**: Windows 10/11 (64-bit)
-- **macOS**: macOS 10.15 or later
-- **Runtime**: .NET 9.0 (included in installer)
-- **Game**: Hollow Knight: Silksong installed
-
 ## Contributing
 
 We welcome contributions! Whether you're fixing bugs, adding features, or improving documentation, your help is appreciated.
