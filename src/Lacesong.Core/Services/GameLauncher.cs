@@ -18,26 +18,53 @@ public class GameLauncher : IGameLauncher
 {
     private readonly IBepInExManager _bepInExManager;
     private readonly IModManager _modManager;
+    private readonly IDoorstopConfigManager _doorstopConfigManager;
     // map install path to list of processes we spawned so we can stop them later
     private readonly ConcurrentDictionary<string, List<Process>> _runningProcesses = new();
 
-    public GameLauncher(IBepInExManager bepInExManager, IModManager modManager)
+    public GameLauncher(IBepInExManager bepInExManager, IModManager modManager, IDoorstopConfigManager doorstopConfigManager)
     {
         _bepInExManager = bepInExManager;
         _modManager = modManager;
+        _doorstopConfigManager = doorstopConfigManager;
     }
 
-    public Task<OperationResult> LaunchModded(GameInstallation gameInstall)
+    public async Task<OperationResult> LaunchModded(GameInstallation gameInstall)
     {
         // ensure mods directory exists so any first-run setup is complete
         ModManager.EnsureModsDirectory(gameInstall); // static helper
 
         if (!_bepInExManager.IsBepInExInstalled(gameInstall))
         {
-            return Task.FromResult(OperationResult.ErrorResult("BepInEx is not installed", "modded launch failed"));
+            return OperationResult.ErrorResult("BepInEx is not installed", "modded launch failed");
         }
 
-        return StartGameInternal(gameInstall, isVanilla:false);
+        // ensure doorstop is enabled on windows for modded launches
+        if (OperatingSystem.IsWindows())
+        {
+            Console.WriteLine($"[DEBUG] Windows detected, ensuring doorstop is enabled for modded launch");
+            if (_doorstopConfigManager.IsDoorstopInstalled(gameInstall))
+            {
+                var isEnabled = await _doorstopConfigManager.IsDoorstopEnabled(gameInstall);
+                Console.WriteLine($"[DEBUG] Doorstop enabled: {isEnabled}");
+                
+                if (!isEnabled)
+                {
+                    Console.WriteLine($"[DEBUG] Enabling doorstop for modded launch");
+                    var enableResult = await _doorstopConfigManager.EnableDoorstop(gameInstall);
+                    if (!enableResult.Success)
+                    {
+                        Console.WriteLine($"[DEBUG] Warning: Failed to enable doorstop: {enableResult.Error}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[DEBUG] Doorstop enabled successfully");
+                    }
+                }
+            }
+        }
+
+        return await StartGameInternal(gameInstall, isVanilla:false);
     }
 
     public async Task<OperationResult> LaunchVanilla(GameInstallation gameInstall)
@@ -60,8 +87,40 @@ public class GameLauncher : IGameLauncher
         var tempDisabledPath = pluginsPath + "_disabled";
         Console.WriteLine($"[DEBUG] Temp disabled path: {tempDisabledPath}");
         
+        // track doorstop state for restoration
+        bool doorstopWasEnabled = false;
+        bool doorstopWasInstalled = false;
+        
         try
         {
+            // disable doorstop on windows for vanilla launches
+            if (OperatingSystem.IsWindows())
+            {
+                Console.WriteLine($"[DEBUG] Windows detected, checking doorstop state");
+                doorstopWasInstalled = _doorstopConfigManager.IsDoorstopInstalled(gameInstall);
+                Console.WriteLine($"[DEBUG] Doorstop installed: {doorstopWasInstalled}");
+                
+                if (doorstopWasInstalled)
+                {
+                    doorstopWasEnabled = await _doorstopConfigManager.IsDoorstopEnabled(gameInstall);
+                    Console.WriteLine($"[DEBUG] Doorstop enabled: {doorstopWasEnabled}");
+                    
+                    if (doorstopWasEnabled)
+                    {
+                        Console.WriteLine($"[DEBUG] Disabling doorstop for vanilla launch");
+                        var disableResult = await _doorstopConfigManager.DisableDoorstop(gameInstall);
+                        if (!disableResult.Success)
+                        {
+                            Console.WriteLine($"[DEBUG] Warning: Failed to disable doorstop: {disableResult.Error}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[DEBUG] Doorstop disabled successfully");
+                        }
+                    }
+                }
+            }
+            
             // temporarily disable plugins folder (symlinks) to ensure a pure vanilla launch
             if (Directory.Exists(pluginsPath))
             {
@@ -100,6 +159,21 @@ public class GameLauncher : IGameLauncher
             // note: we don't wait for game process exit to remain non-blocking. this keeps previous semantics while avoiding heavy directory moves.
             Console.WriteLine($"[DEBUG] Restoring plugins folder");
             RestorePluginsFolder(pluginsPath, tempDisabledPath);
+            
+            // restore doorstop state on windows
+            if (OperatingSystem.IsWindows() && doorstopWasInstalled && doorstopWasEnabled)
+            {
+                Console.WriteLine($"[DEBUG] Restoring doorstop enabled state");
+                var enableResult = await _doorstopConfigManager.EnableDoorstop(gameInstall);
+                if (!enableResult.Success)
+                {
+                    Console.WriteLine($"[DEBUG] Warning: Failed to restore doorstop: {enableResult.Error}");
+                }
+                else
+                {
+                    Console.WriteLine($"[DEBUG] Doorstop restored successfully");
+                }
+            }
         }
     }
 

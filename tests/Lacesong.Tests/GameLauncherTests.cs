@@ -44,7 +44,8 @@ public class GameLauncherTests
         var bepMock = new Mock<IBepInExManager>();
         bepMock.Setup(b => b.IsBepInExInstalled(It.IsAny<GameInstallation>())).Returns(false);
         var modMgr = new Mock<IModManager>().Object;
-        var launcher = new GameLauncher(bepMock.Object, modMgr);
+        var doorstopMock = new Mock<IDoorstopConfigManager>().Object;
+        var launcher = new GameLauncher(bepMock.Object, modMgr, doorstopMock);
         var game = CreateTempGameInstall();
 
         var result = await launcher.LaunchModded(game);
@@ -57,7 +58,8 @@ public class GameLauncherTests
         var bepMock = new Mock<IBepInExManager>();
         bepMock.Setup(b => b.IsBepInExInstalled(It.IsAny<GameInstallation>())).Returns(true);
         var modMgr = new Mock<IModManager>().Object;
-        var launcher = new GameLauncher(bepMock.Object, modMgr);
+        var doorstopMock = new Mock<IDoorstopConfigManager>().Object;
+        var launcher = new GameLauncher(bepMock.Object, modMgr, doorstopMock);
         var game = CreateTempGameInstall(createExe: false);
 
         var result = await launcher.LaunchVanilla(game);
@@ -69,7 +71,8 @@ public class GameLauncherTests
     {
         var bepMock = new Mock<IBepInExManager>();
         var modMgr = new Mock<IModManager>().Object;
-        var launcher = new GameLauncher(bepMock.Object, modMgr);
+        var doorstopMock = new Mock<IDoorstopConfigManager>().Object;
+        var launcher = new GameLauncher(bepMock.Object, modMgr, doorstopMock);
         var game = CreateTempGameInstall();
 
         var result = await launcher.Stop(game);
@@ -82,7 +85,8 @@ public class GameLauncherTests
         // arrange
         var bepMock = new Mock<IBepInExManager>();
         var modMgr = new Mock<IModManager>().Object;
-        var launcher = new GameLauncher(bepMock.Object, modMgr);
+        var doorstopMock = new Mock<IDoorstopConfigManager>().Object;
+        var launcher = new GameLauncher(bepMock.Object, modMgr, doorstopMock);
         var game = CreateTempGameInstall();
 
         // start a mock process that will exit gracefully
@@ -129,7 +133,8 @@ public class GameLauncherTests
         // arrange
         var bepMock = new Mock<IBepInExManager>();
         var modMgr = new Mock<IModManager>().Object;
-        var launcher = new GameLauncher(bepMock.Object, modMgr);
+        var doorstopMock = new Mock<IDoorstopConfigManager>().Object;
+        var launcher = new GameLauncher(bepMock.Object, modMgr, doorstopMock);
         var game = CreateTempGameInstall();
 
         // start a long-running process that won't exit gracefully

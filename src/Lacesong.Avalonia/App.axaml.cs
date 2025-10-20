@@ -59,6 +59,7 @@ public partial class App : Application
         services.AddSingleton<IConflictDetectionService, ConflictDetectionService>();
         services.AddSingleton<ICompatibilityService, CompatibilityService>();
         services.AddSingleton<IModConfigService, ModConfigService>();
+        services.AddSingleton<IDoorstopConfigManager, DoorstopConfigManager>();
         services.AddSingleton<IGameLauncher, GameLauncher>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IThemeService, ThemeService>();
