@@ -6,7 +6,7 @@ A cross-platform mod management tool for Unity/Mono games, starting with Hollow 
 
 ## Overview
 
-Lacesong provides a simple, safe, and consistent way to install, manage, and update community mods. Inspired by tools like Lumafly and Scarab, it focuses on automation, safety, and cross-platform compatibility. Looking for contributors or developers.
+Lacesong provides a simple, safe, and consistent way to install, manage, and update community mods. Inspired by tools like Lumafly and Scarab, it focuses on automation, safety, and cross-platform compatibility for Hollow Knight: Silksong.
 
 ## Screenshots
 
