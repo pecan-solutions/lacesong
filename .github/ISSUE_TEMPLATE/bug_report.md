@@ -38,5 +38,4 @@ Add any other context about the problem here.
 ## Checklist
 - [ ] I have searched existing issues to avoid duplicates
 - [ ] I have provided all required environment information
-- [ ] I have attached relevant log files
 - [ ] I have described the issue clearly and concisely
