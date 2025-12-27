@@ -4,11 +4,14 @@
 
 A cross-platform mod management tool for Unity/Mono games, starting with Hollow Knight: Silksong. Built with .NET 9 and Avalonia UI, Lacesong runs natively on Windows, macOS, and Linux.
 
+## Current Development Status
+The Linux implementation is still in progress. Once a small Windows-specific issue is resolved, we plan to release the first major version for macOS and Windows. Linux support will continue to be developed, and the next major release will include all platforms once remaining issues are addressed.
+
+---
+
 ## Overview
 
 Lacesong provides a simple, safe, and consistent way to install, manage, and update community mods. Inspired by tools like Lumafly and Scarab, it focuses on automation, safety, and cross-platform compatibility for Hollow Knight: Silksong.
-
-Looking for contributors to help fix bugs and maintain
 
 ## Screenshots
 
